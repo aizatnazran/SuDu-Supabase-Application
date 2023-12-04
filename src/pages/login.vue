@@ -14,6 +14,7 @@ const router = useRouter(); // Add this line
 
 const userProfile = ref(null);
 
+
 const form = ref({
   email: '',
   password: '',
@@ -35,7 +36,7 @@ const login = async () => {
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
       email: form.value.email,
-      password: form.value.password,
+      password: form.value. password,
     });
 
     if (error) {
