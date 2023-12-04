@@ -1,32 +1,26 @@
 <script setup>
-const recentDevices = ref([
-  {
-    type: '60177824922',
-    email: true,
-    browser: true,
-    app: true,
-  },
-  {
-    type: '60126969001',
-    email: true,
-    browser: true,
-    app: true,
-  },
-  {
-    type: '601132871109',
-    email: true,
-    browser: true,
-    app: false,
-  },
-  {
-    type: '60148888991',
-    email: true,
-    browser: false,
-    app: false,
-  },
-])
+import { supabase } from '@/lib/supaBaseClient'
+import { ref } from 'vue'
 
-const selectedNotification = ref('Only when I\'m online')
+const allowedDevices = ref([])
+
+const fetchAllowedDevices = async () => {
+  try {
+    const { data: allowed_devices, error } = await supabase
+      .from('allowed_devices')
+      .select('*')
+
+    if (allowed_devices) {
+      console.log(allowed_devices)
+      allowedDevices.value = allowed_devices
+    }
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+// Fetch allowed devices when the component is mounted
+fetchAllowedDevices()
 </script>
 
 <template>
@@ -38,50 +32,18 @@ const selectedNotification = ref('Only when I\'m online')
 
     <VTable class="text-no-wrap">
       <thead>
-        <tr>
-          <th scope="col">
-            Contact Number (6017*******)
-          </th>
-          <th scope="col">
-            Active 
-          </th>
-          <th scope="col">
-            Action
-          </th>
-          <!--
-            <th scope="col">
-            App
-            </th> 
-          -->
-        </tr>
+        <!-- Your table headers -->
       </thead>
       <tbody>
         <tr
-          v-for="device in recentDevices"
-          :key="device.type"
+          v-for="device in allowedDevices"
+          :key="device.contact_number"
         >
+          <td>{{ device.contact_number }}</td>
           <td>
-            {{ device.type }}
+            <VCheckbox v-model="device.active" />
           </td>
-          <!--
-            <td>
-            <VCheckbox v-model="device.email" />
-            </td>
-          -->
-          <td>
-            <VCheckbox v-model="device.browser" />
-          </td> 
-          <td>
-            <VBtn
-              icon
-              size="25"
-              color="error"
-            >
-              <VIcon size="20">
-                mdi-delete
-              </VIcon>
-            </VBtn>
-          </td>
+          <!-- Additional columns as needed -->
         </tr>
       </tbody>
     </VTable>
