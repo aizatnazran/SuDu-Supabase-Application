@@ -7,7 +7,7 @@ import authV1Tree2 from '@images/pages/auth-v1-tree-2.png'
 import authV1Tree from '@images/pages/auth-v1-tree.png'
 import { computed, ref } from 'vue'
 import { useTheme } from 'vuetify'
-import { supabase } from '../lib/supabaseClient.js'
+import { supabase } from '../lib/supaBaseClient.js'
 
 const form = ref({
   email: '',
@@ -30,7 +30,7 @@ const login = async () => {
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
       email: form.value.email,
-      password: form.value.password,
+      password: form.value. password,
     });
 
     if (error) {
