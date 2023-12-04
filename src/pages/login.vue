@@ -6,8 +6,14 @@ import authV1MaskLight from '@images/pages/auth-v1-mask-light.png'
 import authV1Tree2 from '@images/pages/auth-v1-tree-2.png'
 import authV1Tree from '@images/pages/auth-v1-tree.png'
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'; // Add this import
 import { useTheme } from 'vuetify'
 import { supabase } from '../lib/supaBaseClient.js'
+
+const router = useRouter(); // Add this line
+
+const userProfile = ref(null);
+
 
 const form = ref({
   email: '',
@@ -37,14 +43,34 @@ const login = async () => {
       console.error('Login error:', error.message)
       // Handle error (e.g., show error message)
     } else {
-      console.log('Login successful:', data)
-      // Redirect to the desired page or perform other actions
+      console.log('Login successful:', data);
+
+      // Retrieve user profile information from the 'users' table
+      const { data: userData, error: profileError } = await supabase
+        .from('users')
+        .select('id, email, name') // Include fields you want to retrieve
+        .eq('id', data.user.id)
+        .single();
+
+        console.log('User profile data:', userData);
+console.log('Profile error:', profileError);
+
+      if (profileError) {
+        console.error('Error fetching user profile:', profileError.message);
+      } else {
+        // Store the user's profile in your component state or global state
+        userProfile.value = userData;
+
+        // Redirect to the dashboard or perform other actions
+        router.push('/dashboard');
+      }
     }
   } catch (error) {
     console.error('Error during login:', error.message)
     // Handle error (e.g., show error message)
   }
-}
+};
+
 
 </script>
 
