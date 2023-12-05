@@ -4,26 +4,25 @@ import triangleLight from '@images/misc/triangle-light.png'
 import trophy from '@images/misc/trophy.png'
 import { computed } from 'vue'
 import { useTheme } from 'vuetify'
+import { useUserStore } from '../../../stores/user'
 
+const userStore = useUserStore()
+const congratulationsMessage = computed(() => `Congratulations ${userStore.companyName || 'User'}! 🎉`)
 
 const { global } = useTheme()
-const triangleBg = computed(() => global.name.value === 'light' ? triangleLight : triangleDark)
+const triangleBg = computed(() => (global.name.value === 'light' ? triangleLight : triangleDark))
 </script>
 
 <template>
   <VCard
-    :title="`Congratulations ${userProfile ? userProfile.name : 'User'}! 🎉`"
+    :title="congratulationsMessage"
     subtitle="Best seller of the month"
     class="position-relative"
   >
     <VCardText>
-      <h5 class="text-2xl font-weight-medium text-primary">
-        $42.8k
-      </h5>
+      <h5 class="text-2xl font-weight-medium text-primary">$42.8k</h5>
       <p>78% of target 🚀</p>
-      <VBtn size="small">
-        View Sales
-      </VBtn>
+      <VBtn size="small"> View Sales </VBtn>
     </VCardText>
 
     <!-- Triangle Background -->
@@ -41,7 +40,7 @@ const triangleBg = computed(() => global.name.value === 'light' ? triangleLight 
 </template>
 
 <style lang="scss">
-@use "@layouts/styles/mixins" as layoutsMixins;
+@use '@layouts/styles/mixins' as layoutsMixins;
 
 .v-card .triangle-bg {
   position: absolute;

@@ -8,11 +8,10 @@ import authV1Tree from '@images/pages/auth-v1-tree.png'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTheme } from 'vuetify'
+import { useUserStore } from '../../stores/user'
 import { supabase } from '../lib/supaBaseClient.js'
 
-const router = useRouter(); 
-
-const loggedInUserUUID = ref(null); 
+const router = useRouter()
 
 const form = ref({
   email: '',
@@ -29,34 +28,30 @@ const authThemeMask = computed(() => {
 const isPasswordVisible = ref(false)
 
 const login = async () => {
-  console.log('Login button clicked');
-  console.log('Email:', form.value.email);
-  console.log('Password:', form.value.password);
+  console.log('Login button clicked')
+  console.log('Email:', form.value.email)
+  console.log('Password:', form.value.password)
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
       email: form.value.email,
       password: form.value.password,
-    });
+    })
 
     if (error) {
       console.error('Login error:', error.message)
     } else {
-      console.log('Login successful:', data);
-      loggedInUserUUID.value = data.user.id;
-  
-      if (profileError) {
-        console.error('Error fetching user profile:', profileError.message);
-      } else {
+      const userStore = useUserStore()
+      userStore.setUserData(data.user.id, data.session.access_token)
 
-        router.push('/dashboard');
-      }
+      console.log('Stored UUID in Pinia:', userStore.uuid)
+      console.log('Stored Access Token in Pinia:', userStore.accessToken)
+
+      router.push('/dashboard')
     }
   } catch (error) {
     console.error('Error during login:', error.message)
   }
-};
-
-
+}
 </script>
 
 <template>
@@ -72,23 +67,16 @@ const login = async () => {
           </div>
         </template>
 
-        <VCardTitle class="font-weight-semibold text-2xl text-uppercase">
-          SuDun Business
-        </VCardTitle>
+        <VCardTitle class="font-weight-semibold text-2xl text-uppercase"> SuDun Business </VCardTitle>
       </VCardItem>
 
       <VCardText class="pt-2">
-        <h5 class="text-h5 font-weight-semibold mb-1">
-          Welcome to Sudu! 👋🏻
-        </h5>
-        <p class="mb-0">
-          Please sign-in to your account and start the adventure
-        </p>
+        <h5 class="text-h5 font-weight-semibold mb-1">Welcome to Sudu! 👋🏻</h5>
+        <p class="mb-0">Please sign-in to your account and start the adventure</p>
       </VCardText>
 
       <VCardText>
         <VForm @submit.prevent="login(form.email, form.password)">
-
           <VRow>
             <!-- email -->
             <VCol cols="12">
@@ -125,7 +113,11 @@ const login = async () => {
               </div>
 
               <!-- login button -->
-              <VBtn block type="button" @click="login">
+              <VBtn
+                block
+                type="button"
+                @click="login"
+              >
                 Login
               </VBtn>
             </VCol>
@@ -186,5 +178,5 @@ const login = async () => {
 </template>
 
 <style lang="scss">
-@use "@core/scss/pages/page-auth.scss";
+@use '@core/scss/pages/page-auth.scss';
 </style>
