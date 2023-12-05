@@ -1,4 +1,8 @@
 <script setup>
+
+import { supabase } from '@/lib/supaBaseClient';
+import { ref } from 'vue';
+
 const statistics = [
   {
     title: 'Sales',
@@ -25,6 +29,31 @@ const statistics = [
     color: 'info',
   },
 ]
+
+const testCall = ref([])
+
+const fetchTest = async () => {
+  try {
+    const { data: call_test, error } = await supabase
+      .from('call_test')
+      .select('*');
+
+    console.log('Fetched data:', call_test);
+    if (error) {
+      console.error('Error fetching data:', error);
+    } else if (call_test && call_test.length > 0) {
+      testCall.value = call_test;
+    } else {
+      console.log('No data or empty response');
+      testCall.value = []; 
+    }
+  } catch (error) {
+    console.error('Error during fetch:', error);
+  }
+};
+
+fetchTest()
+
 </script>
 
 <template>
@@ -41,7 +70,7 @@ const statistics = [
 
     <VCardText>
       <h6 class="text-sm font-weight-medium mb-12">
-        <span>Total 48.5% Growth 😎</span>
+        <span>{{ testCall.length > 0 ? testCall[0].test : 'Loading...' }}</span>
         <span class="font-weight-regular"> this month</span>
       </h6>
 

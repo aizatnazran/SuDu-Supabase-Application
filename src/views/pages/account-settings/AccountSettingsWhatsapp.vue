@@ -1,6 +1,6 @@
 <script setup>
-import { supabase } from '@/lib/supaBaseClient'
-import { ref } from 'vue'
+import { supabase } from '@/lib/supaBaseClient';
+import { ref } from 'vue';
 
 const allowedDevices = ref([])
 
@@ -19,7 +19,6 @@ const fetchAllowedDevices = async () => {
   }
 }
 
-// Fetch allowed devices when the component is mounted
 fetchAllowedDevices()
 </script>
 
