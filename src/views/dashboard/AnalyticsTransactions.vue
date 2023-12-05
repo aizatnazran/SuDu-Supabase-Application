@@ -1,7 +1,6 @@
 <script setup>
-
-import { supabase } from '@/lib/supaBaseClient';
-import { ref } from 'vue';
+import { supabase } from '@/lib/supaBaseClient'
+import { ref } from 'vue'
 
 const statistics = [
   {
@@ -34,26 +33,22 @@ const testCall = ref([])
 
 const fetchTest = async () => {
   try {
-    const { data: call_test, error } = await supabase
-      .from('call_test')
-      .select('*');
+    const { data: call_test, error } = await supabase.from('call_test').select('*')
 
-    console.log('Fetched data:', call_test);
     if (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching data:', error)
     } else if (call_test && call_test.length > 0) {
-      testCall.value = call_test;
+      testCall.value = call_test
     } else {
-      console.log('No data or empty response');
-      testCall.value = []; 
+      console.log('No data or empty response')
+      testCall.value = []
     }
   } catch (error) {
-    console.error('Error during fetch:', error);
+    console.error('Error during fetch:', error)
   }
-};
+}
 
 fetchTest()
-
 </script>
 
 <template>
@@ -95,7 +90,6 @@ fetchTest()
                 />
               </VAvatar>
             </div>
-
             <div class="d-flex flex-column">
               <span class="text-caption">
                 {{ item.title }}
