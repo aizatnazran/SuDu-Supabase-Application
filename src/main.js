@@ -6,15 +6,16 @@ import router from '@/router'
 import '@core/scss/template/index.scss'
 import '@layouts/styles/index.scss'
 import '@styles/styles.scss'
-import { createPinia } from 'pinia'
 import { createApp } from 'vue'
+
+import { createPinia } from 'pinia'
 
 const app = createApp(App)
 
 
 // Use plugins
+app.use(createPinia()); // Create and use Pinia instance
 app.use(vuetify)
-app.use(createPinia())
 app.use(router)
 
 // Mount vue app

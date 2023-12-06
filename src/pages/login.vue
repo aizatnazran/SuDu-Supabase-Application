@@ -8,7 +8,6 @@ import authV1Tree from '@images/pages/auth-v1-tree.png'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTheme } from 'vuetify'
-import { useUserStore } from '../../stores/user'
 import { supabase } from '../lib/supaBaseClient.js'
 
 // Vue Composition API References
@@ -39,14 +38,29 @@ const login = async () => {
       password: form.value.password,
     })
 
-    if (error) {
-      console.error('Login error:', error.message)
-    } else {
-      const userStore = useUserStore()
-      userStore.setUserData(data.user.id, data.session.access_token)
+    if (!error) {
+      localStorage.setItem('uuid', data.user.id)
+      localStorage.setItem('accessToken', data.session.access_token)
 
-      console.log('Stored UUID in Pinia:', userStore.uuid)
-      console.log('Stored Access Token in Pinia:', userStore.accessToken)
+      console.log('Stored UUID in Local Storage:', data.user.id)
+      console.log('Stored Access Token in Local Storage:', data.session.access_token)
+
+      try {
+        const { data: companyData, error: companyError } = await supabase
+          .from('company')
+          .select('id')
+          .eq('user_uuid', data.user.id)
+          .single()
+
+        if (!companyError && companyData) {
+          localStorage.setItem('company_id', companyData.id)
+          console.log('Stored Company ID in Local Storage:', companyData.id)
+        } else {
+          console.error('Error fetching company data:', companyError?.message)
+        }
+      } catch (error) {
+        console.error('Error during company data retrieval:', error.message)
+      }
 
       router.push('/dashboard')
     }

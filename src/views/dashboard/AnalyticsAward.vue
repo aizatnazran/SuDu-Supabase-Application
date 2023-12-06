@@ -1,26 +1,42 @@
 <script setup>
+import { supabase } from '@/lib/supaBaseClient'
 import triangleDark from '@images/misc/triangle-dark.png'
 import triangleLight from '@images/misc/triangle-light.png'
 import trophy from '@images/misc/trophy.png'
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useTheme } from 'vuetify'
-import { useUserStore } from '../../../stores/user'
 
 // Vue Composition API References
 const { global } = useTheme()
 
-// Stores and State
-const userStore = useUserStore()
-const congratulationsMessage = computed(() => `Congratulations ${userStore.companyName || 'User'}! 🎉`)
+const companyName = ref('')
+
 const triangleBg = computed(() => (global.name.value === 'light' ? triangleLight : triangleDark))
+
+onMounted(async () => {
+  const companyId = localStorage.getItem('company_id')
+  if (companyId) {
+    try {
+      const { data, error } = await supabase.from('company').select('company_name').eq('id', companyId).single()
+
+      if (!error && data) {
+        companyName.value = data.company_name
+      } else {
+        console.error('Error fetching company name:', error?.message)
+      }
+    } catch (error) {
+      console.error('Error during company name retrieval:', error.message)
+    }
+  }
+})
 </script>
 
 <template>
   <VCard
-    :title="congratulationsMessage"
     subtitle="Best seller of the month"
     class="position-relative"
   >
+    <h2 class="ml-5 text-2xl font-weight-medium text-primary">{{ companyName }}</h2>
     <VCardText>
       <h5 class="text-2xl font-weight-medium text-primary">$42.8k</h5>
       <p>78% of target 🚀</p>
