@@ -11,22 +11,24 @@ import { useTheme } from 'vuetify'
 import { useUserStore } from '../../stores/user'
 import { supabase } from '../lib/supaBaseClient.js'
 
+// Vue Composition API References
 const router = useRouter()
+const vuetifyTheme = useTheme()
+const isPasswordVisible = ref(false)
 
+// Component State and Functions
 const form = ref({
   email: '',
   password: '',
   remember: false,
 })
 
-const vuetifyTheme = useTheme()
-
+// Theme Related
 const authThemeMask = computed(() => {
   return vuetifyTheme.global.name.value === 'light' ? authV1MaskLight : authV1MaskDark
 })
 
-const isPasswordVisible = ref(false)
-
+// Function Definition
 const login = async () => {
   console.log('Login button clicked')
   console.log('Email:', form.value.email)

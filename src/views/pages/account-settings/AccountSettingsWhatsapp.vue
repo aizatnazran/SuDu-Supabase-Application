@@ -1,17 +1,16 @@
 <script setup>
-import { supabase } from '@/lib/supaBaseClient';
-import { ref } from 'vue';
+import { supabase } from '@/lib/supaBaseClient'
+import { ref } from 'vue'
 
+// Component State
 const allowedDevices = ref([])
 
+// Function Definitions
 const fetchAllowedDevices = async () => {
   try {
-    const { data: allowed_devices, error } = await supabase
-      .from('allowed_devices')
-      .select('*')
+    const { data: allowed_devices, error } = await supabase.from('allowed_devices').select('*')
 
     if (allowed_devices) {
-      console.log(allowed_devices)
       allowedDevices.value = allowed_devices
     }
   } catch (error) {
@@ -50,9 +49,7 @@ fetchAllowedDevices()
 
     <VCardText>
       <VForm @submit.prevent="() => {}">
-        <p class="text-base font-weight-medium">
-          Add new contact to allow whatsapp user
-        </p>
+        <p class="text-base font-weight-medium">Add new contact to allow whatsapp user</p>
 
         <VRow>
           <VCol
@@ -74,9 +71,7 @@ fetchAllowedDevices()
         </VRow>
 
         <div class="d-flex flex-wrap gap-4 mt-4">
-          <VBtn type="submit">
-            Add Contact 
-          </VBtn>
+          <VBtn type="submit"> Add Contact </VBtn>
           <VBtn
             color="secondary"
             variant="tonal"
