@@ -1,11 +1,12 @@
 <script setup>
 import AuthProvider from '@/views/pages/authentication/AuthProvider.vue'
-import { useTheme } from 'vuetify'
 import logo from '@images/logo.svg?raw'
 import authV1MaskDark from '@images/pages/auth-v1-mask-dark.png'
 import authV1MaskLight from '@images/pages/auth-v1-mask-light.png'
 import authV1Tree2 from '@images/pages/auth-v1-tree-2.png'
 import authV1Tree from '@images/pages/auth-v1-tree.png'
+import { useTheme } from 'vuetify'
+import { supabase } from '../lib/supaBaseClient.js'
 
 const form = ref({
   username: '',
@@ -21,6 +22,30 @@ const authThemeMask = computed(() => {
 })
 
 const isPasswordVisible = ref(false)
+
+const handleSignUp = async () => {
+  if (form.value.password !== form.value.confirmPassword) {
+    alert('Passwords do not match!')
+    return
+  }
+
+  if (!form.value.privacyPolicies) {
+    alert('Please agree to the privacy policy and terms!')
+    return
+  }
+
+  const { data, error } = await supabase.auth.signUp({
+    email: form.value.email,
+    password: form.value.password,
+  })
+
+  if (error) {
+    alert(error.message)
+  } else {
+    alert('Signup successful!')
+    // You can add redirection or other actions here after successful signup
+  }
+}
 </script>
 
 <template>
@@ -36,30 +61,17 @@ const isPasswordVisible = ref(false)
           </div>
         </template>
 
-        <VCardTitle class="font-weight-semibold text-2xl text-uppercase">
-          Materio
-        </VCardTitle>
+        <VCardTitle class="font-weight-semibold text-2xl text-uppercase"> SuDu.ai </VCardTitle>
       </VCardItem>
 
       <VCardText class="pt-2">
-        <h5 class="text-h5 font-weight-semibold mb-1">
-          Adventure starts here 🚀
-        </h5>
-        <p class="mb-0">
-          Make your app management easy and fun!
-        </p>
+        <h5 class="text-h5 font-weight-semibold mb-1">Adventure starts here 🚀</h5>
+        <p class="mb-0">Make your app management easy and fun!</p>
       </VCardText>
 
       <VCardText>
-        <VForm @submit.prevent="() => {}">
+        <VForm @submit.prevent="handleSignUp">
           <VRow>
-            <!-- Username -->
-            <VCol cols="12">
-              <VTextField
-                v-model="form.username"
-                label="Username"
-              />
-            </VCol>
             <!-- email -->
             <VCol cols="12">
               <VTextField
@@ -72,12 +84,21 @@ const isPasswordVisible = ref(false)
             <!-- password -->
             <VCol cols="12">
               <VTextField
+                class="mb-6"
                 v-model="form.password"
                 label="Password"
                 :type="isPasswordVisible ? 'text' : 'password'"
                 :append-inner-icon="isPasswordVisible ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
                 @click:append-inner="isPasswordVisible = !isPasswordVisible"
               />
+              <VTextField
+                v-model="form.confirmPassword"
+                label="Confirm Password"
+                :type="isPasswordVisible ? 'text' : 'password'"
+                :append-inner-icon="isPasswordVisible ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
+                @click:append-inner="isPasswordVisible = !isPasswordVisible"
+              />
+
               <div class="d-flex align-center mt-1 mb-4">
                 <VCheckbox
                   id="privacy-policy"
@@ -86,20 +107,20 @@ const isPasswordVisible = ref(false)
                 />
                 <VLabel
                   for="privacy-policy"
-                  style="opacity: 1;"
+                  style="opacity: 1"
                 >
                   <span class="me-1">I agree to</span>
                   <a
                     href="javascript:void(0)"
                     class="text-primary"
-                  >privacy policy & terms</a>
+                    >privacy policy & terms</a
+                  >
                 </VLabel>
               </div>
 
               <VBtn
                 block
                 type="submit"
-                to="/"
               >
                 Sign up
               </VBtn>
@@ -161,5 +182,5 @@ const isPasswordVisible = ref(false)
 </template>
 
 <style lang="scss">
-@use "@core/scss/pages/page-auth.scss";
+@use '@core/scss/pages/page-auth.scss';
 </style>
