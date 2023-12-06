@@ -2,8 +2,10 @@
 import { supabase } from '@/lib/supaBaseClient'
 import { ref } from 'vue'
 
+// Component State
 const allowedDevices = ref([])
 
+// Function Definitions
 const fetchAllowedDevices = async () => {
   try {
     const { data: allowed_devices, error } = await supabase.from('allowed_devices').select('*')

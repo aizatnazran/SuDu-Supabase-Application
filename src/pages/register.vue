@@ -8,21 +8,24 @@ import authV1Tree from '@images/pages/auth-v1-tree.png'
 import { useTheme } from 'vuetify'
 import { supabase } from '../lib/supaBaseClient.js'
 
+// Vue Composition API References
+const vuetifyTheme = useTheme()
+
+// Component State
 const form = ref({
   username: '',
   email: '',
   password: '',
   privacyPolicies: false,
 })
+const isPasswordVisible = ref(false)
 
-const vuetifyTheme = useTheme()
-
+// Theme Related
 const authThemeMask = computed(() => {
   return vuetifyTheme.global.name.value === 'light' ? authV1MaskLight : authV1MaskDark
 })
 
-const isPasswordVisible = ref(false)
-
+// Function Definition
 const handleSignUp = async () => {
   if (form.value.password !== form.value.confirmPassword) {
     alert('Passwords do not match!')
@@ -43,7 +46,6 @@ const handleSignUp = async () => {
     alert(error.message)
   } else {
     alert('Signup successful!')
-    // You can add redirection or other actions here after successful signup
   }
 }
 </script>

@@ -6,10 +6,12 @@ import { computed } from 'vue'
 import { useTheme } from 'vuetify'
 import { useUserStore } from '../../../stores/user'
 
+// Vue Composition API References
+const { global } = useTheme()
+
+// Stores and State
 const userStore = useUserStore()
 const congratulationsMessage = computed(() => `Congratulations ${userStore.companyName || 'User'}! 🎉`)
-
-const { global } = useTheme()
 const triangleBg = computed(() => (global.name.value === 'light' ? triangleLight : triangleDark))
 </script>
 
