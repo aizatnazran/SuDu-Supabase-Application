@@ -6,7 +6,6 @@ const allowedContacts = ref([])
 const newContactNumber = ref('')
 
 const fetchContact = async () => {
-  console.log('Fetching contacts...')
   try {
     const company_id = localStorage.getItem('company_id')
     if (company_id) {
@@ -35,7 +34,6 @@ const addNewContact = async () => {
           throw error
         }
 
-        // Optimistically update the UI
         allowedContacts.value.push(requestData)
         newContactNumber.value = ''
         alert('Contact successfully added!')
@@ -49,22 +47,17 @@ const addNewContact = async () => {
 
 const editContact = async contact => {
   try {
-    // Use a prompt or dialog to get the new contact information
     const newContactNumber = prompt('Enter the new contact number:', contact.contact_number)
 
     if (newContactNumber !== null) {
-      // User didn't cancel
-      // Create an object with updated data, including 'id'
       const updatedData = { contact_number: newContactNumber, company_id: contact.company_id, id: contact.id }
 
-      // Send the update request to the server
       const { error } = await supabase.from('contact').upsert([updatedData], { onConflict: ['id'] })
 
       if (error) {
         throw error
       }
 
-      // Update the contact in the UI
       const index = allowedContacts.value.findIndex(c => c.id === contact.id)
       if (index !== -1) {
         allowedContacts.value[index] = updatedData
@@ -91,7 +84,6 @@ const confirmDelete = async contact => {
         throw error
       }
 
-      // Remove the contact from the UI
       allowedContacts.value = allowedContacts.value.filter(c => c.id !== contact.id)
 
       alert('Contact deleted successfully!')
@@ -102,7 +94,6 @@ const confirmDelete = async contact => {
   }
 }
 
-// Fetch contacts on component mount if company_id is already set
 onMounted(() => {
   const company_id = localStorage.getItem('company_id')
   if (company_id) {

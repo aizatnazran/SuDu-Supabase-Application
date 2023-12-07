@@ -23,7 +23,7 @@ const refInputEl = ref()
 const isAccountDeactivated = ref(false)
 
 const resetForm = () => {
-  fetchCompanyData() // Reset to the last fetched state
+  fetchCompanyData()
 }
 
 const changeAvatar = file => {
@@ -37,7 +37,6 @@ const changeAvatar = file => {
   }
 }
 
-// reset avatar image
 const resetAvatar = () => {
   accountDataLocal.value.avatarImg = accountData.avatarImg
 }
@@ -65,14 +64,11 @@ const fetchCompanyData = async () => {
       .eq('id', companyId)
       .single()
 
-    console.log('Fetched data:', data) // Debugging
-
     if (error) throw new Error(error.message)
 
-    // Manually map each property
     if (data) {
       accountDataLocal.value = {
-        ...accountDataLocal.value, // Retain existing data
+        ...accountDataLocal.value,
         company_name: data.company_name,
         company_website: data.company_website,
         company_size: data.company_size,
