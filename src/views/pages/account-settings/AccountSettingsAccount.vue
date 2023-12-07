@@ -1,6 +1,7 @@
 <script setup>
 import { supabase } from '@/lib/supaBaseClient'
 import avatar1 from '@images/avatars/avatar-1.png'
+import Swal from 'sweetalert2'
 import { onMounted, ref } from 'vue'
 
 const companyId = localStorage.getItem('company_id')
@@ -87,26 +88,39 @@ const fetchCompanyData = async () => {
 }
 
 const saveChanges = async () => {
-  const updateData = { ...accountDataLocal.value }
-  delete updateData.avatarImg
-  delete updateData.businessType
+  Swal.fire({
+    title: 'Are you sure?',
+    text: 'Do you want to save the changes?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Yes, save it!',
+  }).then(async result => {
+    if (result.isConfirmed) {
+      const updateData = { ...accountDataLocal.value }
+      delete updateData.avatarImg
+      delete updateData.businessType
 
-  Object.keys(updateData).forEach(key => {
-    if (updateData[key] === '' || updateData[key] === undefined) {
-      updateData[key] = null
+      Object.keys(updateData).forEach(key => {
+        if (updateData[key] === '' || updateData[key] === undefined) {
+          updateData[key] = null
+        }
+      })
+
+      try {
+        const { error } = await supabase.from('company').update(updateData).eq('id', companyId)
+
+        if (error) throw new Error(error.message)
+
+        Swal.fire('Saved!', 'Changes saved successfully.', 'success')
+      } catch (error) {
+        console.error('Error updating company data:', error.message)
+        Swal.fire('Error!', 'Error saving changes: ' + error.message, 'error')
+      }
     }
   })
-
-  try {
-    const { error } = await supabase.from('company').update(updateData).eq('id', companyId)
-
-    if (error) throw new Error(error.message)
-    alert('Company data updated successfully!')
-  } catch (error) {
-    console.error('Error updating company data:', error.message)
-  }
 }
-
 onMounted(fetchCompanyData)
 </script>
 

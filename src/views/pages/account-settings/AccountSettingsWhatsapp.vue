@@ -1,5 +1,6 @@
 <script setup>
 import { supabase } from '@/lib/supaBaseClient'
+import Swal from 'sweetalert2'
 import { onMounted, ref } from 'vue'
 
 const allowedContacts = ref([])
@@ -26,7 +27,6 @@ const addNewContact = async () => {
       const company_id = localStorage.getItem('company_id')
       if (company_id) {
         const requestData = { contact_number: newContactNumber.value, company_id }
-        console.log('Request Data:', requestData)
 
         const { data, error } = await supabase.from('contact').insert([requestData])
 
@@ -34,25 +34,55 @@ const addNewContact = async () => {
           throw error
         }
 
-        allowedContacts.value.push(requestData)
+        let newContact = data && data.length > 0 ? data[0] : requestData
+        allowedContacts.value.push(newContact)
         newContactNumber.value = ''
-        alert('Contact successfully added!')
+
+        Swal.fire({
+          title: 'Success!',
+          text: 'Contact successfully added!',
+          icon: 'success',
+          confirmButtonColor: '#3085d6',
+        })
       }
     } catch (error) {
       console.error('Error adding contact:', error.message)
-      alert('Error adding contact: ' + error.message)
+      Swal.fire({
+        title: 'Error!',
+        text: 'Error adding contact: ' + error.message,
+        icon: 'error',
+        confirmButtonColor: '#d33',
+      })
     }
+  } else {
+    Swal.fire({
+      title: 'Attention!',
+      text: 'Please enter a contact number before submitting.',
+      icon: 'warning',
+      confirmButtonColor: '#3085d6',
+    })
   }
 }
 
 const editContact = async contact => {
-  try {
-    const newContactNumber = prompt('Enter the new contact number:', contact.contact_number)
+  const { value: newContactNumber } = await Swal.fire({
+    title: 'Enter the new contact number',
+    input: 'text',
+    inputLabel: 'Contact Number',
+    inputValue: contact.contact_number,
+    showCancelButton: true,
+    inputValidator: value => {
+      if (!value) {
+        return 'You need to write something!'
+      }
+    },
+  })
 
-    if (newContactNumber !== null) {
+  if (newContactNumber) {
+    try {
       const updatedData = { contact_number: newContactNumber, company_id: contact.company_id, id: contact.id }
 
-      const { error } = await supabase.from('contact').upsert([updatedData], { onConflict: ['id'] })
+      const { error } = await supabase.from('contact').upsert([updatedData], { onConflict: 'id' })
 
       if (error) {
         throw error
@@ -63,35 +93,42 @@ const editContact = async contact => {
         allowedContacts.value[index] = updatedData
       }
 
-      alert('Contact updated successfully!')
+      Swal.fire('Updated!', 'Contact updated successfully.', 'success')
+    } catch (error) {
+      console.error('Error updating contact:', error.message)
+      Swal.fire('Error!', 'Error updating contact: ' + error.message, 'error')
     }
-  } catch (error) {
-    console.error('Error updating contact:', error.message)
-    alert('Error updating contact: ' + error.message)
   }
 }
 
 // Function to confirm and delete a contact
 const confirmDelete = async contact => {
-  try {
-    const confirm = window.confirm('Are you sure you want to delete this contact?')
+  Swal.fire({
+    title: 'Are you sure?',
+    text: 'You will not be able to recover this contact!',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Yes, delete it!',
+  }).then(async result => {
+    if (result.isConfirmed) {
+      try {
+        const { error } = await supabase.from('contact').delete().match({ id: contact.id })
 
-    if (confirm) {
-      // Send the delete request to the server
-      const { error } = await supabase.from('contact').delete().eq('id', contact.id)
+        if (error) {
+          throw error
+        }
 
-      if (error) {
-        throw error
+        allowedContacts.value = allowedContacts.value.filter(c => c.id !== contact.id)
+
+        Swal.fire('Deleted!', 'Contact has been deleted.', 'success')
+      } catch (error) {
+        console.error('Error deleting contact:', error.message)
+        Swal.fire('Error!', 'Error deleting contact: ' + error.message, 'error')
       }
-
-      allowedContacts.value = allowedContacts.value.filter(c => c.id !== contact.id)
-
-      alert('Contact deleted successfully!')
     }
-  } catch (error) {
-    console.error('Error deleting contact:', error.message)
-    alert('Error deleting contact: ' + error.message)
-  }
+  })
 }
 
 onMounted(() => {
@@ -111,7 +148,9 @@ onMounted(() => {
 
     <VTable class="text-no-wrap">
       <thead>
-        <!-- Your table headers -->
+        <th scope="col">Contact Number (6017*******)</th>
+        <th scope="col">Active</th>
+        <th scope="col">Action</th>
       </thead>
       <tbody>
         <tr
@@ -119,13 +158,14 @@ onMounted(() => {
           :key="device.contact_number"
         >
           <td>{{ device.contact_number }}</td>
-          <td>
+          <td class="text-center">
             <VCheckbox v-model="device.active" />
           </td>
-          <td>
-            <VIcon @click="editContact(device)">mdi-pencil</VIcon>
-
-            <VIcon @click="confirmDelete(device)">mdi-delete</VIcon>
+          <td class="text-center">
+            <div class="icon-wrapper">
+              <VIcon @click="editContact(device)">mdi-pencil</VIcon>
+              <VIcon @click="confirmDelete(device)">mdi-delete</VIcon>
+            </div>
           </td>
         </tr>
       </tbody>
@@ -170,3 +210,15 @@ onMounted(() => {
     </VCardText>
   </VCard>
 </template>
+
+<style scoped>
+.text-center {
+  text-align: center;
+}
+.icon-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px; /* Adjust the gap between icons as needed */
+}
+</style>
