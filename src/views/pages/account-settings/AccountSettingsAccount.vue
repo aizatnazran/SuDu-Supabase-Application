@@ -1,28 +1,29 @@
 <script setup>
+import { supabase } from '@/lib/supaBaseClient'
 import avatar1 from '@images/avatars/avatar-1.png'
+import { onMounted, ref } from 'vue'
 
-const accountData = {
+const companyId = localStorage.getItem('company_id')
+
+const accountDataLocal = ref({
   avatarImg: avatar1,
-  firstName: 'john',
-  lastName: 'Doe',
-  email: 'johnDoe@example.com',
-  org: 'ThemeSelection',
-  phone: '+1 (917) 543-9876',
-  address: '123 Main St, New York, NY 10001',
-  state: 'New York',
-  zip: '10001',
-  country: 'USA',
-  language: 'English',
-  timezone: '(GMT-11:00) International Date Line West',
-  currency: 'USD',
-}
+  company_name: null,
+  company_website: null,
+  company_size: null,
+  company_email: null,
+  businessType: null,
+  company_phone: null,
+  company_address: null,
+  company_state: null,
+  company_zipcode: null,
+  company_country: null,
+})
 
 const refInputEl = ref()
-const accountDataLocal = ref(structuredClone(accountData))
 const isAccountDeactivated = ref(false)
 
 const resetForm = () => {
-  accountDataLocal.value = structuredClone(accountData)
+  fetchCompanyData() // Reset to the last fetched state
 }
 
 const changeAvatar = file => {
@@ -31,8 +32,7 @@ const changeAvatar = file => {
   if (files && files.length) {
     fileReader.readAsDataURL(files[0])
     fileReader.onload = () => {
-      if (typeof fileReader.result === 'string')
-        accountDataLocal.value.avatarImg = fileReader.result
+      if (typeof fileReader.result === 'string') accountDataLocal.value.avatarImg = fileReader.result
     }
   }
 }
@@ -42,62 +42,76 @@ const resetAvatar = () => {
   accountDataLocal.value.avatarImg = accountData.avatarImg
 }
 
-const timezones = [
-  '(GMT-11:00) International Date Line West',
-  '(GMT-11:00) Midway Island',
-  '(GMT-10:00) Hawaii',
-  '(GMT-09:00) Alaska',
-  '(GMT-08:00) Pacific Time (US & Canada)',
-  '(GMT-08:00) Tijuana',
-  '(GMT-07:00) Arizona',
-  '(GMT-07:00) Chihuahua',
-  '(GMT-07:00) La Paz',
-  '(GMT-07:00) Mazatlan',
-  '(GMT-07:00) Mountain Time (US & Canada)',
-  '(GMT-06:00) Central America',
-  '(GMT-06:00) Central Time (US & Canada)',
-  '(GMT-06:00) Guadalajara',
-  '(GMT-06:00) Mexico City',
-  '(GMT-06:00) Monterrey',
-  '(GMT-06:00) Saskatchewan',
-  '(GMT-05:00) Bogota',
-  '(GMT-05:00) Eastern Time (US & Canada)',
-  '(GMT-05:00) Indiana (East)',
-  '(GMT-05:00) Lima',
-  '(GMT-05:00) Quito',
-  '(GMT-04:00) Atlantic Time (Canada)',
-  '(GMT-04:00) Caracas',
-  '(GMT-04:00) La Paz',
-  '(GMT-04:00) Santiago',
-  '(GMT-03:30) Newfoundland',
-  '(GMT-03:00) Brasilia',
-  '(GMT-03:00) Buenos Aires',
-  '(GMT-03:00) Georgetown',
-  '(GMT-03:00) Greenland',
-  '(GMT-02:00) Mid-Atlantic',
-  '(GMT-01:00) Azores',
-  '(GMT-01:00) Cape Verde Is.',
-  '(GMT+00:00) Casablanca',
-  '(GMT+00:00) Dublin',
-  '(GMT+00:00) Edinburgh',
-  '(GMT+00:00) Lisbon',
-  '(GMT+00:00) London',
-]
+const fetchCompanyData = async () => {
+  const companyId = localStorage.getItem('company_id')
 
-const currencies = [
-  'USD',
-  'EUR',
-  'GBP',
-  'AUD',
-  'BRL',
-  'CAD',
-  'CNY',
-  'CZK',
-  'DKK',
-  'HKD',
-  'HUF',
-  'INR',
-]
+  try {
+    const { data, error } = await supabase
+      .from('company')
+      .select(
+        `
+        company_name,
+        company_website,
+        company_email,
+        company_size,
+        businesstype:company_businesstype(businesstype_name),
+        company_phone,
+        company_address,
+        company_state,
+        company_zipcode,
+        company_country
+      `,
+      )
+      .eq('id', companyId)
+      .single()
+
+    console.log('Fetched data:', data) // Debugging
+
+    if (error) throw new Error(error.message)
+
+    // Manually map each property
+    if (data) {
+      accountDataLocal.value = {
+        ...accountDataLocal.value, // Retain existing data
+        company_name: data.company_name,
+        company_website: data.company_website,
+        company_size: data.company_size,
+        company_email: data.company_email,
+        businessType: data.businesstype?.businesstype_name,
+        company_phone: data.company_phone,
+        company_address: data.company_address,
+        company_state: data.company_state,
+        company_zipcode: data.company_zipcode,
+        company_country: data.company_country,
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching company data:', error)
+  }
+}
+
+const saveChanges = async () => {
+  const updateData = { ...accountDataLocal.value }
+  delete updateData.avatarImg
+  delete updateData.businessType
+
+  Object.keys(updateData).forEach(key => {
+    if (updateData[key] === '' || updateData[key] === undefined) {
+      updateData[key] = null
+    }
+  })
+
+  try {
+    const { error } = await supabase.from('company').update(updateData).eq('id', companyId)
+
+    if (error) throw new Error(error.message)
+    alert('Company data updated successfully!')
+  } catch (error) {
+    console.error('Error updating company data:', error.message)
+  }
+}
+
+onMounted(fetchCompanyData)
 </script>
 
 <template>
@@ -134,7 +148,7 @@ const currencies = [
                 accept=".jpeg,.png,.jpg,GIF"
                 hidden
                 @input="changeAvatar"
-              >
+              />
 
               <VBtn
                 type="reset"
@@ -150,9 +164,7 @@ const currencies = [
               </VBtn>
             </div>
 
-            <p class="text-body-1 mb-0">
-              Allowed JPG, GIF or PNG. Max size of 800K
-            </p>
+            <p class="text-body-1 mb-0">Allowed JPG, GIF or PNG. Max size of 800K</p>
           </form>
         </VCardText>
 
@@ -162,14 +174,14 @@ const currencies = [
           <!-- 👉 Form -->
           <VForm class="mt-6">
             <VRow>
-              <!-- 👉 First Name -->
+              <!-- 👉 Company Name -->
               <VCol
                 md="6"
                 cols="12"
               >
                 <VTextField
-                  v-model="accountDataLocal.firstName"
-                  label="First Name"
+                  v-model="accountDataLocal.company_name"
+                  label="Company Name"
                 />
               </VCol>
 
@@ -179,8 +191,20 @@ const currencies = [
                 cols="12"
               >
                 <VTextField
-                  v-model="accountDataLocal.lastName"
-                  label="Last Name"
+                  v-model="accountDataLocal.company_website"
+                  label="Company Website"
+                />
+              </VCol>
+
+              <!-- 👉 Company Size -->
+              <VCol
+                cols="12"
+                md="6"
+              >
+                <VSelect
+                  v-model="accountDataLocal.company_size"
+                  label="Company Size"
+                  :items="['Less than 10', '10 - 49', '50 - 99', '100 - 499', 'More than 500']"
                 />
               </VCol>
 
@@ -190,20 +214,21 @@ const currencies = [
                 md="6"
               >
                 <VTextField
-                  v-model="accountDataLocal.email"
-                  label="E-mail"
+                  v-model="accountDataLocal.company_email"
+                  label="Company E-mail"
                   type="email"
                 />
               </VCol>
 
-              <!-- 👉 Organization -->
+              <!-- 👉 Business Type -->
               <VCol
                 cols="12"
                 md="6"
               >
-                <VTextField
-                  v-model="accountDataLocal.org"
-                  label="Organization"
+                <VSelect
+                  v-model="accountDataLocal.businessType"
+                  label="Business Type"
+                  :items="['Information and Technology', 'Banking and Financial', 'Construction', 'Medical and Health']"
                 />
               </VCol>
 
@@ -213,7 +238,7 @@ const currencies = [
                 md="6"
               >
                 <VTextField
-                  v-model="accountDataLocal.phone"
+                  v-model="accountDataLocal.company_phone"
                   label="Phone Number"
                 />
               </VCol>
@@ -224,7 +249,7 @@ const currencies = [
                 md="6"
               >
                 <VTextField
-                  v-model="accountDataLocal.address"
+                  v-model="accountDataLocal.company_address"
                   label="Address"
                 />
               </VCol>
@@ -235,7 +260,7 @@ const currencies = [
                 md="6"
               >
                 <VTextField
-                  v-model="accountDataLocal.state"
+                  v-model="accountDataLocal.company_state"
                   label="State"
                 />
               </VCol>
@@ -246,7 +271,7 @@ const currencies = [
                 md="6"
               >
                 <VTextField
-                  v-model="accountDataLocal.zip"
+                  v-model="accountDataLocal.company_zipcode"
                   label="Zip Code"
                 />
               </VCol>
@@ -257,47 +282,9 @@ const currencies = [
                 md="6"
               >
                 <VSelect
-                  v-model="accountDataLocal.country"
+                  v-model="accountDataLocal.company_country"
                   label="Country"
-                  :items="['USA', 'Canada', 'UK', 'India', 'Australia']"
-                />
-              </VCol>
-
-              <!-- 👉 Language -->
-              <VCol
-                cols="12"
-                md="6"
-              >
-                <VSelect
-                  v-model="accountDataLocal.language"
-                  label="Language"
-                  :items="['English', 'Spanish', 'Arabic', 'Hindi', 'Urdu']"
-                />
-              </VCol>
-
-              <!-- 👉 Timezone -->
-              <VCol
-                cols="12"
-                md="6"
-              >
-                <VSelect
-                  v-model="accountDataLocal.timezone"
-                  label="Timezone"
-                  :items="timezones"
-                  :menu-props="{ maxHeight: 200 }"
-                />
-              </VCol>
-
-              <!-- 👉 Currency -->
-              <VCol
-                cols="12"
-                md="6"
-              >
-                <VSelect
-                  v-model="accountDataLocal.currency"
-                  label="Currency"
-                  :items="currencies"
-                  :menu-props="{ maxHeight: 200 }"
+                  :items="['Malaysia', 'USA', 'Canada', 'UK', 'India', 'Australia']"
                 />
               </VCol>
 
@@ -306,7 +293,7 @@ const currencies = [
                 cols="12"
                 class="d-flex flex-wrap gap-4"
               >
-                <VBtn>Save changes</VBtn>
+                <VBtn @click="saveChanges">Save changes</VBtn>
 
                 <VBtn
                   color="secondary"

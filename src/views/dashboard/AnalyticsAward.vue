@@ -36,7 +36,7 @@ onMounted(async () => {
     subtitle="Best seller of the month"
     class="position-relative"
   >
-    <h2 class="ml-5 text-2xl font-weight-medium text-primary">{{ companyName }}</h2>
+    <h2 class="ml-5 text-2xl font-weight-bold text-black">{{ companyName }}</h2>
     <VCardText>
       <h5 class="text-2xl font-weight-medium text-primary">$42.8k</h5>
       <p>78% of target 🚀</p>
