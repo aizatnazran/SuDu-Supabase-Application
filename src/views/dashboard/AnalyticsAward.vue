@@ -33,7 +33,7 @@ onMounted(async () => {
 
 <template>
   <VCard
-    subtitle="Best seller of the month"
+    subtitle="Welcome to SuDu.ai,"
     class="position-relative"
   >
     <h2 class="ml-5 text-2xl font-weight-bold text-black">{{ companyName }}</h2>
