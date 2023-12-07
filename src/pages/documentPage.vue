@@ -1,5 +1,6 @@
 <script setup>
 import csvimg from '@images/images/csv.png'
+import Swal from 'sweetalert2'
 import { useTheme } from 'vuetify'
 import { supabase } from '../lib/supaBaseClient.js'
 
@@ -30,6 +31,44 @@ async function fetchFiles() {
 }
 
 const filesList = ref([])
+
+const confirmDelete = async file => {
+  Swal.fire({
+    title: 'Are you sure?',
+    text: `You won't be able to revert the deletion of ${file.uploadfile_filename}!`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Yes, delete it!',
+  }).then(async result => {
+    if (result.isConfirmed) {
+      try {
+        let { error } = await supabase
+          .from('uploadfile')
+          .delete()
+          .match({ uploadfile_filename: file.uploadfile_filename, uploadfile_company: companyId })
+
+        if (error) throw error
+
+        // Remove the file from the filesList
+        filesList.value = filesList.value.filter(f => f.uploadfile_filename !== file.uploadfile_filename)
+
+        Swal.fire({
+          title: 'Deleted!',
+          text: 'Your file has been deleted.',
+          icon: 'success',
+        })
+      } catch (error) {
+        Swal.fire({
+          title: 'Error!',
+          text: 'There was a problem deleting your file.',
+          icon: 'error',
+        })
+      }
+    }
+  })
+}
 
 onMounted(async () => {
   filesList.value = await fetchFiles()
@@ -65,6 +104,24 @@ onMounted(async () => {
             class="elevation-0 ma-1"
             style="max-width: 10%; max-height: 180px; min-width: 95px; border-radius: 5%; opacity: 0.8"
           >
+            <VBtn
+              icon
+              class="m-2"
+              style="
+                position: absolute;
+                top: 0;
+                right: 0;
+                z-index: 2;
+                width: 24px;
+                height: 24px;
+                min-width: 24px;
+                padding: 0;
+                margin: 2px;
+              "
+              @click="confirmDelete(file)"
+            >
+              <VIcon size="x-small">mdi-close</VIcon>
+            </VBtn>
             <VImg
               class="ma-3"
               max-width="100"
@@ -88,10 +145,10 @@ onMounted(async () => {
             style="background-color: rgb(222, 222, 222)"
           >
             <!--
-              <div class="text-overline text-start ml-10">
-              File Menu :
-              </div> 
-            -->
+                <div class="text-overline text-start ml-10">
+                File Menu :
+                </div> 
+              -->
             <div class="text-overline text-start ml-10">File Upload :</div>
             <VFileInput
               counter
