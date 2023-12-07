@@ -3,24 +3,14 @@ import { supabase } from '@/lib/supaBaseClient'
 import csvimg from '@images/images/csv.png'
 import { onMounted, ref } from 'vue'
 import { useTheme } from 'vuetify'
-import { useUserStore } from '../../stores/user'
 
 // Components
 const vuetifyTheme = useTheme()
 const sheet = ref(false)
 
-// Use the user store
-const userStore = useUserStore()
-
-// Ref for storing the CSV files
-const csvFiles = ref([])
-
 // Function to download a specific CSV file
 const downloadCsvFile = async file => {
   try {
-    // Construct the path to the file you want to download
-    const filePath = `${userStore.companyId}/${file.name}`
-
     // Download the CSV file
     const { data, error } = await supabase.storage.from('.CSV Files').download(filePath)
 
@@ -53,15 +43,6 @@ const downloadCsvFile = async file => {
 // Fetch CSV files based on companyId
 // Fetch CSV files based on companyId
 const fetchCsvFiles = async () => {
-  // Check if companyId is present
-  if (!userStore.companyId) {
-    console.error('No companyId found.')
-    return
-  }
-
-  // Path to the folder inside the bucket
-  const path = `${userStore.companyId}/`
-
   console.log('Fetching CSV files from path:', path)
 
   try {
@@ -85,7 +66,6 @@ const fetchCsvFiles = async () => {
 
 // Fetch files when the component is mounted
 onMounted(async () => {
-  console.log(userStore.companyId)
   await fetchCsvFiles() // Make sure to await the fetchCsvFiles function
   console.log(csvFiles.value) // Log the csvFiles to check if data is present
 })
