@@ -1,5 +1,84 @@
 <script setup>
+import { supabase } from '@/lib/supaBaseClient'
 import avatar1 from '@images/avatars/avatar-1.png'
+import Swal from 'sweetalert2'
+import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+const goToSettings = () => {
+  router.push('/account-settings')
+}
+
+const companyName = ref('')
+
+const logout = async () => {
+  // Log the current state of local storage before logout
+  console.log('Before logout:', {
+    accessToken: localStorage.getItem('accessToken'),
+    uuid: localStorage.getItem('uuid'),
+    companyData: localStorage.getItem('company_id'),
+    // ... any other items
+  })
+
+  try {
+    const { error } = await supabase.auth.signOut()
+    if (error) {
+      console.error('Error logging out:', error)
+      throw error
+    }
+
+    // Clear local storage
+    localStorage.removeItem('accessToken')
+    localStorage.removeItem('uuid')
+    localStorage.removeItem('company_id')
+    // ... any other items
+
+    // Log the state of local storage to confirm it's cleared
+    console.log('After clearing local storage:', {
+      accessToken: localStorage.getItem('accessToken'),
+      uuid: localStorage.getItem('uuid'),
+      companyData: localStorage.getItem('company_id'),
+      // ... any other items
+    })
+
+    // Notify user of successful logout
+    await Swal.fire({
+      title: 'Logged Out!',
+      text: 'You have been successfully logged out. All local data has been cleared.',
+      icon: 'success',
+      confirmButtonColor: '#3085d6',
+    })
+
+    // Redirect to login page
+    router.push('/login')
+  } catch (error) {
+    Swal.fire({
+      title: 'Error!',
+      text: 'Error during logout: ' + error.message,
+      icon: 'error',
+      confirmButtonColor: '#d33',
+    })
+  }
+}
+
+onMounted(async () => {
+  const companyId = localStorage.getItem('company_id')
+  if (companyId) {
+    try {
+      const { data, error } = await supabase.from('company').select('company_name').eq('id', companyId).single()
+
+      if (!error && data) {
+        companyName.value = data.company_name
+      } else {
+        console.error('Error fetching company name:', error?.message)
+      }
+    } catch (error) {
+      console.error('Error during company name retrieval:', error.message)
+    }
+  }
+})
 </script>
 
 <template>
@@ -47,9 +126,7 @@ import avatar1 from '@images/avatars/avatar-1.png'
               </VListItemAction>
             </template>
 
-            <VListItemTitle class="font-weight-semibold">
-              John Doe
-            </VListItemTitle>
+            <VListItemTitle class="font-weight-semibold">{{ companyName }}</VListItemTitle>
             <VListItemSubtitle>Admin</VListItemSubtitle>
           </VListItem>
           <VDivider class="my-2" />
@@ -77,7 +154,11 @@ import avatar1 from '@images/avatars/avatar-1.png'
               />
             </template>
 
-            <VListItemTitle>Settings</VListItemTitle>
+            <VListItemTitle
+              link
+              @click="goToSettings"
+              >Settings</VListItemTitle
+            >
           </VListItem>
 
           <!-- 👉 Pricing -->
@@ -112,7 +193,7 @@ import avatar1 from '@images/avatars/avatar-1.png'
           <VDivider class="my-2" />
 
           <!-- 👉 Logout -->
-          <VListItem to="/login">
+          <VListItem @click="logout">
             <template #prepend>
               <VIcon
                 class="me-2"
