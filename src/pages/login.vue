@@ -5,6 +5,7 @@ import authV1MaskDark from '@images/pages/auth-v1-mask-dark.png'
 import authV1MaskLight from '@images/pages/auth-v1-mask-light.png'
 import authV1Tree2 from '@images/pages/auth-v1-tree-2.png'
 import authV1Tree from '@images/pages/auth-v1-tree.png'
+import Swal from 'sweetalert2'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTheme } from 'vuetify'
@@ -38,7 +39,13 @@ const login = async () => {
       password: form.value.password,
     })
 
-    if (!error) {
+    if (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Login Failed',
+        text: 'Invalid email or password!',
+      })
+    } else {
       localStorage.setItem('uuid', data.user.id)
       localStorage.setItem('accessToken', data.session.access_token)
 
@@ -65,7 +72,11 @@ const login = async () => {
       router.push('/dashboard')
     }
   } catch (error) {
-    console.error('Error during login:', error.message)
+    Swal.fire({
+      icon: 'error',
+      title: 'Login Error',
+      text: 'Something went wrong!',
+    })
   }
 }
 </script>
