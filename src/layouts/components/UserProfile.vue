@@ -14,13 +14,6 @@ const goToSettings = () => {
 const companyName = ref('')
 
 const logout = async () => {
-  // Log the current state of local storage before logout
-  console.log('Before logout:', {
-    accessToken: localStorage.getItem('accessToken'),
-    uuid: localStorage.getItem('uuid'),
-    companyData: localStorage.getItem('company_id'),
-  })
-
   try {
     const { error } = await supabase.auth.signOut()
     if (error) {
@@ -31,12 +24,6 @@ const logout = async () => {
     localStorage.removeItem('accessToken')
     localStorage.removeItem('uuid')
     localStorage.removeItem('company_id')
-
-    console.log('After clearing local storage:', {
-      accessToken: localStorage.getItem('accessToken'),
-      uuid: localStorage.getItem('uuid'),
-      companyData: localStorage.getItem('company_id'),
-    })
 
     // Notify user of successful logout
     await Swal.fire({

@@ -68,13 +68,6 @@ const login = async () => {
     console.error('Error during login:', error.message)
   }
 }
-
-onMounted(async () => {
-  console.log('Current Local Storage on login.vue:')
-  console.log('accessToken:', localStorage.getItem('accessToken'))
-  console.log('uuid:', localStorage.getItem('uuid'))
-  console.log('company_id:', localStorage.getItem('company_id'))
-})
 </script>
 
 <template>
