@@ -74,8 +74,6 @@ onMounted(async () => {
   console.log('accessToken:', localStorage.getItem('accessToken'))
   console.log('uuid:', localStorage.getItem('uuid'))
   console.log('company_id:', localStorage.getItem('company_id'))
-
-  // ... rest of your existing onMounted logic
 })
 </script>
 

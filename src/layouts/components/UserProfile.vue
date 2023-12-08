@@ -19,7 +19,6 @@ const logout = async () => {
     accessToken: localStorage.getItem('accessToken'),
     uuid: localStorage.getItem('uuid'),
     companyData: localStorage.getItem('company_id'),
-    // ... any other items
   })
 
   try {
@@ -29,24 +28,20 @@ const logout = async () => {
       throw error
     }
 
-    // Clear local storage
     localStorage.removeItem('accessToken')
     localStorage.removeItem('uuid')
     localStorage.removeItem('company_id')
-    // ... any other items
 
-    // Log the state of local storage to confirm it's cleared
     console.log('After clearing local storage:', {
       accessToken: localStorage.getItem('accessToken'),
       uuid: localStorage.getItem('uuid'),
       companyData: localStorage.getItem('company_id'),
-      // ... any other items
     })
 
     // Notify user of successful logout
     await Swal.fire({
       title: 'Logged Out!',
-      text: 'You have been successfully logged out. All local data has been cleared.',
+      text: 'You have logged out successfully.',
       icon: 'success',
       confirmButtonColor: '#3085d6',
     })

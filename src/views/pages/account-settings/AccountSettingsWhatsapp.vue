@@ -34,8 +34,12 @@ const addNewContact = async () => {
           throw error
         }
 
-        let newContact = data && data.length > 0 ? data[0] : requestData
-        allowedContacts.value.push(newContact)
+        // Ensure that the newly added contact, along with its generated id, is pushed to allowedContacts
+        if (data && data.length > 0) {
+          console.log('Newly added contact data:', data[0]) // Log the newly added contact data
+          allowedContacts.value.push(data[0])
+        }
+
         newContactNumber.value = ''
 
         Swal.fire({
@@ -62,6 +66,7 @@ const addNewContact = async () => {
       confirmButtonColor: '#3085d6',
     })
   }
+  fetchContact()
 }
 
 const editContact = async contact => {
@@ -73,7 +78,7 @@ const editContact = async contact => {
     showCancelButton: true,
     inputValidator: value => {
       if (!value) {
-        return 'You need to write something!'
+        return 'Contact number cannot be empty!'
       }
     },
   })
