@@ -17,8 +17,8 @@ const router = createRouter({
           component: () => import('../pages/documentPage.vue'),
         },
         {
-          path: 'comingsoon',
-          component: () => import('../pages/comingsoon.vue'),
+          path: 'integration',
+          component: () => import('../pages/integration.vue'),
         },
         {
           path: 'comingsoon2',

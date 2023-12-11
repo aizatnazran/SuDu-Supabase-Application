@@ -149,7 +149,7 @@ onMounted(async () => {
                 File Menu :
                 </div> 
               -->
-            <div class="text-overline text-start ml-10">File Upload :</div>
+            <div class="text-overline text-start ml-10 text-white">File Upload :</div>
             <VFileInput
               counter
               truncate-length="15"
