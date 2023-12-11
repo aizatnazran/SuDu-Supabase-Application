@@ -29,31 +29,37 @@ const integrations = ref({
       name: 'Zoho',
       description: 'A unique and powerful software suite for businesses of all sizes.',
       image: zoho,
+      connected: true,
     },
     {
       name: 'Clover',
       description: 'POS systems that handle the ever-changing parts of your business.',
       image: clover,
+      connected: true,
     },
     {
       name: 'StoreHub',
       description: 'An all-in-one platform that enables retailers automate their businesses.',
       image: storehub,
+      connected: false,
     },
     {
       name: 'SalesForce',
       description: 'Salesforce helps businesses keep track of customer interactions and sales data.',
       image: salesforce,
+      connected: false,
     },
     {
       name: 'MondaySalesCRM',
       description: 'Monday Sales CRM is a',
       image: mondaysales,
+      connected: false,
     },
     {
       name: 'NexCRM',
       description: 'NexCRM is a',
       image: nexcrm,
+      connected: false,
     },
   ],
   cloudStorage: [
@@ -61,21 +67,25 @@ const integrations = ref({
       name: 'Zoho',
       description: 'A unique and powerful software suite for businesses of all sizes.',
       image: zoho,
+      connected: true,
     },
     {
       name: 'Clover',
       description: 'POS systems that handle the ever-changing parts of your business.',
       image: clover,
+      connected: true,
     },
     {
       name: 'StoreHub',
       description: 'An all-in-one platform that enables retailers automate their businesses.',
       image: storehub,
+      connected: false,
     },
     {
       name: 'SalesForce',
       description: 'Salesforce helps businesses keep track of customer interactions and sales data.',
       image: salesforce,
+      connected: false,
     },
   ],
 })
@@ -136,14 +146,18 @@ const integrations = ref({
                 <v-card-text class="fixed-height">{{ integration.description }}</v-card-text>
               </div>
               <v-btn
-                class="connect-btn"
-                color="primary"
+                :color="integration.connected ? 'primary' : 'black'"
+                :outlined="!integration.connected"
                 text
                 block
                 rounded="xl"
+                class="my-2"
+                depressed
+                :class="{ 'white--text': integration.connected }"
                 @click="toggleConnection(integration)"
+                style="text-transform: none"
               >
-                Connect
+                {{ integration.connected ? 'Connected' : 'Connect' }}
               </v-btn>
             </v-col>
 
@@ -224,14 +238,18 @@ const integrations = ref({
                 <v-card-text class="fixed-height">{{ integration.description }}</v-card-text>
               </div>
               <v-btn
-                class="connect-btn"
-                color="primary"
+                :color="integration.connected ? 'primary' : 'black'"
+                :outlined="!integration.connected"
                 text
                 block
                 rounded="xl"
+                class="my-2"
+                depressed
+                :class="{ 'white--text': integration.connected }"
                 @click="toggleConnection(integration)"
+                style="text-transform: none"
               >
-                Connect
+                {{ integration.connected ? 'Connected' : 'Connect' }}
               </v-btn>
             </v-col>
 
@@ -262,10 +280,6 @@ const integrations = ref({
 </template>
 
 <style scoped>
-.connect-btn {
-  margin-top: 2; /* Adjust the margin as needed */
-}
-
 .dots-button {
   padding: 0px; /* Reduce padding to make the button smaller */
   font-size: 18px; /* Adjust font size for the icon inside the button */
