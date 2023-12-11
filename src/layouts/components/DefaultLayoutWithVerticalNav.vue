@@ -34,7 +34,7 @@ const upgradeBanner = computed(() => {
         <!-- 👉 Search -->
         <div
           class="d-flex align-center cursor-pointer"
-          style="user-select: none;"
+          style="user-select: none"
         >
           <!-- 👉 Search Trigger button -->
           <IconBtn>
@@ -100,9 +100,9 @@ const upgradeBanner = computed(() => {
       />
       <VerticalNavLink
         :item="{
-          title: 'Schedule',
+          title: 'Integration',
           icon: 'mdi-align-horizontal-left',
-          to: '/comingsoon',
+          to: '/integration',
         }"
       />
       <VerticalNavLink
