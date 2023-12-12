@@ -15,6 +15,14 @@ const handleFileChange = event => {
   console.log('Selected file:', selectedFile.value)
 }
 
+const templateOptions = ref([
+  { label: 'Template 1', value: 'template1' },
+  { label: 'Template 2', value: 'template2' },
+  { label: 'Template 3', value: 'template3' },
+])
+
+const selectedTemplate = ref('template1')
+
 const sheet = ref(false)
 
 // const props = defineProps({
@@ -29,10 +37,13 @@ const companyId = localStorage.getItem('company_id')
 
 const uploadFile = async () => {
   if (!selectedFile.value) {
-    Swal.fire({
+    await Swal.fire({
       title: 'Error!',
       text: 'No file selected.',
       icon: 'error',
+      customClass: {
+        container: 'high-z-index-swal',
+      },
     })
     return
   }
@@ -56,7 +67,11 @@ const uploadFile = async () => {
       title: 'Error!',
       text: 'Error uploading file.',
       icon: 'error',
+      customClass: {
+        container: 'high-z-index-swal',
+      },
     })
+    // Do not toggle 'sheet' here
     return
   }
 
@@ -75,8 +90,10 @@ const uploadFile = async () => {
       title: 'Error!',
       text: 'Error saving file info to database.',
       icon: 'error',
+      customClass: {
+        container: 'high-z-index-swal',
+      },
     })
-    return
   }
 
   // Clear the selected file
@@ -89,6 +106,9 @@ const uploadFile = async () => {
     title: 'Success!',
     text: 'Your file has been uploaded.',
     icon: 'success',
+    customClass: {
+      container: 'high-z-index-swal',
+    },
   })
 }
 
@@ -210,23 +230,36 @@ onMounted(async () => {
         v-model="sheet"
         activator="parent"
         width="60%"
+        class="overlaying-component-class"
       >
         <VCard class="pa-10">
           <VContainer
-            class="pa-5 rounded-lg mt-2"
-            style="background-color: rgb(222, 222, 222)"
+            class="pa-5 rounded-lg mt-2 border-2"
+            style="background-color: var(--v-theme-on-surface); border: 2px solid #8a8d93"
           >
             <!--
                 <div class="text-overline text-start ml-10">
                 File Menu :
                 </div> 
               -->
-            <div class="text-overline text-start ml-10 text-white">File Upload :</div>
+            <div class="text-overline text-start ml-10 text-title">File Upload :</div>
             <VFileInput
               @change="handleFileChange"
               counter
               truncate-length="15"
             />
+            <div class="text-overline text-start ml-10 text-title">Select Template:</div>
+            <VRadioGroup
+              v-model="selectedTemplate"
+              row
+            >
+              <VRadio
+                v-for="option in templateOptions"
+                :key="option.value"
+                :label="option.label"
+                :value="option.value"
+              />
+            </VRadioGroup>
           </VContainer>
           <VBtn
             class="mt-5"
@@ -240,3 +273,12 @@ onMounted(async () => {
     </div>
   </div>
 </template>
+
+<style>
+.high-z-index-swal {
+  z-index: 9999999 !important;
+}
+.overlaying-component-class {
+  z-index: 1050;
+}
+</style>
