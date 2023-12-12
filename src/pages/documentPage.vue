@@ -188,39 +188,47 @@ onMounted(async () => {
       </VRow>
 
       <VRow>
-        <template
-          v-for="file in filesList"
-          :key="file.uploadfile_filename"
+        <div
+          v-if="filesList.length === 0"
+          class="text-center my-5"
         >
-          <VCard
-            class="elevation-0 ma-1"
-            style="max-width: 10%; max-height: 180px; min-width: 95px; border-radius: 5%; opacity: 0.8"
+          <p>No documents submitted yet.</p>
+        </div>
+        <template v-else>
+          <template
+            v-for="file in filesList"
+            :key="file.uploadfile_filename"
           >
-            <VBtn
-              icon
-              class="m-2"
-              style="
-                position: absolute;
-                top: 0;
-                right: 0;
-                z-index: 2;
-                width: 24px;
-                height: 24px;
-                min-width: 24px;
-                padding: 0;
-                margin: 2px;
-              "
-              @click="confirmDelete(file)"
+            <VCard
+              class="elevation-0 ma-1"
+              style="max-width: 10%; max-height: 180px; min-width: 95px; border-radius: 5%; opacity: 0.8"
             >
-              <VIcon size="x-small">mdi-close</VIcon>
-            </VBtn>
-            <VImg
-              class="ma-3"
-              max-width="100"
-              :src="csvimg"
-            />
-            <p class="text-center text-caption px-2">{{ file.uploadfile_filename }}</p>
-          </VCard>
+              <VBtn
+                icon
+                class="m-2"
+                style="
+                  position: absolute;
+                  top: 0;
+                  right: 0;
+                  z-index: 2;
+                  width: 24px;
+                  height: 24px;
+                  min-width: 24px;
+                  padding: 0;
+                  margin: 2px;
+                "
+                @click="confirmDelete(file)"
+              >
+                <VIcon size="x-small">mdi-close</VIcon>
+              </VBtn>
+              <VImg
+                class="ma-3"
+                max-width="100"
+                :src="csvimg"
+              />
+              <p class="text-center text-caption px-2">{{ file.uploadfile_filename }}</p>
+            </VCard>
+          </template>
         </template>
       </VRow>
     </VContainer>
