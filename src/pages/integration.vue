@@ -151,7 +151,7 @@ const integrations = ref({
                 text
                 block
                 rounded="xl"
-                class="my-2"
+                class="my-2 my-custom-button"
                 depressed
                 :class="{ 'white--text': integration.connected }"
                 @click="toggleConnection(integration)"
@@ -169,6 +169,8 @@ const integrations = ref({
                 <template v-slot:activator="{ on }">
                   <v-btn
                     icon
+                    flat
+                    color="transparent"
                     class="dots-button"
                     v-on="on"
                   >
@@ -243,7 +245,7 @@ const integrations = ref({
                 text
                 block
                 rounded="xl"
-                class="my-2"
+                class="my-2 my-custom-button"
                 depressed
                 :class="{ 'white--text': integration.connected }"
                 @click="toggleConnection(integration)"
@@ -261,6 +263,8 @@ const integrations = ref({
                 <template v-slot:activator="{ on }">
                   <v-btn
                     icon
+                    flat
+                    color="transparent"
                     class="dots-button"
                     v-on="on"
                   >
@@ -288,5 +292,11 @@ const integrations = ref({
 .fixed-height {
   height: 100px; /* Or whatever height you find appropriate */
   overflow: auto; /* To allow scrolling if the text is longer */
+}
+
+.my-custom-button {
+  padding: 4px 12px; /* Reduce vertical padding, keep horizontal padding */
+  font-size: 0.875rem; /* Optional: Adjust font size if needed */
+  height: 28px; /* Set a fixed height for the button */
 }
 </style>

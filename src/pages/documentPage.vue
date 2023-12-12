@@ -8,6 +8,13 @@ import { supabase } from '../lib/supaBaseClient.js'
 
 const vuetifyTheme = useTheme()
 
+const selectedFile = ref(null)
+
+const handleFileChange = event => {
+  selectedFile.value = event.target.files[0]
+  console.log('Selected file:', selectedFile.value)
+}
+
 const sheet = ref(false)
 
 // const props = defineProps({
@@ -17,8 +24,73 @@ const sheet = ref(false)
 //   },
 
 // })
-
+const userUUID = localStorage.getItem('uuid')
 const companyId = localStorage.getItem('company_id')
+
+const uploadFile = async () => {
+  if (!selectedFile.value) {
+    Swal.fire({
+      title: 'Error!',
+      text: 'No file selected.',
+      icon: 'error',
+    })
+    return
+  }
+
+  // Get the original file name
+  const originalFileName = selectedFile.value.name
+  console.log('Original file name:', originalFileName)
+
+  // Construct the new file name with uuid and original file name
+  const newFileName = `${userUUID}_${originalFileName}`
+  console.log('New file name for storage:', newFileName)
+
+  const filePath = `${newFileName}` // Use new file name for the path
+
+  // Upload to Supabase Storage with the new file name
+  const { error: uploadError } = await supabase.storage.from('documents').upload(filePath, selectedFile.value)
+
+  if (uploadError) {
+    console.error('Error uploading file:', uploadError)
+    Swal.fire({
+      title: 'Error!',
+      text: 'Error uploading file.',
+      icon: 'error',
+    })
+    return
+  }
+
+  // Add a record to your database with the original file name
+  const { error: dbError } = await supabase.from('uploadfile').insert([
+    {
+      uploadfile_filename: originalFileName, // Keep the original file name in the database
+      uploadfile_company: companyId,
+      uploadfile_uuid: userUUID,
+    },
+  ])
+
+  if (dbError) {
+    console.error('Error saving file info to database:', dbError)
+    Swal.fire({
+      title: 'Error!',
+      text: 'Error saving file info to database.',
+      icon: 'error',
+    })
+    return
+  }
+
+  // Clear the selected file
+  selectedFile.value = null
+
+  // Update the files list
+  filesList.value = await fetchFiles()
+
+  Swal.fire({
+    title: 'Success!',
+    text: 'Your file has been uploaded.',
+    icon: 'success',
+  })
+}
 
 async function fetchFiles() {
   let { data: files, error } = await supabase
@@ -151,6 +223,7 @@ onMounted(async () => {
               -->
             <div class="text-overline text-start ml-10 text-white">File Upload :</div>
             <VFileInput
+              @change="handleFileChange"
               counter
               truncate-length="15"
             />
@@ -158,6 +231,7 @@ onMounted(async () => {
           <VBtn
             class="mt-5"
             prepend-icon="mdi-send-variant"
+            @click="uploadFile"
           >
             Upload
           </VBtn>
