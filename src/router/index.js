@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -57,10 +57,12 @@ const router = createRouter({
         {
           path: 'login',
           component: () => import('../pages/login.vue'),
+          meta: { public: true },
         },
         {
           path: 'register',
           component: () => import('../pages/register.vue'),
+          meta: { public: true },
         },
         {
           path: '/:pathMatch(.*)*',
@@ -72,4 +74,6 @@ const router = createRouter({
   ],
 })
 
-export default router
+
+
+export default router;
