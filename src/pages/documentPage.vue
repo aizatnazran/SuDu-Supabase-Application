@@ -1,6 +1,7 @@
 <script setup>
 import csvimg from '@images/images/csv.png'
 import Swal from 'sweetalert2'
+import { ref } from 'vue'
 import { useTheme } from 'vuetify'
 import { supabase } from '../lib/supaBaseClient.js'
 
@@ -25,16 +26,7 @@ async function fetchTemplates() {
   }
 }
 
-const templateOptions = computed(async () => {
-  console.log('Computed property templateOptions is called')
-  const templates = await fetchTemplates()
-  console.log('Templates:', templates) // Log the templates to see their structure
-
-  return templates.map(template => ({
-    label: template.template_name,
-    value: template.template_name,
-  }))
-})
+const templateOptions = ref([])
 
 const vuetifyTheme = useTheme()
 
@@ -82,7 +74,7 @@ const uploadFiles = async () => {
 
     if (uploadError) {
       console.error('Error uploading file:', uploadError)
-      uploadErrors.push(originalFileName) // Add the file name to the error list
+      uploadErrors.push(originalFileName)
       continue
     }
 
@@ -97,7 +89,7 @@ const uploadFiles = async () => {
 
     if (dbError) {
       console.error('Error saving file info to database:', dbError)
-      uploadErrors.push(originalFileName) // Add the file name to the error list
+      uploadErrors.push(originalFileName)
     }
   }
 
@@ -155,7 +147,6 @@ const confirmDelete = async file => {
 
         if (error) throw error
 
-        // Remove the file from the filesList
         filesList.value = filesList.value.filter(f => f.uploadfile_filename !== file.uploadfile_filename)
 
         Swal.fire({
@@ -175,7 +166,12 @@ const confirmDelete = async file => {
 }
 
 onMounted(async () => {
-  filesList.value = await fetchFiles()
+  try {
+    filesList.value = await fetchFiles()
+    templateOptions.value = await fetchTemplates()
+  } catch (error) {
+    console.error('Error during onMounted:', error)
+  }
 })
 </script>
 
@@ -274,9 +270,9 @@ onMounted(async () => {
               <template v-if="templateOptions instanceof Array">
                 <VRadio
                   v-for="option in templateOptions"
-                  :key="option.value"
-                  :label="option.label"
-                  :value="option.value"
+                  :key="option.template_name"
+                  :label="option.template_name"
+                  :value="option.template_name"
                 />
               </template>
               <template v-else>
