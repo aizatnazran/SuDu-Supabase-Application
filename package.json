@@ -7,13 +7,13 @@
     "build": "vite build",
     "preview": "vite preview --port 5050",
     "lint": "eslint . -c .eslintrc.js --fix --ext .ts,.js,.vue,.tsx,.jsx",
-    "build:icons": "node src/@iconify/build-icons.js",
-    "postinstall": "npm run build:icons"
+    "build:icons": "node src/@iconify/build-icons.js"
   },
   "dependencies": {
     "@casl/ability": "^6.2.0",
     "@casl/vue": "^2.2.0",
     "@floating-ui/dom": "1.2.8",
+    "@iconify/vue": "^4.1.1",
     "@supabase/supabase-js": "^2.39.0",
     "@vueuse/core": "^10.1.2",
     "@vueuse/math": "^10.1.2",
@@ -54,7 +54,6 @@
     "@fullcalendar/vue3": "^6.1.7",
     "@iconify-json/mdi": "^1.1.52",
     "@iconify/tools": "^2.2.0",
-    "@iconify/vue": "4.1.1",
     "@intlify/unplugin-vue-i18n": "^0.10.0",
     "@vitejs/plugin-vue": "^4.2.3",
     "@vitejs/plugin-vue-jsx": "^3.0.0",
