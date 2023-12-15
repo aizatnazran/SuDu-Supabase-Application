@@ -278,7 +278,6 @@ onMounted(() => {
               </VCol>
 
               <!-- 👉 Business Type -->
-              <!-- 👉 Business Type -->
               <VCol
                 cols="12"
                 md="6"

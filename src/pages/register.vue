@@ -5,6 +5,7 @@ import authV1MaskDark from '@images/pages/auth-v1-mask-dark.png'
 import authV1MaskLight from '@images/pages/auth-v1-mask-light.png'
 import authV1Tree2 from '@images/pages/auth-v1-tree-2.png'
 import authV1Tree from '@images/pages/auth-v1-tree.png'
+import Swal from 'sweetalert2'
 import { useTheme } from 'vuetify'
 import { supabase } from '../lib/supaBaseClient.js'
 
@@ -28,24 +29,59 @@ const authThemeMask = computed(() => {
 // Function Definition
 const handleSignUp = async () => {
   if (form.value.password !== form.value.confirmPassword) {
-    alert('Passwords do not match!')
+    Swal.fire({
+      icon: 'error',
+      title: 'Oops...',
+      text: 'Passwords do not match!',
+    })
     return
   }
 
   if (!form.value.privacyPolicies) {
-    alert('Please agree to the privacy policy and terms!')
+    Swal.fire({
+      icon: 'error',
+      title: 'Oops...',
+      text: 'Please agree to the privacy policy and terms!',
+    })
     return
   }
 
-  const { data, error } = await supabase.auth.signUp({
+  // Register the user
+  const { user, error } = await supabase.auth.signUp({
     email: form.value.email,
     password: form.value.password,
   })
 
+  // Handle any errors during registration
   if (error) {
-    alert(error.message)
-  } else {
-    alert('Signup successful!')
+    Swal.fire({
+      icon: 'error',
+      title: 'Signup Failed',
+      text: error.message,
+    })
+    return
+  }
+
+  // If registration is successful, insert the data into the company table
+  if (user) {
+    const { error: insertError } = await supabase
+      .from('company')
+      .insert([{ company_email: user.email, user_uuid: user.id }])
+
+    // Handle any errors during insertion
+    if (insertError) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: 'Error adding user to company table: ' + insertError.message,
+      })
+    } else {
+      Swal.fire({
+        icon: 'success',
+        title: 'Success!',
+        text: 'Signup successful and user added to company table!',
+      })
+    }
   }
 }
 </script>

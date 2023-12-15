@@ -1,4 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import BlankLayout from '../layouts/blank.vue';
+import Login from '../pages/login.vue';
+import Register from '../pages/register.vue';
+  
+function checkAuth() {
+  const uuid = localStorage.getItem('uuid');
+  const accessToken = localStorage.getItem('accessToken');
+  return uuid && accessToken;
+}
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -11,58 +20,68 @@ const router = createRouter({
         {
           path: 'dashboard',
           component: () => import('../pages/dashboard.vue'),
+          meta: { requiresAuth: true },
         },
         {
           path: 'document',
           component: () => import('../pages/documentPage.vue'),
+          meta: { requiresAuth: true },
         },
         {
           path: 'integration',
           component: () => import('../pages/integration.vue'),
+          meta: { requiresAuth: true },
         },
         {
           path: 'comingsoon2',
           component: () => import('../pages/comingsoon.vue'),
+          meta: { requiresAuth: true },
         },
         {
           path: 'account-settings',
           component: () => import('../pages/account-settings.vue'),
+          meta: { requiresAuth: true },
         },
         {
           path: 'typography',
           component: () => import('../pages/typography.vue'),
+          meta: { requiresAuth: true },
         },
         {
           path: 'icons',
           component: () => import('../pages/icons.vue'),
+          meta: { requiresAuth: true },
         },
         {
           path: 'cards',
           component: () => import('../pages/cards.vue'),
+          meta: { requiresAuth: true },
         },
         {
           path: 'tables',
           component: () => import('../pages/tables.vue'),
+          meta: { requiresAuth: true },
         },
         {
           path: 'form-layouts',
           component: () => import('../pages/form-layouts.vue'),
+          meta: { requiresAuth: true },
         },
       ],
     },
     {
       path: '/',
-      component: () => import('../layouts/blank.vue'),
+      component: BlankLayout,
       children: [
         {
           path: 'login',
-          component: () => import('../pages/login.vue'),
-          meta: { public: true },
+          component: Login,
+          
         },
         {
           path: 'register',
-          component: () => import('../pages/register.vue'),
-          meta: { public: true },
+          component: Register,
+          
         },
         {
           path: '/:pathMatch(.*)*',
@@ -74,6 +93,16 @@ const router = createRouter({
   ],
 })
 
+router.beforeEach((to, from, next) => {
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
+  const isAuthenticated = checkAuth();
+
+  if (requiresAuth && !isAuthenticated) {
+    next('/login');
+  } else {
+    next();
+  }
+});
 
 
 export default router;
