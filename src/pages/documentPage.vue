@@ -8,12 +8,20 @@ import { supabase } from '../lib/supaBaseClient.js'
 
 const vuetifyTheme = useTheme()
 
-const selectedFile = ref(null)
+const selectedFiles = ref([])
 
 const handleFileChange = event => {
-  selectedFile.value = event.target.files[0]
-  console.log('Selected file:', selectedFile.value)
+  selectedFiles.value = Array.from(event.target.files) // Store all selected files
+  console.log('Selected files:', selectedFiles.value)
 }
+
+const templateOptions = ref([
+  { label: 'Template 1', value: 'template1' },
+  { label: 'Template 2', value: 'template2' },
+  { label: 'Template 3', value: 'template3' },
+])
+
+const selectedTemplate = ref('template1')
 
 const sheet = ref(false)
 
@@ -27,69 +35,69 @@ const sheet = ref(false)
 const userUUID = localStorage.getItem('uuid')
 const companyId = localStorage.getItem('company_id')
 
-const uploadFile = async () => {
-  if (!selectedFile.value) {
-    Swal.fire({
+const uploadFiles = async () => {
+  if (!selectedFiles.value.length) {
+    await Swal.fire({
       title: 'Error!',
       text: 'No file selected.',
       icon: 'error',
+      customClass: { container: 'high-z-index-swal' },
     })
     return
   }
 
-  // Get the original file name
-  const originalFileName = selectedFile.value.name
-  console.log('Original file name:', originalFileName)
+  let uploadErrors = []
 
-  // Construct the new file name with uuid and original file name
-  const newFileName = `${userUUID}_${originalFileName}`
-  console.log('New file name for storage:', newFileName)
+  for (const file of selectedFiles.value) {
+    const originalFileName = file.name
+    const newFileName = `${userUUID}_${originalFileName}`
+    const filePath = `${newFileName}`
 
-  const filePath = `${newFileName}` // Use new file name for the path
+    // Upload each file to Supabase Storage
+    const { error: uploadError } = await supabase.storage.from('documents').upload(filePath, file)
 
-  // Upload to Supabase Storage with the new file name
-  const { error: uploadError } = await supabase.storage.from('documents').upload(filePath, selectedFile.value)
+    if (uploadError) {
+      console.error('Error uploading file:', uploadError)
+      uploadErrors.push(originalFileName) // Add the file name to the error list
+      continue
+    }
 
-  if (uploadError) {
-    console.error('Error uploading file:', uploadError)
-    Swal.fire({
-      title: 'Error!',
-      text: 'Error uploading file.',
-      icon: 'error',
-    })
-    return
+    // Add record to the database for each file
+    const { error: dbError } = await supabase.from('uploadfile').insert([
+      {
+        uploadfile_filename: originalFileName,
+        uploadfile_company: companyId,
+        uploadfile_uuid: userUUID,
+      },
+    ])
+
+    if (dbError) {
+      console.error('Error saving file info to database:', dbError)
+      uploadErrors.push(originalFileName) // Add the file name to the error list
+    }
   }
 
-  // Add a record to your database with the original file name
-  const { error: dbError } = await supabase.from('uploadfile').insert([
-    {
-      uploadfile_filename: originalFileName, // Keep the original file name in the database
-      uploadfile_company: companyId,
-      uploadfile_uuid: userUUID,
-    },
-  ])
-
-  if (dbError) {
-    console.error('Error saving file info to database:', dbError)
-    Swal.fire({
-      title: 'Error!',
-      text: 'Error saving file info to database.',
-      icon: 'error',
-    })
-    return
-  }
-
-  // Clear the selected file
-  selectedFile.value = null
+  // Clear the selected files
+  selectedFiles.value = []
 
   // Update the files list
   filesList.value = await fetchFiles()
 
-  Swal.fire({
-    title: 'Success!',
-    text: 'Your file has been uploaded.',
-    icon: 'success',
-  })
+  if (uploadErrors.length === 0) {
+    Swal.fire({
+      title: 'Success!',
+      text: 'All your files have been uploaded.',
+      icon: 'success',
+      customClass: { container: 'high-z-index-swal' },
+    })
+  } else {
+    Swal.fire({
+      title: 'Some or all files failed to upload',
+      text: `The following files could not be uploaded: ${uploadErrors.join(', ')}`,
+      icon: 'warning',
+      customClass: { container: 'high-z-index-swal' },
+    })
+  }
 }
 
 async function fetchFiles() {
@@ -168,39 +176,44 @@ onMounted(async () => {
       </VRow>
 
       <VRow>
-        <template
-          v-for="file in filesList"
-          :key="file.uploadfile_filename"
+        <div
+          v-if="filesList.length === 0"
+          class="text-center my-5"
         >
-          <VCard
-            class="elevation-0 ma-1"
-            style="max-width: 10%; max-height: 180px; min-width: 95px; border-radius: 5%; opacity: 0.8"
+          <p>No documents submitted yet.</p>
+        </div>
+        <template v-else>
+          <template
+            v-for="file in filesList"
+            :key="file.uploadfile_filename"
           >
-            <VBtn
-              icon
-              class="m-2"
-              style="
-                position: absolute;
-                top: 0;
-                right: 0;
-                z-index: 2;
-                width: 24px;
-                height: 24px;
-                min-width: 24px;
-                padding: 0;
-                margin: 2px;
-              "
-              @click="confirmDelete(file)"
-            >
-              <VIcon size="x-small">mdi-close</VIcon>
-            </VBtn>
-            <VImg
-              class="ma-3"
-              max-width="100"
-              :src="csvimg"
-            />
-            <p class="text-center text-caption px-2">{{ file.uploadfile_filename }}</p>
-          </VCard>
+            <VCard class="document-card ma-1">
+              <VBtn
+                icon
+                class="m-2"
+                style="
+                  position: absolute;
+                  top: 0;
+                  right: 0;
+                  z-index: 2;
+                  width: 24px;
+                  height: 24px;
+                  min-width: 24px;
+                  padding: 0;
+                  margin: 2px;
+                "
+                @click="confirmDelete(file)"
+              >
+                <VIcon size="x-small">mdi-close</VIcon>
+              </VBtn>
+              <VImg
+                class="ma-3"
+                max-width="100"
+                :src="csvimg"
+              />
+              <p class="text-center text-caption px-2 file-name">{{ file.uploadfile_filename }}</p>
+            </VCard>
+          </template>
         </template>
       </VRow>
     </VContainer>
@@ -210,28 +223,42 @@ onMounted(async () => {
         v-model="sheet"
         activator="parent"
         width="60%"
+        class="overlaying-component-class"
       >
         <VCard class="pa-10">
           <VContainer
-            class="pa-5 rounded-lg mt-2"
-            style="background-color: rgb(222, 222, 222)"
+            class="pa-5 rounded-lg mt-2 border-2"
+            style="background-color: var(--v-theme-on-surface); border: 2px solid #8a8d93"
           >
             <!--
                 <div class="text-overline text-start ml-10">
                 File Menu :
                 </div> 
               -->
-            <div class="text-overline text-start ml-10 text-white">File Upload :</div>
+            <div class="text-overline text-start ml-10 text-title">File Upload :</div>
             <VFileInput
               @change="handleFileChange"
               counter
               truncate-length="15"
+              multiple
             />
+            <div class="text-overline text-start ml-10 text-title">Select Template:</div>
+            <VRadioGroup
+              v-model="selectedTemplate"
+              row
+            >
+              <VRadio
+                v-for="option in templateOptions"
+                :key="option.value"
+                :label="option.label"
+                :value="option.value"
+              />
+            </VRadioGroup>
           </VContainer>
           <VBtn
             class="mt-5"
             prepend-icon="mdi-send-variant"
-            @click="uploadFile"
+            @click="uploadFiles"
           >
             Upload
           </VBtn>
@@ -240,3 +267,29 @@ onMounted(async () => {
     </div>
   </div>
 </template>
+
+<style>
+.high-z-index-swal {
+  z-index: 9999999 !important;
+}
+.overlaying-component-class {
+  z-index: 1050;
+}
+
+.document-card {
+  width: 100px;
+  height: 150px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-radius: 5%;
+  opacity: 0.8;
+}
+
+.file-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+</style>

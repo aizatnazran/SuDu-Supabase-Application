@@ -42,6 +42,22 @@ const resetAvatar = () => {
   accountDataLocal.value.avatarImg = accountData.avatarImg
 }
 
+const businessTypes = ref([])
+
+const fetchBusinessTypes = async () => {
+  try {
+    const { data, error } = await supabase.from('businesstype').select('businesstype_name')
+
+    if (error) throw new Error(error.message)
+
+    if (data) {
+      businessTypes.value = data.map(type => type.businesstype_name)
+    }
+  } catch (error) {
+    console.error('Error fetching business types:', error)
+  }
+}
+
 const fetchCompanyData = async () => {
   const companyId = localStorage.getItem('company_id')
 
@@ -87,6 +103,25 @@ const fetchCompanyData = async () => {
   }
 }
 
+const fetchBusinessTypeId = async businessTypeName => {
+  try {
+    const { data, error } = await supabase
+      .from('businesstype')
+      .select('id')
+      .eq('businesstype_name', businessTypeName)
+      .single()
+
+    if (error) throw new Error(error.message)
+
+    if (data) {
+      return data.id
+    }
+  } catch (error) {
+    console.error('Error fetching business type ID:', error)
+    return null
+  }
+}
+
 const saveChanges = async () => {
   Swal.fire({
     title: 'Are you sure?',
@@ -101,6 +136,14 @@ const saveChanges = async () => {
       const updateData = { ...accountDataLocal.value }
       delete updateData.avatarImg
       delete updateData.businessType
+
+      // Fetch the businesstype ID based on the selected businesstype_name
+      const selectedBusinessTypeName = accountDataLocal.value.businessType
+      const businessType = await fetchBusinessTypeId(selectedBusinessTypeName)
+
+      if (businessType) {
+        updateData.company_businesstype = businessType
+      }
 
       Object.keys(updateData).forEach(key => {
         if (updateData[key] === '' || updateData[key] === undefined) {
@@ -121,7 +164,11 @@ const saveChanges = async () => {
     }
   })
 }
-onMounted(fetchCompanyData)
+
+onMounted(() => {
+  fetchCompanyData()
+  fetchBusinessTypes() // Add this line
+})
 </script>
 
 <template>
@@ -238,7 +285,7 @@ onMounted(fetchCompanyData)
                 <VSelect
                   v-model="accountDataLocal.businessType"
                   label="Business Type"
-                  :items="['Information and Technology', 'Banking and Financial', 'Construction', 'Medical and Health']"
+                  :items="businessTypes"
                 />
               </VCol>
 

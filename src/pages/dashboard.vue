@@ -9,6 +9,7 @@ import AnalyticsTransactions from '@/views/dashboard/AnalyticsTransactions.vue'
 import AnalyticsUserTable from '@/views/dashboard/AnalyticsUserTable.vue'
 import AnalyticsWeeklyOverview from '@/views/dashboard/AnalyticsWeeklyOverview.vue'
 import CardStatisticsVertical from '@core/components/cards/CardStatisticsVertical.vue'
+import { onMounted } from 'vue'
 
 const totalProfit = {
   title: 'Total Profit',
@@ -27,6 +28,16 @@ const newProject = {
   change: -18,
   subtitle: 'Yearly Project',
 }
+
+onMounted(() => {
+  const uuid = localStorage.getItem('uuid')
+  const companyId = localStorage.getItem('company_id')
+  const accessToken = localStorage.getItem('accessToken')
+
+  console.log('UUID:', uuid)
+  console.log('Company ID:', companyId)
+  console.log('Access Token:', accessToken)
+})
 </script>
 
 <template>

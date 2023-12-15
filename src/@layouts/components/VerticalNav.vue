@@ -5,10 +5,7 @@ import { useDisplay } from 'vuetify'
 
 const props = defineProps({
   tag: {
-    type: [
-      String,
-      null,
-    ],
+    type: [String, null],
     required: false,
     default: 'aside',
   },
@@ -26,12 +23,15 @@ const { mdAndDown } = useDisplay()
 const refNav = ref()
 const route = useRoute()
 
-watch(() => route.path, () => {
-  props.toggleIsOverlayNavActive(false)
-})
+watch(
+  () => route.path,
+  () => {
+    props.toggleIsOverlayNavActive(false)
+  },
+)
 
 const isVerticalNavScrolled = ref(false)
-const updateIsVerticalNavScrolled = val => isVerticalNavScrolled.value = val
+const updateIsVerticalNavScrolled = val => (isVerticalNavScrolled.value = val)
 
 const handleNavScroll = evt => {
   isVerticalNavScrolled.value = evt.target.scrollTop > 0
@@ -45,8 +45,8 @@ const handleNavScroll = evt => {
     class="layout-vertical-nav"
     :class="[
       {
-        'visible': isOverlayNavActive,
-        'scrolled': isVerticalNavScrolled,
+        visible: isOverlayNavActive,
+        scrolled: isVerticalNavScrolled,
         'overlay-nav': mdAndDown,
       },
     ]"
@@ -71,10 +71,7 @@ const handleNavScroll = evt => {
           />
           <VImg :src="csvimg" />
 
-          
-          <h1 class="font-weight-medium leading-normal text-xl text-uppercase">
-            SuDu Business
-          </h1>
+          <h1 class="font-weight-medium leading-normal text-xl text-uppercase">SuDu Business</h1>
         </RouterLink>
       </slot>
     </div>
@@ -100,8 +97,8 @@ const handleNavScroll = evt => {
 </template>
 
 <style lang="scss">
-@use "@configured-variables" as variables;
-@use "@layouts/styles/mixins";
+@use '@configured-variables' as variables;
+@use '@layouts/styles/mixins';
 
 // 👉 Vertical Nav
 .layout-vertical-nav {
