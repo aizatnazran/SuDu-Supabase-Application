@@ -8,11 +8,11 @@ import { supabase } from '../lib/supaBaseClient.js'
 
 const vuetifyTheme = useTheme()
 
-const selectedFile = ref(null)
+const selectedFiles = ref([])
 
 const handleFileChange = event => {
-  selectedFile.value = event.target.files[0]
-  console.log('Selected file:', selectedFile.value)
+  selectedFiles.value = Array.from(event.target.files) // Store all selected files
+  console.log('Selected files:', selectedFiles.value)
 }
 
 const templateOptions = ref([
@@ -35,81 +35,69 @@ const sheet = ref(false)
 const userUUID = localStorage.getItem('uuid')
 const companyId = localStorage.getItem('company_id')
 
-const uploadFile = async () => {
-  if (!selectedFile.value) {
+const uploadFiles = async () => {
+  if (!selectedFiles.value.length) {
     await Swal.fire({
       title: 'Error!',
       text: 'No file selected.',
       icon: 'error',
-      customClass: {
-        container: 'high-z-index-swal',
-      },
+      customClass: { container: 'high-z-index-swal' },
     })
     return
   }
 
-  // Get the original file name
-  const originalFileName = selectedFile.value.name
-  console.log('Original file name:', originalFileName)
+  let uploadErrors = []
 
-  // Construct the new file name with uuid and original file name
-  const newFileName = `${userUUID}_${originalFileName}`
-  console.log('New file name for storage:', newFileName)
+  for (const file of selectedFiles.value) {
+    const originalFileName = file.name
+    const newFileName = `${userUUID}_${originalFileName}`
+    const filePath = `${newFileName}`
 
-  const filePath = `${newFileName}` // Use new file name for the path
+    // Upload each file to Supabase Storage
+    const { error: uploadError } = await supabase.storage.from('documents').upload(filePath, file)
 
-  // Upload to Supabase Storage with the new file name
-  const { error: uploadError } = await supabase.storage.from('documents').upload(filePath, selectedFile.value)
+    if (uploadError) {
+      console.error('Error uploading file:', uploadError)
+      uploadErrors.push(originalFileName) // Add the file name to the error list
+      continue
+    }
 
-  if (uploadError) {
-    console.error('Error uploading file:', uploadError)
-    Swal.fire({
-      title: 'Error!',
-      text: 'Error uploading file.',
-      icon: 'error',
-      customClass: {
-        container: 'high-z-index-swal',
+    // Add record to the database for each file
+    const { error: dbError } = await supabase.from('uploadfile').insert([
+      {
+        uploadfile_filename: originalFileName,
+        uploadfile_company: companyId,
+        uploadfile_uuid: userUUID,
       },
-    })
-    // Do not toggle 'sheet' here
-    return
+    ])
+
+    if (dbError) {
+      console.error('Error saving file info to database:', dbError)
+      uploadErrors.push(originalFileName) // Add the file name to the error list
+    }
   }
 
-  // Add a record to your database with the original file name
-  const { error: dbError } = await supabase.from('uploadfile').insert([
-    {
-      uploadfile_filename: originalFileName, // Keep the original file name in the database
-      uploadfile_company: companyId,
-      uploadfile_uuid: userUUID,
-    },
-  ])
-
-  if (dbError) {
-    console.error('Error saving file info to database:', dbError)
-    Swal.fire({
-      title: 'Error!',
-      text: 'Error saving file info to database.',
-      icon: 'error',
-      customClass: {
-        container: 'high-z-index-swal',
-      },
-    })
-  }
-
-  // Clear the selected file
-  selectedFile.value = null
+  // Clear the selected files
+  selectedFiles.value = []
 
   // Update the files list
   filesList.value = await fetchFiles()
 
-  Swal.fire({
-    title: 'Success!',
-    text: 'Your file has been uploaded.',
-    icon: 'success',
-    customClass: {
-      container: 'high-z-index-swal',
-    },
-  })
+  if (uploadErrors.length === 0) {
+    Swal.fire({
+      title: 'Success!',
+      text: 'All your files have been uploaded.',
+      icon: 'success',
+      customClass: { container: 'high-z-index-swal' },
+    })
+  } else {
+    Swal.fire({
+      title: 'Some or all files failed to upload',
+      text: `The following files could not be uploaded: ${uploadErrors.join(', ')}`,
+      icon: 'warning',
+      customClass: { container: 'high-z-index-swal' },
+    })
+  }
 }
 
 async function fetchFiles() {
@@ -199,10 +187,7 @@ onMounted(async () => {
             v-for="file in filesList"
             :key="file.uploadfile_filename"
           >
-            <VCard
-              class="elevation-0 ma-1"
-              style="max-width: 10%; max-height: 180px; min-width: 95px; border-radius: 5%; opacity: 0.8"
-            >
+            <VCard class="document-card ma-1">
               <VBtn
                 icon
                 class="m-2"
@@ -226,7 +211,7 @@ onMounted(async () => {
                 max-width="100"
                 :src="csvimg"
               />
-              <p class="text-center text-caption px-2">{{ file.uploadfile_filename }}</p>
+              <p class="text-center text-caption px-2 file-name">{{ file.uploadfile_filename }}</p>
             </VCard>
           </template>
         </template>
@@ -255,6 +240,7 @@ onMounted(async () => {
               @change="handleFileChange"
               counter
               truncate-length="15"
+              multiple
             />
             <div class="text-overline text-start ml-10 text-title">Select Template:</div>
             <VRadioGroup
@@ -272,7 +258,7 @@ onMounted(async () => {
           <VBtn
             class="mt-5"
             prepend-icon="mdi-send-variant"
-            @click="uploadFile"
+            @click="uploadFiles"
           >
             Upload
           </VBtn>
@@ -288,5 +274,22 @@ onMounted(async () => {
 }
 .overlaying-component-class {
   z-index: 1050;
+}
+
+.document-card {
+  width: 100px;
+  height: 150px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-radius: 5%;
+  opacity: 0.8;
+}
+
+.file-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 </style>
