@@ -109,7 +109,7 @@ const upgradeBanner = computed(() => {
         :item="{
           title: 'Template',
           icon: 'mdi-arrange-send-backward',
-          to: '/comingsoon2',
+          to: '/template',
         }"
       />
       <!--

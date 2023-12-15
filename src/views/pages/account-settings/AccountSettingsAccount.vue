@@ -4,7 +4,25 @@ import avatar1 from '@images/avatars/avatar-1.png'
 import Swal from 'sweetalert2'
 import { onMounted, ref } from 'vue'
 
+const form = ref(null)
+const isFormValid = async () => {
+  const result = form.value?.validate()
+  if (result instanceof Promise) {
+    const valid = await result
+    console.log('Async validation result:', valid)
+    return valid
+  } else {
+    console.log('Sync validation result:', result)
+    return result
+  }
+}
+
 const companyId = localStorage.getItem('company_id')
+
+const phoneRules = value => {
+  const pattern = /^(\+\d{1,3}[- ]?)?\d{10,12}$/
+  return pattern.test(value) || 'Invalid phone number format'
+}
 
 const accountDataLocal = ref({
   avatarImg: avatar1,
@@ -123,6 +141,11 @@ const fetchBusinessTypeId = async businessTypeName => {
 }
 
 const saveChanges = async () => {
+  if (!isFormValid()) {
+    Swal.fire('Error', 'Please correct the errors in the form.', 'error')
+    return
+  }
+
   Swal.fire({
     title: 'Are you sure?',
     text: 'Do you want to save the changes?',
@@ -229,7 +252,10 @@ onMounted(() => {
 
         <VCardText>
           <!-- 👉 Form -->
-          <VForm class="mt-6">
+          <VForm
+            ref="form"
+            class="mt-6"
+          >
             <VRow>
               <!-- 👉 Company Name -->
               <VCol
@@ -297,6 +323,7 @@ onMounted(() => {
                 <VTextField
                   v-model="accountDataLocal.company_phone"
                   label="Phone Number"
+                  :rules="[phoneRules]"
                 />
               </VCol>
 
@@ -330,6 +357,7 @@ onMounted(() => {
                 <VTextField
                   v-model="accountDataLocal.company_zipcode"
                   label="Zip Code"
+                  type="number"
                 />
               </VCol>
 
@@ -350,7 +378,11 @@ onMounted(() => {
                 cols="12"
                 class="d-flex flex-wrap gap-4"
               >
-                <VBtn @click="saveChanges">Save changes</VBtn>
+                <VBtn
+                  @click="saveChanges"
+                  :disabled="!isFormValid()"
+                  >Save changes</VBtn
+                >
 
                 <VBtn
                   color="secondary"

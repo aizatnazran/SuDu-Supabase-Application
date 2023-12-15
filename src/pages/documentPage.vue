@@ -6,6 +6,36 @@ import { supabase } from '../lib/supaBaseClient.js'
 
 // Components
 
+async function fetchTemplates() {
+  try {
+    const { data: templates, error } = await supabase
+      .from('template')
+      .select('template_name')
+      .eq('company_id', companyId)
+
+    if (error) {
+      console.error('Error fetching templates:', error)
+      return []
+    }
+
+    return templates
+  } catch (error) {
+    console.error('Error fetching templates:', error)
+    return []
+  }
+}
+
+const templateOptions = computed(async () => {
+  console.log('Computed property templateOptions is called')
+  const templates = await fetchTemplates()
+  console.log('Templates:', templates) // Log the templates to see their structure
+
+  return templates.map(template => ({
+    label: template.template_name,
+    value: template.template_name,
+  }))
+})
+
 const vuetifyTheme = useTheme()
 
 const selectedFiles = ref([])
@@ -14,12 +44,6 @@ const handleFileChange = event => {
   selectedFiles.value = Array.from(event.target.files) // Store all selected files
   console.log('Selected files:', selectedFiles.value)
 }
-
-const templateOptions = ref([
-  { label: 'Template 1', value: 'template1' },
-  { label: 'Template 2', value: 'template2' },
-  { label: 'Template 3', value: 'template3' },
-])
 
 const selectedTemplate = ref('template1')
 
@@ -247,12 +271,17 @@ onMounted(async () => {
               v-model="selectedTemplate"
               row
             >
-              <VRadio
-                v-for="option in templateOptions"
-                :key="option.value"
-                :label="option.label"
-                :value="option.value"
-              />
+              <template v-if="templateOptions instanceof Array">
+                <VRadio
+                  v-for="option in templateOptions"
+                  :key="option.value"
+                  :label="option.label"
+                  :value="option.value"
+                />
+              </template>
+              <template v-else>
+                <p>Loading template options...</p>
+              </template>
             </VRadioGroup>
           </VContainer>
           <VBtn
