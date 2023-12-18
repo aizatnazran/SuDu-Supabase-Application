@@ -6,15 +6,12 @@ FROM node:16-alpine as build-stage
 # set the working directory
 WORKDIR /app
 
-# Copy the working directory in the container
-COPY package*.json ./
+# Copy the rest of the project files to the container
+COPY . .
 
 # Install the project dependecies
 # if you npm then npm install 
 RUN npm install
-
-# Copy the rest of the project files to the container
-COPY . .
 
 #Build the Vue.js application to the production mode to dist folder
 # here also if you use npm then npm run build
