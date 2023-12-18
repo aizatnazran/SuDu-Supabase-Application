@@ -95,7 +95,7 @@ const editTemplate = async template => {
         throw error
       }
 
-      const index = templateList.value.findIndex(t => t.id === template.id) // Update the templateList after updating the template
+      const index = templateList.value.findIndex(t => t.id === template.id)
       if (index !== -1) {
         templateList.value[index] = updatedData
       }

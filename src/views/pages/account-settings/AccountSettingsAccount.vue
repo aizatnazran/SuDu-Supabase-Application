@@ -9,10 +9,8 @@ const isFormValid = async () => {
   const result = form.value?.validate()
   if (result instanceof Promise) {
     const valid = await result
-    console.log('Async validation result:', valid)
     return valid
   } else {
-    console.log('Sync validation result:', result)
     return result
   }
 }
