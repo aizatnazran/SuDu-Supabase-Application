@@ -1,5 +1,8 @@
 <script setup>
-import { onMounted } from 'vue';
+// import { supabase } from '@/lib/supaBaseClient'
+// import avatar1 from '@images/avatars/avatar-1.png'
+// import Swal from 'sweetalert2'
+// import { onMounted, ref } from 'vue'
 
 // const form = ref(null)
 // const isFormValid = async () => {
@@ -196,26 +199,24 @@ import { onMounted } from 'vue';
 //   })
 // }
 
-onMounted(() => {
-  // fetchCompanyData()
-  // fetchBusinessTypes()
-})
+// onMounted(() => {
+//   // fetchCompanyData()
+//   // fetchBusinessTypes()
+// })
 </script>
 
-<!-- <template> -->
+<!-- 
   <VRow>
     <VCol cols="12">
       <VCard title="Account Details">
         <VCardText class="d-flex">
-          <!-- 👉 Avatar -->
+         
           <VAvatar
             rounded="lg"
             size="100"
             class="me-6"
             :image="accountDataLocal.avatarImg"
           />
-
-          <!-- 👉 Upload Photo -->
           <form class="d-flex flex-column justify-center gap-5">
             <div class="d-flex flex-wrap gap-2">
               <VBtn
@@ -259,13 +260,11 @@ onMounted(() => {
         <VDivider />
 
         <VCardText>
-          <!-- 👉 Form -->
           <VForm
             ref="form"
             class="mt-6"
           >
             <VRow>
-              <!-- 👉 Company Name -->
               <VCol
                 md="6"
                 cols="12"
@@ -276,7 +275,6 @@ onMounted(() => {
                 />
               </VCol>
 
-              <!-- 👉 Last Name -->
               <VCol
                 md="6"
                 cols="12"
@@ -287,7 +285,6 @@ onMounted(() => {
                 />
               </VCol>
 
-              <!-- 👉 Company Size -->
               <VCol
                 cols="12"
                 md="6"
@@ -299,7 +296,6 @@ onMounted(() => {
                 />
               </VCol>
 
-              <!-- 👉 Email -->
               <VCol
                 cols="12"
                 md="6"
@@ -312,7 +308,6 @@ onMounted(() => {
                 />
               </VCol>
 
-              <!-- 👉 Business Type -->
               <VCol
                 cols="12"
                 md="6"
@@ -324,7 +319,6 @@ onMounted(() => {
                 />
               </VCol>
 
-              <!-- 👉 Phone -->
               <VCol
                 cols="12"
                 md="6"
@@ -336,7 +330,6 @@ onMounted(() => {
                 />
               </VCol>
 
-              <!-- 👉 Address -->
               <VCol
                 cols="12"
                 md="6"
@@ -347,7 +340,6 @@ onMounted(() => {
                 />
               </VCol>
 
-              <!-- 👉 State -->
               <VCol
                 cols="12"
                 md="6"
@@ -358,7 +350,6 @@ onMounted(() => {
                 />
               </VCol>
 
-              <!-- 👉 Zip Code -->
               <VCol
                 cols="12"
                 md="6"
@@ -371,7 +362,6 @@ onMounted(() => {
                 />
               </VCol>
 
-              <!-- 👉 Country -->
               <VCol
                 cols="12"
                 md="6"
@@ -383,7 +373,6 @@ onMounted(() => {
                 />
               </VCol>
 
-              <!-- 👉 Form Actions -->
               <VCol
                 cols="12"
                 class="d-flex flex-wrap gap-4"
@@ -410,7 +399,6 @@ onMounted(() => {
     </VCol>
 
     <VCol cols="12">
-      <!-- 👉 Deactivate Account -->
       <VCard title="Deactivate Account">
         <VCardText>
           <div>
@@ -429,6 +417,10 @@ onMounted(() => {
           </VBtn>
         </VCardText>
       </VCard>
+      
     </VCol>
+    
   </VRow>
+  
 </template>
+          Comment -->
