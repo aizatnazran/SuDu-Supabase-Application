@@ -205,12 +205,11 @@
 // })
 </script>
 
-<!-- 
+<template>
   <VRow>
     <VCol cols="12">
       <VCard title="Account Details">
         <VCardText class="d-flex">
-         
           <VAvatar
             rounded="lg"
             size="100"
@@ -417,10 +416,6 @@
           </VBtn>
         </VCardText>
       </VCard>
-      
     </VCol>
-    
   </VRow>
-  
 </template>
-          Comment -->
