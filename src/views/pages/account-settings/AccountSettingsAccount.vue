@@ -2,8 +2,8 @@
 import { supabase } from '@/lib/supaBaseClient'
 import avatar1 from '@images/avatars/avatar-1.png'
 import Swal from 'sweetalert2'
-import { ref } from 'vue'
-import { useRoute, watch } from 'vue-router'
+import { ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 
 const form = ref(null)
 const isFormValid = async () => {
