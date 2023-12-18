@@ -2,7 +2,8 @@
 import { supabase } from '@/lib/supaBaseClient'
 import avatar1 from '@images/avatars/avatar-1.png'
 import Swal from 'sweetalert2'
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
+import { useRoute, watch } from 'vue-router'
 
 const form = ref(null)
 const isFormValid = async () => {
@@ -16,6 +17,22 @@ const isFormValid = async () => {
 }
 
 const companyId = localStorage.getItem('company_id')
+
+const route = useRoute()
+const isDataFetched = ref(false)
+
+watch(route, async (to, from) => {
+  if (to.path === '/account-settings' && !isDataFetched.value) {
+    try {
+      await fetchCompanyData()
+      await fetchBusinessTypes()
+      isDataFetched.value = true
+    } catch (error) {
+      console.error('Error loading data:', error)
+      // Handle error appropriately
+    }
+  }
+})
 
 const emailRules = value => {
   if (!value || value.trim() === '') return true
@@ -198,15 +215,6 @@ const saveChanges = async () => {
     }
   })
 }
-
-const isLoading = ref(false)
-
-onMounted(async () => {
-  isLoading.value = true
-  await fetchCompanyData()
-  await fetchBusinessTypes()
-  isLoading.value = false
-})
 </script>
 
 <template>
