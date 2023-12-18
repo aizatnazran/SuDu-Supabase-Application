@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted } from 'vue';
 
 // const form = ref(null)
 // const isFormValid = async () => {
@@ -202,7 +202,7 @@ onMounted(() => {
 })
 </script>
 
-<template>
+<!-- <template> -->
   <VRow>
     <VCol cols="12">
       <VCard title="Account Details">
