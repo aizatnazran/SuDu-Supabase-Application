@@ -2,7 +2,7 @@
 import { supabase } from '@/lib/supaBaseClient'
 import avatar1 from '@images/avatars/avatar-1.png'
 import Swal from 'sweetalert2'
-import { onMounted, ref, watch } from 'vue'
+import { ref, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 
 const form = ref(null)
@@ -16,31 +16,28 @@ const isFormValid = async () => {
   }
 }
 
-const companyId = localStorage.getItem('company_id')
-
+const companyId = ref(localStorage.getItem('company_id'))
 const route = useRoute()
-const isDataFetched = ref(false)
 
-// Function to fetch data
-const fetchData = async () => {
-  if (!isDataFetched.value) {
-    try {
-      await fetchCompanyData()
-      await fetchBusinessTypes()
-      isDataFetched.value = true
-    } catch (error) {
-      console.error('Error loading data:', error)
-    }
+async function fetchData() {
+  if (route.path === '/account-settings') {
+    await fetchCompanyData()
+    await fetchBusinessTypes()
   }
 }
+fetchData()
 
-onMounted(fetchData)
-
-watch(route, (to, from) => {
-  // This ensures that fetchData is called only when navigating to the specific path
+onBeforeRouteEnter(async (to, from, next) => {
   if (to.path === '/account-settings') {
-    fetchData()
+    await fetchData()
+    next()
+  } else {
+    next()
   }
+})
+
+watchEffect(() => {
+  fetchData()
 })
 
 const emailRules = value => {
@@ -99,7 +96,7 @@ const resetAvatar = () => {
 
 const businessTypes = ref([])
 
-const fetchBusinessTypes = async () => {
+async function fetchBusinessTypes() {
   try {
     const { data, error } = await supabase.from('businesstype').select('businesstype_name')
 
@@ -113,7 +110,7 @@ const fetchBusinessTypes = async () => {
   }
 }
 
-const fetchCompanyData = async () => {
+async function fetchCompanyData() {
   const companyId = localStorage.getItem('company_id')
 
   try {
@@ -407,7 +404,7 @@ const saveChanges = async () => {
                   color="secondary"
                   variant="tonal"
                   type="reset"
-                  @click.prevent="resetForm"
+                  @click.prevent="fetchData"
                 >
                   Reset
                 </VBtn>
