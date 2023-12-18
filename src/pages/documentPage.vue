@@ -1,10 +1,32 @@
 <script setup>
 import csvimg from '@images/images/csv.png'
 import Swal from 'sweetalert2'
+import { ref } from 'vue'
 import { useTheme } from 'vuetify'
 import { supabase } from '../lib/supaBaseClient.js'
 
 // Components
+
+async function fetchTemplates() {
+  try {
+    const { data: templates, error } = await supabase
+      .from('template')
+      .select('template_name')
+      .eq('company_id', companyId)
+
+    if (error) {
+      console.error('Error fetching templates:', error)
+      return []
+    }
+
+    return templates
+  } catch (error) {
+    console.error('Error fetching templates:', error)
+    return []
+  }
+}
+
+const templateOptions = ref([])
 
 const vuetifyTheme = useTheme()
 
@@ -14,12 +36,6 @@ const handleFileChange = event => {
   selectedFiles.value = Array.from(event.target.files) // Store all selected files
   console.log('Selected files:', selectedFiles.value)
 }
-
-const templateOptions = ref([
-  { label: 'Template 1', value: 'template1' },
-  { label: 'Template 2', value: 'template2' },
-  { label: 'Template 3', value: 'template3' },
-])
 
 const selectedTemplate = ref('template1')
 
@@ -58,7 +74,7 @@ const uploadFiles = async () => {
 
     if (uploadError) {
       console.error('Error uploading file:', uploadError)
-      uploadErrors.push(originalFileName) // Add the file name to the error list
+      uploadErrors.push(originalFileName)
       continue
     }
 
@@ -73,7 +89,7 @@ const uploadFiles = async () => {
 
     if (dbError) {
       console.error('Error saving file info to database:', dbError)
-      uploadErrors.push(originalFileName) // Add the file name to the error list
+      uploadErrors.push(originalFileName)
     }
   }
 
@@ -131,7 +147,6 @@ const confirmDelete = async file => {
 
         if (error) throw error
 
-        // Remove the file from the filesList
         filesList.value = filesList.value.filter(f => f.uploadfile_filename !== file.uploadfile_filename)
 
         Swal.fire({
@@ -151,7 +166,12 @@ const confirmDelete = async file => {
 }
 
 onMounted(async () => {
-  filesList.value = await fetchFiles()
+  try {
+    filesList.value = await fetchFiles()
+    templateOptions.value = await fetchTemplates()
+  } catch (error) {
+    console.error('Error during onMounted:', error)
+  }
 })
 </script>
 
@@ -247,12 +267,17 @@ onMounted(async () => {
               v-model="selectedTemplate"
               row
             >
-              <VRadio
-                v-for="option in templateOptions"
-                :key="option.value"
-                :label="option.label"
-                :value="option.value"
-              />
+              <template v-if="templateOptions instanceof Array">
+                <VRadio
+                  v-for="option in templateOptions"
+                  :key="option.template_name"
+                  :label="option.template_name"
+                  :value="option.template_name"
+                />
+              </template>
+              <template v-else>
+                <p>Loading template options...</p>
+              </template>
             </VRadioGroup>
           </VContainer>
           <VBtn

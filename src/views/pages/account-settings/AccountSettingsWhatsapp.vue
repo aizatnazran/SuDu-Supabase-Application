@@ -1,10 +1,21 @@
 <script setup>
 import { supabase } from '@/lib/supaBaseClient'
 import Swal from 'sweetalert2'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 const allowedContacts = ref([])
 const newContactNumber = ref('')
+
+const phoneRules = value => {
+  if (!value) return true
+  const pattern = /^60(\+\d{1,3}[- ]?)?\d{8,10}$/
+  return pattern.test(value) || 'Invalid phone number format'
+}
+
+const isFormValid = computed(() => {
+  // Assuming newContactNumber is the only field that needs validation
+  return phoneRules(newContactNumber.value) === true
+})
 
 const fetchContact = async () => {
   try {
@@ -22,51 +33,54 @@ const fetchContact = async () => {
 }
 
 const addNewContact = async () => {
-  if (newContactNumber.value) {
-    try {
-      const company_id = localStorage.getItem('company_id')
-      if (company_id) {
-        const requestData = { contact_number: newContactNumber.value, company_id }
+  if (isFormValid.value) {
+    if (newContactNumber.value) {
+      try {
+        const company_id = localStorage.getItem('company_id')
+        if (company_id) {
+          const requestData = { contact_number: newContactNumber.value, company_id }
 
-        const { data, error } = await supabase.from('contact').insert([requestData])
+          const { data, error } = await supabase.from('contact').insert([requestData])
 
-        if (error) {
-          throw error
+          if (error) {
+            throw error
+          }
+
+          if (data && data.length > 0) {
+            console.log('Newly added contact data:', data[0])
+            allowedContacts.value.push(data[0])
+          }
+
+          newContactNumber.value = ''
+
+          Swal.fire({
+            title: 'Success!',
+            text: 'Contact successfully added!',
+            icon: 'success',
+            confirmButtonColor: '#3085d6',
+          })
         }
-
-        // Ensure that the newly added contact, along with its generated id, is pushed to allowedContacts
-        if (data && data.length > 0) {
-          console.log('Newly added contact data:', data[0]) // Log the newly added contact data
-          allowedContacts.value.push(data[0])
-        }
-
-        newContactNumber.value = ''
-
+      } catch (error) {
+        console.error('Error adding contact:', error.message)
         Swal.fire({
-          title: 'Success!',
-          text: 'Contact successfully added!',
-          icon: 'success',
-          confirmButtonColor: '#3085d6',
+          title: 'Error!',
+          text: 'Error adding contact: ' + error.message,
+          icon: 'error',
+          confirmButtonColor: '#d33',
         })
       }
-    } catch (error) {
-      console.error('Error adding contact:', error.message)
+    } else {
       Swal.fire({
-        title: 'Error!',
-        text: 'Error adding contact: ' + error.message,
-        icon: 'error',
-        confirmButtonColor: '#d33',
+        title: 'Attention!',
+        text: 'Please enter a contact number before submitting.',
+        icon: 'warning',
+        confirmButtonColor: '#3085d6',
       })
     }
   } else {
-    Swal.fire({
-      title: 'Attention!',
-      text: 'Please enter a contact number before submitting.',
-      icon: 'warning',
-      confirmButtonColor: '#3085d6',
-    })
+    // Handle the case when form validation fails
+    console.error('Form validation failed')
   }
-  fetchContact()
 }
 
 const editContact = async contact => {
@@ -178,7 +192,7 @@ onMounted(() => {
     <VDivider />
 
     <VCardText>
-      <VForm @submit.prevent="() => {}">
+      <VForm @submit.prevent="addNewContact">
         <p class="text-base font-weight-medium">Add new contact to allow whatsapp user</p>
 
         <VRow>
@@ -189,26 +203,18 @@ onMounted(() => {
             <VTextField
               label="6012*******"
               v-model="newContactNumber"
+              :rules="[phoneRules]"
               variant="solo-filled"
             />
-            <!--
-              <VSelect
-              v-model="selectedNotification"
-              mandatory
-              :items="['Only when I\'m online', 'Anytime']"
-              /> 
-            -->
           </VCol>
         </VRow>
 
         <div class="d-flex flex-wrap gap-4 mt-4">
-          <VBtn @click="addNewContact"> Add Contact </VBtn>
           <VBtn
-            color="secondary"
-            variant="tonal"
-            type="reset"
+            @click="addNewContact"
+            :disabled="!isFormValid"
           >
-            Reset
+            Add Contact
           </VBtn>
         </div>
       </VForm>

@@ -33,6 +33,11 @@ const router = createRouter({
           meta: { requiresAuth: true },
         },
         {
+          path: 'template',
+          component: () => import('../pages/template.vue'),
+          meta: { requiresAuth: true },
+        },
+        {
           path: 'comingsoon2',
           component: () => import('../pages/comingsoon.vue'),
           meta: { requiresAuth: true },
