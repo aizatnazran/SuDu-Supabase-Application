@@ -200,8 +200,8 @@ const saveChanges = async () => {
 }
 
 onMounted(() => {
-  fetchCompanyData()
-  fetchBusinessTypes() // Add this line
+  // fetchCompanyData()
+  // fetchBusinessTypes()
 })
 </script>
 
