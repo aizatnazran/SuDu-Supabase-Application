@@ -199,9 +199,13 @@ const saveChanges = async () => {
   })
 }
 
-onMounted(() => {
-  //fetchCompanyData()
-  //fetchBusinessTypes()
+const isLoading = ref(false)
+
+onMounted(async () => {
+  isLoading.value = true
+  await fetchCompanyData()
+  await fetchBusinessTypes()
+  isLoading.value = false
 })
 </script>
 
