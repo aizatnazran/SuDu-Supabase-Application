@@ -2,7 +2,7 @@
 import { supabase } from '@/lib/supaBaseClient'
 import avatar1 from '@images/avatars/avatar-1.png'
 import Swal from 'sweetalert2'
-import { ref, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 const form = ref(null)
@@ -21,16 +21,25 @@ const companyId = localStorage.getItem('company_id')
 const route = useRoute()
 const isDataFetched = ref(false)
 
-watch(route, async (to, from) => {
-  if (to.path === '/account-settings' && !isDataFetched.value) {
+// Function to fetch data
+const fetchData = async () => {
+  if (!isDataFetched.value) {
     try {
       await fetchCompanyData()
       await fetchBusinessTypes()
       isDataFetched.value = true
     } catch (error) {
       console.error('Error loading data:', error)
-      // Handle error appropriately
     }
+  }
+}
+
+onMounted(fetchData)
+
+watch(route, (to, from) => {
+  // This ensures that fetchData is called only when navigating to the specific path
+  if (to.path === '/account-settings') {
+    fetchData()
   }
 })
 
