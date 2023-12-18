@@ -17,7 +17,20 @@ const isFormValid = async () => {
 
 const companyId = localStorage.getItem('company_id')
 
+const emailRules = value => {
+  if (!value || value.trim() === '') return true
+  const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/
+  return emailPattern.test(value) || 'Invalid email format'
+}
+
+const zipCodeRules = value => {
+  if (!value || value.trim() === '') return true
+  const zipPattern = /^\d{5}$/
+  return zipPattern.test(value) || 'Zip code must be exactly 5 digits'
+}
+
 const phoneRules = value => {
+  if (!value || value.trim() === '') return true
   const pattern = /^(\+\d{1,3}[- ]?)?\d{10,12}$/
   return pattern.test(value) || 'Invalid phone number format'
 }
@@ -298,6 +311,7 @@ onMounted(() => {
                   v-model="accountDataLocal.company_email"
                   label="Company E-mail"
                   type="email"
+                  :rules="[emailRules]"
                 />
               </VCol>
 
@@ -356,6 +370,7 @@ onMounted(() => {
                   v-model="accountDataLocal.company_zipcode"
                   label="Zip Code"
                   type="number"
+                  :rules="[zipCodeRules]"
                 />
               </VCol>
 
