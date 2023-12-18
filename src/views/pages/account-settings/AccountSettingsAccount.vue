@@ -1,203 +1,200 @@
 <script setup>
-import { supabase } from '@/lib/supaBaseClient'
-import avatar1 from '@images/avatars/avatar-1.png'
-import Swal from 'sweetalert2'
-import { onMounted, ref } from 'vue'
+import { onMounted } from 'vue'
 
-const form = ref(null)
-const isFormValid = async () => {
-  const result = form.value?.validate()
-  if (result instanceof Promise) {
-    const valid = await result
-    return valid
-  } else {
-    return result
-  }
-}
+// const form = ref(null)
+// const isFormValid = async () => {
+//   const result = form.value?.validate()
+//   if (result instanceof Promise) {
+//     const valid = await result
+//     return valid
+//   } else {
+//     return result
+//   }
+// }
 
-const companyId = localStorage.getItem('company_id')
+// const companyId = localStorage.getItem('company_id')
 
-const emailRules = value => {
-  if (!value || value.trim() === '') return true
-  const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/
-  return emailPattern.test(value) || 'Invalid email format'
-}
+// const emailRules = value => {
+//   if (!value || value.trim() === '') return true
+//   const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/
+//   return emailPattern.test(value) || 'Invalid email format'
+// }
 
-const zipCodeRules = value => {
-  if (!value || value.trim() === '') return true
-  const zipPattern = /^\d{5}$/
-  return zipPattern.test(value) || 'Zip code must be exactly 5 digits'
-}
+// const zipCodeRules = value => {
+//   if (!value || value.trim() === '') return true
+//   const zipPattern = /^\d{5}$/
+//   return zipPattern.test(value) || 'Zip code must be exactly 5 digits'
+// }
 
-const phoneRules = value => {
-  if (!value || value.trim() === '') return true
-  const pattern = /^(\+\d{1,3}[- ]?)?\d{10,12}$/
-  return pattern.test(value) || 'Invalid phone number format'
-}
+// const phoneRules = value => {
+//   if (!value || value.trim() === '') return true
+//   const pattern = /^(\+\d{1,3}[- ]?)?\d{10,12}$/
+//   return pattern.test(value) || 'Invalid phone number format'
+// }
 
-const accountDataLocal = ref({
-  avatarImg: avatar1,
-  company_name: null,
-  company_website: null,
-  company_size: null,
-  company_email: null,
-  businessType: null,
-  company_phone: null,
-  company_address: null,
-  company_state: null,
-  company_zipcode: null,
-  company_country: null,
-})
+// const accountDataLocal = ref({
+//   avatarImg: avatar1,
+//   company_name: null,
+//   company_website: null,
+//   company_size: null,
+//   company_email: null,
+//   businessType: null,
+//   company_phone: null,
+//   company_address: null,
+//   company_state: null,
+//   company_zipcode: null,
+//   company_country: null,
+// })
 
-const refInputEl = ref()
-const isAccountDeactivated = ref(false)
+// const refInputEl = ref()
+// const isAccountDeactivated = ref(false)
 
-const resetForm = () => {
-  fetchCompanyData()
-}
+// const resetForm = () => {
+//   fetchCompanyData()
+// }
 
-const changeAvatar = file => {
-  const fileReader = new FileReader()
-  const { files } = file.target
-  if (files && files.length) {
-    fileReader.readAsDataURL(files[0])
-    fileReader.onload = () => {
-      if (typeof fileReader.result === 'string') accountDataLocal.value.avatarImg = fileReader.result
-    }
-  }
-}
+// const changeAvatar = file => {
+//   const fileReader = new FileReader()
+//   const { files } = file.target
+//   if (files && files.length) {
+//     fileReader.readAsDataURL(files[0])
+//     fileReader.onload = () => {
+//       if (typeof fileReader.result === 'string') accountDataLocal.value.avatarImg = fileReader.result
+//     }
+//   }
+// }
 
-const resetAvatar = () => {
-  accountDataLocal.value.avatarImg = accountData.avatarImg
-}
+// const resetAvatar = () => {
+//   accountDataLocal.value.avatarImg = accountData.avatarImg
+// }
 
-const businessTypes = ref([])
+// const businessTypes = ref([])
 
-const fetchBusinessTypes = async () => {
-  try {
-    const { data, error } = await supabase.from('businesstype').select('businesstype_name')
+// const fetchBusinessTypes = async () => {
+//   try {
+//     const { data, error } = await supabase.from('businesstype').select('businesstype_name')
 
-    if (error) throw new Error(error.message)
+//     if (error) throw new Error(error.message)
 
-    if (data) {
-      businessTypes.value = data.map(type => type.businesstype_name)
-    }
-  } catch (error) {
-    console.error('Error fetching business types:', error)
-  }
-}
+//     if (data) {
+//       businessTypes.value = data.map(type => type.businesstype_name)
+//     }
+//   } catch (error) {
+//     console.error('Error fetching business types:', error)
+//   }
+// }
 
-const fetchCompanyData = async () => {
-  const companyId = localStorage.getItem('company_id')
+// const fetchCompanyData = async () => {
+//   const companyId = localStorage.getItem('company_id')
 
-  try {
-    const { data, error } = await supabase
-      .from('company')
-      .select(
-        `
-        company_name,
-        company_website,
-        company_email,
-        company_size,
-        businesstype:company_businesstype(businesstype_name),
-        company_phone,
-        company_address,
-        company_state,
-        company_zipcode,
-        company_country
-      `,
-      )
-      .eq('id', companyId)
-      .single()
+//   try {
+//     const { data, error } = await supabase
+//       .from('company')
+//       .select(
+//         `
+//         company_name,
+//         company_website,
+//         company_email,
+//         company_size,
+//         businesstype:company_businesstype(businesstype_name),
+//         company_phone,
+//         company_address,
+//         company_state,
+//         company_zipcode,
+//         company_country
+//       `,
+//       )
+//       .eq('id', companyId)
+//       .single()
 
-    if (error) throw new Error(error.message)
+//     if (error) throw new Error(error.message)
 
-    if (data) {
-      accountDataLocal.value = {
-        ...accountDataLocal.value,
-        company_name: data.company_name,
-        company_website: data.company_website,
-        company_size: data.company_size,
-        company_email: data.company_email,
-        businessType: data.businesstype?.businesstype_name,
-        company_phone: data.company_phone,
-        company_address: data.company_address,
-        company_state: data.company_state,
-        company_zipcode: data.company_zipcode,
-        company_country: data.company_country,
-      }
-    }
-  } catch (error) {
-    console.error('Error fetching company data:', error)
-  }
-}
+//     if (data) {
+//       accountDataLocal.value = {
+//         ...accountDataLocal.value,
+//         company_name: data.company_name,
+//         company_website: data.company_website,
+//         company_size: data.company_size,
+//         company_email: data.company_email,
+//         businessType: data.businesstype?.businesstype_name,
+//         company_phone: data.company_phone,
+//         company_address: data.company_address,
+//         company_state: data.company_state,
+//         company_zipcode: data.company_zipcode,
+//         company_country: data.company_country,
+//       }
+//     }
+//   } catch (error) {
+//     console.error('Error fetching company data:', error)
+//   }
+// }
 
-const fetchBusinessTypeId = async businessTypeName => {
-  try {
-    const { data, error } = await supabase
-      .from('businesstype')
-      .select('id')
-      .eq('businesstype_name', businessTypeName)
-      .single()
+// const fetchBusinessTypeId = async businessTypeName => {
+//   try {
+//     const { data, error } = await supabase
+//       .from('businesstype')
+//       .select('id')
+//       .eq('businesstype_name', businessTypeName)
+//       .single()
 
-    if (error) throw new Error(error.message)
+//     if (error) throw new Error(error.message)
 
-    if (data) {
-      return data.id
-    }
-  } catch (error) {
-    console.error('Error fetching business type ID:', error)
-    return null
-  }
-}
+//     if (data) {
+//       return data.id
+//     }
+//   } catch (error) {
+//     console.error('Error fetching business type ID:', error)
+//     return null
+//   }
+// }
 
-const saveChanges = async () => {
-  if (!isFormValid()) {
-    Swal.fire('Error', 'Please correct the errors in the form.', 'error')
-    return
-  }
+// const saveChanges = async () => {
+//   if (!isFormValid()) {
+//     Swal.fire('Error', 'Please correct the errors in the form.', 'error')
+//     return
+//   }
 
-  Swal.fire({
-    title: 'Are you sure?',
-    text: 'Do you want to save the changes?',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#3085d6',
-    cancelButtonColor: '#d33',
-    confirmButtonText: 'Yes, save it!',
-  }).then(async result => {
-    if (result.isConfirmed) {
-      const updateData = { ...accountDataLocal.value }
-      delete updateData.avatarImg
-      delete updateData.businessType
+//   Swal.fire({
+//     title: 'Are you sure?',
+//     text: 'Do you want to save the changes?',
+//     icon: 'warning',
+//     showCancelButton: true,
+//     confirmButtonColor: '#3085d6',
+//     cancelButtonColor: '#d33',
+//     confirmButtonText: 'Yes, save it!',
+//   }).then(async result => {
+//     if (result.isConfirmed) {
+//       const updateData = { ...accountDataLocal.value }
+//       delete updateData.avatarImg
+//       delete updateData.businessType
 
-      // Fetch the businesstype ID based on the selected businesstype_name
-      const selectedBusinessTypeName = accountDataLocal.value.businessType
-      const businessType = await fetchBusinessTypeId(selectedBusinessTypeName)
+//       // Fetch the businesstype ID based on the selected businesstype_name
+//       const selectedBusinessTypeName = accountDataLocal.value.businessType
+//       const businessType = await fetchBusinessTypeId(selectedBusinessTypeName)
 
-      if (businessType) {
-        updateData.company_businesstype = businessType
-      }
+//       if (businessType) {
+//         updateData.company_businesstype = businessType
+//       }
 
-      Object.keys(updateData).forEach(key => {
-        if (updateData[key] === '' || updateData[key] === undefined) {
-          updateData[key] = null
-        }
-      })
+//       Object.keys(updateData).forEach(key => {
+//         if (updateData[key] === '' || updateData[key] === undefined) {
+//           updateData[key] = null
+//         }
+//       })
 
-      try {
-        const { error } = await supabase.from('company').update(updateData).eq('id', companyId)
+//       try {
+//         const { error } = await supabase.from('company').update(updateData).eq('id', companyId)
 
-        if (error) throw new Error(error.message)
+//         if (error) throw new Error(error.message)
 
-        Swal.fire('Saved!', 'Changes saved successfully.', 'success')
-      } catch (error) {
-        console.error('Error updating company data:', error.message)
-        Swal.fire('Error!', 'Error saving changes: ' + error.message, 'error')
-      }
-    }
-  })
-}
+//         Swal.fire('Saved!', 'Changes saved successfully.', 'success')
+//       } catch (error) {
+//         console.error('Error updating company data:', error.message)
+//         Swal.fire('Error!', 'Error saving changes: ' + error.message, 'error')
+//       }
+//     }
+//   })
+// }
 
 onMounted(() => {
   // fetchCompanyData()
