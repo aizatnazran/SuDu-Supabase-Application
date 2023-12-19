@@ -64,6 +64,23 @@ const uploadFiles = async () => {
 
   let uploadErrors = []
 
+  // Fetch the ID of the selected template
+  let selectedTemplateId = null
+  if (selectedTemplate.value) {
+    const { data: templateData, error: templateError } = await supabase
+      .from('template')
+      .select('id')
+      .eq('template_name', selectedTemplate.value)
+      .single()
+
+    if (templateError) {
+      console.error('Error fetching template ID:', templateError)
+      return
+    }
+
+    selectedTemplateId = templateData.id
+  }
+
   for (const file of selectedFiles.value) {
     const originalFileName = file.name
     const newFileName = `${userUUID}_${originalFileName}`
@@ -78,12 +95,13 @@ const uploadFiles = async () => {
       continue
     }
 
-    // Add record to the database for each file
+    // Add record to the database for each file, including the template ID
     const { error: dbError } = await supabase.from('uploadfile').insert([
       {
         uploadfile_filename: originalFileName,
         uploadfile_company: companyId,
         uploadfile_uuid: userUUID,
+        uploadfile_template: selectedTemplateId, // Add the template ID here
       },
     ])
 
@@ -102,14 +120,14 @@ const uploadFiles = async () => {
   if (uploadErrors.length === 0) {
     Swal.fire({
       title: 'Success!',
-      text: 'All your files have been uploaded.',
+      text: 'File uploaded successfully.',
       icon: 'success',
       customClass: { container: 'high-z-index-swal' },
     })
   } else {
     Swal.fire({
-      title: 'Some or all files failed to upload',
-      text: `The following files could not be uploaded: ${uploadErrors.join(', ')}`,
+      title: 'File failed to upload',
+      text: `The following file could not be uploaded: ${uploadErrors.join(', ')}`,
       icon: 'warning',
       customClass: { container: 'high-z-index-swal' },
     })
@@ -260,7 +278,6 @@ onMounted(async () => {
               @change="handleFileChange"
               counter
               truncate-length="15"
-              multiple
             />
             <div class="text-overline text-start ml-10 text-title">Select Template:</div>
             <VRadioGroup
