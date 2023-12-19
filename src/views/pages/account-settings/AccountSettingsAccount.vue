@@ -221,6 +221,11 @@ const saveChanges = async () => {
     }
   })
 }
+onMounted(() => {
+  // fetchCompanyData()
+  // fetchBusinessTypes()
+})
+
 </script>
 
 <template>
