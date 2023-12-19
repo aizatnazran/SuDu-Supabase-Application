@@ -104,7 +104,6 @@ const uploadFiles = async () => {
         uploadfile_company: companyId,
         uploadfile_uuid: userUUID,
         uploadfile_template: selectedTemplateId,
-
       },
     ])
 
@@ -154,9 +153,8 @@ const uploadFiles = async () => {
     })
   } else {
     Swal.fire({
-
       title: 'File failed to upload or process',
-      text: `The file could not be processed: ${uploadErrors.join(', ')}`,
+      text: `The file '${uploadErrors.join(', ')}' could not be processed`,
       icon: 'warning',
       customClass: { container: 'high-z-index-swal' },
     })

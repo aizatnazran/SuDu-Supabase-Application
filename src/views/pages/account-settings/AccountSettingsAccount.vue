@@ -2,61 +2,10 @@
 import { supabase } from '@/lib/supaBaseClient'
 import avatar1 from '@images/avatars/avatar-1.png'
 import Swal from 'sweetalert2'
-import { ref, watchEffect } from 'vue'
-import { useRoute } from 'vue-router'
+import { onMounted, ref } from 'vue'
 
 const form = ref(null)
-const isFormValid = async () => {
-  const result = form.value?.validate()
-  if (result instanceof Promise) {
-    const valid = await result
-    return valid
-  } else {
-    return result
-  }
-}
-
-const companyId = ref(localStorage.getItem('company_id'))
-const route = useRoute()
-
-async function fetchData() {
-  if (route.path === '/account-settings') {
-    await fetchCompanyData()
-    await fetchBusinessTypes()
-  }
-}
-fetchData()
-
-onBeforeRouteEnter(async (to, from, next) => {
-  if (to.path === '/account-settings') {
-    await fetchData()
-    next()
-  } else {
-    next()
-  }
-})
-
-watchEffect(() => {
-  fetchData()
-})
-
-const emailRules = value => {
-  if (!value || value.trim() === '') return true
-  const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/
-  return emailPattern.test(value) || 'Invalid email format'
-}
-
-const zipCodeRules = value => {
-  if (!value || value.trim() === '') return true
-  const zipPattern = /^\d{5}$/
-  return zipPattern.test(value) || 'Zip code must be exactly 5 digits'
-}
-
-const phoneRules = value => {
-  if (!value || value.trim() === '') return true
-  const pattern = /^(\+\d{1,3}[- ]?)?\d{10,12}$/
-  return pattern.test(value) || 'Invalid phone number format'
-}
+const companyId = localStorage.getItem('company_id')
 
 const accountDataLocal = ref({
   avatarImg: avatar1,
@@ -96,7 +45,7 @@ const resetAvatar = () => {
 
 const businessTypes = ref([])
 
-async function fetchBusinessTypes() {
+const fetchBusinessTypes = async () => {
   try {
     const { data, error } = await supabase.from('businesstype').select('businesstype_name')
 
@@ -110,7 +59,7 @@ async function fetchBusinessTypes() {
   }
 }
 
-async function fetchCompanyData() {
+const fetchCompanyData = async () => {
   const companyId = localStorage.getItem('company_id')
 
   try {
@@ -175,11 +124,6 @@ const fetchBusinessTypeId = async businessTypeName => {
 }
 
 const saveChanges = async () => {
-  if (!isFormValid()) {
-    Swal.fire('Error', 'Please correct the errors in the form.', 'error')
-    return
-  }
-
   Swal.fire({
     title: 'Are you sure?',
     text: 'Do you want to save the changes?',
@@ -221,11 +165,11 @@ const saveChanges = async () => {
     }
   })
 }
-onMounted(() => {
-  // fetchCompanyData()
-  // fetchBusinessTypes()
-})
 
+onMounted(() => {
+  fetchCompanyData()
+  fetchBusinessTypes() // Add this line
+})
 </script>
 
 <template>
@@ -233,12 +177,15 @@ onMounted(() => {
     <VCol cols="12">
       <VCard title="Account Details">
         <VCardText class="d-flex">
+          <!-- 👉 Avatar -->
           <VAvatar
             rounded="lg"
             size="100"
             class="me-6"
             :image="accountDataLocal.avatarImg"
           />
+
+          <!-- 👉 Upload Photo -->
           <form class="d-flex flex-column justify-center gap-5">
             <div class="d-flex flex-wrap gap-2">
               <VBtn
@@ -282,11 +229,13 @@ onMounted(() => {
         <VDivider />
 
         <VCardText>
+          <!-- 👉 Form -->
           <VForm
             ref="form"
             class="mt-6"
           >
             <VRow>
+              <!-- 👉 Company Name -->
               <VCol
                 md="6"
                 cols="12"
@@ -297,6 +246,7 @@ onMounted(() => {
                 />
               </VCol>
 
+              <!-- 👉 Last Name -->
               <VCol
                 md="6"
                 cols="12"
@@ -307,6 +257,7 @@ onMounted(() => {
                 />
               </VCol>
 
+              <!-- 👉 Company Size -->
               <VCol
                 cols="12"
                 md="6"
@@ -318,6 +269,7 @@ onMounted(() => {
                 />
               </VCol>
 
+              <!-- 👉 Email -->
               <VCol
                 cols="12"
                 md="6"
@@ -326,10 +278,10 @@ onMounted(() => {
                   v-model="accountDataLocal.company_email"
                   label="Company E-mail"
                   type="email"
-                  :rules="[emailRules]"
                 />
               </VCol>
 
+              <!-- 👉 Business Type -->
               <VCol
                 cols="12"
                 md="6"
@@ -341,6 +293,7 @@ onMounted(() => {
                 />
               </VCol>
 
+              <!-- 👉 Phone -->
               <VCol
                 cols="12"
                 md="6"
@@ -348,10 +301,10 @@ onMounted(() => {
                 <VTextField
                   v-model="accountDataLocal.company_phone"
                   label="Phone Number"
-                  :rules="[phoneRules]"
                 />
               </VCol>
 
+              <!-- 👉 Address -->
               <VCol
                 cols="12"
                 md="6"
@@ -362,6 +315,7 @@ onMounted(() => {
                 />
               </VCol>
 
+              <!-- 👉 State -->
               <VCol
                 cols="12"
                 md="6"
@@ -372,6 +326,7 @@ onMounted(() => {
                 />
               </VCol>
 
+              <!-- 👉 Zip Code -->
               <VCol
                 cols="12"
                 md="6"
@@ -380,10 +335,10 @@ onMounted(() => {
                   v-model="accountDataLocal.company_zipcode"
                   label="Zip Code"
                   type="number"
-                  :rules="[zipCodeRules]"
                 />
               </VCol>
 
+              <!-- 👉 Country -->
               <VCol
                 cols="12"
                 md="6"
@@ -395,21 +350,18 @@ onMounted(() => {
                 />
               </VCol>
 
+              <!-- 👉 Form Actions -->
               <VCol
                 cols="12"
                 class="d-flex flex-wrap gap-4"
               >
-                <VBtn
-                  @click="saveChanges"
-                  :disabled="!isFormValid()"
-                  >Save changes</VBtn
-                >
+                <VBtn @click="saveChanges">Save changes</VBtn>
 
                 <VBtn
                   color="secondary"
                   variant="tonal"
                   type="reset"
-                  @click.prevent="fetchData"
+                  @click.prevent="resetForm"
                 >
                   Reset
                 </VBtn>
@@ -421,6 +373,7 @@ onMounted(() => {
     </VCol>
 
     <VCol cols="12">
+      <!-- 👉 Deactivate Account -->
       <VCard title="Deactivate Account">
         <VCardText>
           <div>
