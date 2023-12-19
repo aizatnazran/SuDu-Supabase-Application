@@ -73,6 +73,7 @@ const uploadFiles = async () => {
       .from('template')
       .select('id')
       .eq('template_name', selectedTemplateName)
+
       .single()
 
     if (templateError) {
@@ -145,6 +146,7 @@ const uploadFiles = async () => {
   if (uploadErrors.length === 0) {
     Swal.fire({
       title: 'Success!',
+
       text: 'File uploaded and processed.',
       icon: 'success',
       customClass: { container: 'high-z-index-swal' },
@@ -152,7 +154,7 @@ const uploadFiles = async () => {
   } else {
     Swal.fire({
       title: 'File failed to upload or process',
-      text: `The file could not be processed: ${uploadErrors.join(', ')}`,
+      text: `The file '${uploadErrors.join(', ')}' could not be processed`,
       icon: 'warning',
       customClass: { container: 'high-z-index-swal' },
     })
