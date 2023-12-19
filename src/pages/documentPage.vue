@@ -20,7 +20,7 @@ async function fetchTemplates() {
       return []
     }
 
-    return templates
+    return templates.map(template => template.template_name)
   } catch (error) {
     console.error('Error fetching templates:', error)
     return []
@@ -162,13 +162,45 @@ const uploadFiles = async () => {
 }
 
 async function fetchFiles() {
-  let { data: files, error } = await supabase
-    .from('uploadfile')
-    .select('uploadfile_filename')
-    .eq('uploadfile_company', companyId)
+  try {
+    let { data: files, error } = await supabase
+      .from('uploadfile')
+      .select(
+        `
+        uploadfile_filename,
+        template (
+          id,
+          template_name
+        )
+      `,
+      )
+      .eq('uploadfile_company', companyId)
 
-  if (error) console.log('Error fetching files:', error)
-  else return files
+    if (error) {
+      console.error('Error fetching files:', error)
+      return {}
+    }
+
+    const filesByTemplate = files.reduce((acc, file) => {
+      if (file.template && file.template.template_name) {
+        const templateName = file.template.template_name
+        if (!acc[templateName]) {
+          acc[templateName] = []
+        }
+        acc[templateName].push(file)
+      } else {
+        // Handle the case where template is null or doesn't have template_name
+        // Example: add them to a 'No Template' category or log a warning
+        console.warn('File without template:', file)
+      }
+      return acc
+    }, {})
+
+    return filesByTemplate
+  } catch (error) {
+    console.error('Error fetching files:', error)
+    return {}
+  }
 }
 
 const filesList = ref([])
@@ -185,14 +217,24 @@ const confirmDelete = async file => {
   }).then(async result => {
     if (result.isConfirmed) {
       try {
-        let { error } = await supabase
+        let { error: deletionError } = await supabase
           .from('uploadfile')
           .delete()
           .match({ uploadfile_filename: file.uploadfile_filename, uploadfile_company: companyId })
 
-        if (error) throw error
+        if (deletionError) {
+          throw deletionError
+        }
 
-        filesList.value = filesList.value.filter(f => f.uploadfile_filename !== file.uploadfile_filename)
+        // Find the template key for the file and update the array
+        for (const template in filesList.value) {
+          if (filesList.value[template].some(f => f.uploadfile_filename === file.uploadfile_filename)) {
+            filesList.value[template] = filesList.value[template].filter(
+              f => f.uploadfile_filename !== file.uploadfile_filename,
+            )
+            break
+          }
+        }
 
         Swal.fire({
           title: 'Deleted!',
@@ -200,6 +242,7 @@ const confirmDelete = async file => {
           icon: 'success',
         })
       } catch (error) {
+        console.error('Deletion error:', error)
         Swal.fire({
           title: 'Error!',
           text: 'There was a problem deleting your file.',
@@ -233,54 +276,75 @@ onMounted(async () => {
   </VRow>
   <div>
     <VContainer>
-      <!-- Submitted Document Docs -->
-      <VRow>
-        <VChip class="mb-3 mt-6">
-          <p class="text-title ma-5">Submitted Document</p>
-        </VChip>
-      </VRow>
-
-      <VRow>
-        <div
-          v-if="filesList.length === 0"
-          class="text-center my-5"
-        >
-          <p>No documents submitted yet.</p>
-        </div>
-        <template v-else>
-          <template
-            v-for="file in filesList"
-            :key="file.uploadfile_filename"
+      <template
+        v-for="(templateName, index) in templateOptions"
+        :key="index"
+      >
+        <!-- Styled Template Name Row -->
+        <v-row class="mb-4">
+          <v-col
+            cols="5"
+            class="d-flex align-center"
           >
-            <VCard class="document-card ma-1">
-              <VBtn
-                icon
-                class="m-2"
-                style="
-                  position: absolute;
-                  top: 0;
-                  right: 0;
-                  z-index: 2;
-                  width: 24px;
-                  height: 24px;
-                  min-width: 24px;
-                  padding: 0;
-                  margin: 2px;
-                "
-                @click="confirmDelete(file)"
-              >
-                <VIcon size="x-small">mdi-close</VIcon>
-              </VBtn>
-              <VImg
-                class="ma-3"
-                max-width="100"
-                :src="csvimg"
-              />
-              <p class="text-center text-caption px-2 file-name">{{ file.uploadfile_filename }}</p>
-            </VCard>
+            <v-divider></v-divider>
+          </v-col>
+          <v-col
+            cols="2"
+            class="text-center"
+          >
+            <span class="subtitle-1 font-weight-bold">{{ templateName }}</span>
+          </v-col>
+          <v-col
+            cols="5"
+            class="d-flex align-center"
+          >
+            <v-divider></v-divider>
+          </v-col>
+        </v-row>
+
+        <!-- Files associated with the template -->
+        <VRow>
+          <template v-if="filesList[templateName] && filesList[templateName].length">
+            <template
+              v-for="file in filesList[templateName]"
+              :key="file.uploadfile_filename"
+            >
+              <VCard class="document-card ma-1">
+                <VBtn
+                  icon
+                  class="m-2"
+                  style="
+                    position: absolute;
+                    top: 0;
+                    right: 0;
+                    z-index: 2;
+                    width: 24px;
+                    height: 24px;
+                    min-width: 24px;
+                    padding: 0;
+                    margin: 2px;
+                  "
+                  @click="confirmDelete(file)"
+                >
+                  <VIcon size="x-small">mdi-close</VIcon>
+                </VBtn>
+                <VImg
+                  class="ma-3"
+                  max-width="100"
+                  :src="csvimg"
+                />
+                <p class="text-center text-caption px-2 file-name">{{ file.uploadfile_filename }}</p>
+              </VCard>
+            </template>
           </template>
-        </template>
-      </VRow>
+          <div
+            v-else
+            class="text-center my-5"
+          >
+            <p>No documents submitted for {{ templateName }}.</p>
+          </div>
+        </VRow>
+      </template>
     </VContainer>
 
     <div class="text-center">
