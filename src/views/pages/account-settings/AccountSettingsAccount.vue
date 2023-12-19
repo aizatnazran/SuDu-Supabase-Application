@@ -5,35 +5,7 @@ import Swal from 'sweetalert2'
 import { onMounted, ref } from 'vue'
 
 const form = ref(null)
-const isFormValid = async () => {
-  const result = form.value?.validate()
-  if (result instanceof Promise) {
-    const valid = await result
-    return valid
-  } else {
-    return result
-  }
-}
-
 const companyId = localStorage.getItem('company_id')
-
-const emailRules = value => {
-  if (!value || value.trim() === '') return true
-  const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/
-  return emailPattern.test(value) || 'Invalid email format'
-}
-
-const zipCodeRules = value => {
-  if (!value || value.trim() === '') return true
-  const zipPattern = /^\d{5}$/
-  return zipPattern.test(value) || 'Zip code must be exactly 5 digits'
-}
-
-const phoneRules = value => {
-  if (!value || value.trim() === '') return true
-  const pattern = /^(\+\d{1,3}[- ]?)?\d{10,12}$/
-  return pattern.test(value) || 'Invalid phone number format'
-}
 
 const accountDataLocal = ref({
   avatarImg: avatar1,
@@ -152,11 +124,6 @@ const fetchBusinessTypeId = async businessTypeName => {
 }
 
 const saveChanges = async () => {
-  if (!isFormValid()) {
-    Swal.fire('Error', 'Please correct the errors in the form.', 'error')
-    return
-  }
-
   Swal.fire({
     title: 'Are you sure?',
     text: 'Do you want to save the changes?',
@@ -200,8 +167,8 @@ const saveChanges = async () => {
 }
 
 onMounted(() => {
-  // fetchCompanyData()
-  // fetchBusinessTypes()
+  fetchCompanyData()
+  fetchBusinessTypes() // Add this line
 })
 </script>
 
@@ -311,7 +278,6 @@ onMounted(() => {
                   v-model="accountDataLocal.company_email"
                   label="Company E-mail"
                   type="email"
-                  :rules="[emailRules]"
                 />
               </VCol>
 
@@ -335,7 +301,6 @@ onMounted(() => {
                 <VTextField
                   v-model="accountDataLocal.company_phone"
                   label="Phone Number"
-                  :rules="[phoneRules]"
                 />
               </VCol>
 
@@ -370,7 +335,6 @@ onMounted(() => {
                   v-model="accountDataLocal.company_zipcode"
                   label="Zip Code"
                   type="number"
-                  :rules="[zipCodeRules]"
                 />
               </VCol>
 
@@ -391,11 +355,7 @@ onMounted(() => {
                 cols="12"
                 class="d-flex flex-wrap gap-4"
               >
-                <VBtn
-                  @click="saveChanges"
-                  :disabled="!isFormValid()"
-                  >Save changes</VBtn
-                >
+                <VBtn @click="saveChanges">Save changes</VBtn>
 
                 <VBtn
                   color="secondary"
