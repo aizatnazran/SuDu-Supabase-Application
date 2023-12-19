@@ -1,10 +1,11 @@
 <script setup>
 import csvimg from '@images/images/csv.png'
+import axios from 'axios'
+import FormData from 'form-data'
 import Swal from 'sweetalert2'
 import { ref } from 'vue'
 import { useTheme } from 'vuetify'
 import { supabase } from '../lib/supaBaseClient.js'
-
 // Components
 
 async function fetchTemplates() {
@@ -64,13 +65,15 @@ const uploadFiles = async () => {
 
   let uploadErrors = []
 
-  // Fetch the ID of the selected template
+  // Fetch the ID and name of the selected template
   let selectedTemplateId = null
-  if (selectedTemplate.value) {
+  let selectedTemplateName = selectedTemplate.value
+  if (selectedTemplateName) {
     const { data: templateData, error: templateError } = await supabase
       .from('template')
       .select('id')
-      .eq('template_name', selectedTemplate.value)
+      .eq('template_name', selectedTemplateName)
+
       .single()
 
     if (templateError) {
@@ -95,18 +98,42 @@ const uploadFiles = async () => {
       continue
     }
 
-    // Add record to the database for each file, including the template ID
     const { error: dbError } = await supabase.from('uploadfile').insert([
       {
         uploadfile_filename: originalFileName,
         uploadfile_company: companyId,
         uploadfile_uuid: userUUID,
-        uploadfile_template: selectedTemplateId, // Add the template ID here
+        uploadfile_template: selectedTemplateId,
+
       },
     ])
 
     if (dbError) {
       console.error('Error saving file info to database:', dbError)
+      uploadErrors.push(originalFileName)
+      continue
+    }
+
+    const form = new FormData()
+    form.append('file', file, originalFileName)
+
+    // Prepare parameters
+    const collectionName = selectedTemplateName.replace(/\s+/g, '_')
+    const params = {
+      uuid: userUUID,
+      collection_name: collectionName,
+      preprocess: 'false',
+    }
+
+    try {
+      await axios.post('http://sudu.ai:8082/upload', form, {
+        params: params,
+      })
+    } catch (axiosError) {
+      console.error('Error sending file to API:', axiosError)
+      if (axiosError.response) {
+        console.error('Server responded with:', axiosError.response.status, axiosError.response.data)
+      }
       uploadErrors.push(originalFileName)
     }
   }
@@ -120,14 +147,16 @@ const uploadFiles = async () => {
   if (uploadErrors.length === 0) {
     Swal.fire({
       title: 'Success!',
-      text: 'File uploaded successfully.',
+
+      text: 'File uploaded and processed.',
       icon: 'success',
       customClass: { container: 'high-z-index-swal' },
     })
   } else {
     Swal.fire({
-      title: 'File failed to upload',
-      text: `The following file could not be uploaded: ${uploadErrors.join(', ')}`,
+
+      title: 'File failed to upload or process',
+      text: `The file could not be processed: ${uploadErrors.join(', ')}`,
       icon: 'warning',
       customClass: { container: 'high-z-index-swal' },
     })
