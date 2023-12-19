@@ -6,4 +6,4 @@ services:
       dockerfile: Dockerfile
     container_name: SuDu
     ports:
-      - '8081:80'
+      - '8080:80'
