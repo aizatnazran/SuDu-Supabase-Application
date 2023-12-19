@@ -310,30 +310,21 @@ onMounted(async () => {
               :key="file.uploadfile_filename"
             >
               <VCard class="document-card ma-1">
-                <VBtn
+                <v-btn
                   icon
-                  class="m-2"
-                  style="
-                    position: absolute;
-                    top: 0;
-                    right: 0;
-                    z-index: 2;
-                    width: 24px;
-                    height: 24px;
-                    min-width: 24px;
-                    padding: 0;
-                    margin: 2px;
-                  "
+                  flat
+                  color="transparent"
+                  class="dots-button"
+                  v-on="on"
                   @click="confirmDelete(file)"
                 >
-                  <VIcon size="x-small">mdi-close</VIcon>
-                </VBtn>
-                <VImg
-                  class="ma-3"
-                  max-width="100"
+                  <v-icon>mdi-dots-vertical</v-icon>
+                </v-btn>
+                <img
                   :src="csvimg"
+                  alt="CSV Icon"
                 />
-                <p class="text-center text-caption px-2 file-name">{{ file.uploadfile_filename }}</p>
+                <p class="file-name">{{ file.uploadfile_filename }}</p>
               </VCard>
             </template>
           </template>
@@ -410,19 +401,38 @@ onMounted(async () => {
 }
 
 .document-card {
-  width: 100px;
-  height: 150px;
+  width: 180px;
+  height: 120px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  border-radius: 5%;
+  align-items: center; /* Center items horizontally */
+  justify-content: center; /* Center items vertically */
   opacity: 0.8;
+  position: relative; /* For positioning the close button absolutely */
+}
+
+.document-card img {
+  /* Assuming you use an <img> tag for the image */
+  width: 50px; /* Adjust as needed */
+  margin: auto; /* This will center the image */
 }
 
 .file-name {
+  text-align: center;
+  margin-bottom: 2px;
+  padding: 0 10px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 100%;
+  max-width: 170px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.dots-button {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  z-index: 10;
 }
 </style>
