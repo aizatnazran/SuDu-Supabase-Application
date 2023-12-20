@@ -3,10 +3,15 @@ import csvimg from '@images/images/csv.png'
 import axios from 'axios'
 import FormData from 'form-data'
 import Swal from 'sweetalert2'
-import { ref } from 'vue'
-import { useTheme } from 'vuetify'
+import { ref, watch } from 'vue'
 import { supabase } from '../lib/supaBaseClient.js'
 // Components
+
+const templateOptions = ref([])
+const selectedFiles = ref([])
+const selectedTemplate = ref(null)
+const sheet = ref(false)
+const filesList = ref([])
 
 async function fetchTemplates() {
   try {
@@ -27,20 +32,16 @@ async function fetchTemplates() {
   }
 }
 
-const templateOptions = ref([])
-
-const vuetifyTheme = useTheme()
-
-const selectedFiles = ref([])
+watch(sheet, newVal => {
+  if (!newVal) {
+    selectedFiles.value = []
+  }
+})
 
 const handleFileChange = event => {
-  selectedFiles.value = Array.from(event.target.files) // Store all selected files
+  selectedFiles.value = Array.from(event.target.files)
   console.log('Selected files:', selectedFiles.value)
 }
-
-const selectedTemplate = ref('template1')
-
-const sheet = ref(false)
 
 // const props = defineProps({
 
@@ -63,9 +64,20 @@ const uploadFiles = async () => {
     return
   }
 
+  if (!selectedTemplate.value) {
+    await Swal.fire({
+      title: 'Error!',
+      text: 'Please select a template before uploading.',
+      icon: 'error',
+      customClass: { container: 'high-z-index-swal' },
+    })
+    selectedFiles.value = []
+    return
+  }
+
   let uploadErrors = []
 
-  // Fetch the ID and name of the selected template
+  // Fetch the ID of the selected template
   let selectedTemplateId = null
   let selectedTemplateName = selectedTemplate.value
   if (selectedTemplateName) {
@@ -73,7 +85,7 @@ const uploadFiles = async () => {
       .from('template')
       .select('id')
       .eq('template_name', selectedTemplateName)
-
+      .eq('company_id', companyId)
       .single()
 
     if (templateError) {
@@ -98,6 +110,7 @@ const uploadFiles = async () => {
       continue
     }
 
+    // Insert file information into 'uploadfile' table
     const { error: dbError } = await supabase.from('uploadfile').insert([
       {
         uploadfile_filename: originalFileName,
@@ -116,7 +129,6 @@ const uploadFiles = async () => {
     const form = new FormData()
     form.append('file', file, originalFileName)
 
-    // Prepare parameters
     const collectionName = selectedTemplateName.replace(/\s+/g, '_')
     const params = {
       uuid: userUUID,
@@ -137,16 +149,13 @@ const uploadFiles = async () => {
     }
   }
 
-  // Clear the selected files
   selectedFiles.value = []
 
-  // Update the files list
   filesList.value = await fetchFiles()
 
   if (uploadErrors.length === 0) {
     Swal.fire({
       title: 'Success!',
-
       text: 'File uploaded and processed.',
       icon: 'success',
       customClass: { container: 'high-z-index-swal' },
@@ -189,8 +198,6 @@ async function fetchFiles() {
         }
         acc[templateName].push(file)
       } else {
-        // Handle the case where template is null or doesn't have template_name
-        // Example: add them to a 'No Template' category or log a warning
         console.warn('File without template:', file)
       }
       return acc
@@ -202,8 +209,6 @@ async function fetchFiles() {
     return {}
   }
 }
-
-const filesList = ref([])
 
 const confirmDelete = async file => {
   Swal.fire({
@@ -292,7 +297,7 @@ onMounted(async () => {
             cols="2"
             class="text-center"
           >
-            <span class="subtitle-1 font-weight-bold">{{ templateName }}</span>
+            <span class="subtitle-1">{{ templateName }}</span>
           </v-col>
           <v-col
             cols="5"
@@ -346,38 +351,21 @@ onMounted(async () => {
         class="overlaying-component-class"
       >
         <VCard class="pa-10">
-          <VContainer
-            class="pa-5 rounded-lg mt-2 border-2"
-            style="background-color: var(--v-theme-on-surface); border: 2px solid #8a8d93"
-          >
-            <!--
-                <div class="text-overline text-start ml-10">
-                File Menu :
-                </div> 
-              -->
-            <div class="text-overline text-start ml-10 text-title">File Upload :</div>
-            <VFileInput
-              @change="handleFileChange"
-              counter
-              truncate-length="15"
-            />
-            <div class="text-overline text-start ml-10 text-title">Select Template:</div>
-            <VRadioGroup
+          <VContainer>
+            <div class="text-h6 text-start mb-2 font-weight-bold">Select File Type</div>
+            <VSelect
               v-model="selectedTemplate"
-              row
-            >
-              <template v-if="templateOptions instanceof Array">
-                <VRadio
-                  v-for="option in templateOptions"
-                  :key="option.template_name"
-                  :label="option.template_name"
-                  :value="option.template_name"
-                />
-              </template>
-              <template v-else>
-                <p>Loading template options...</p>
-              </template>
-            </VRadioGroup>
+              :items="templateOptions"
+              label="Templates"
+              class="select-template"
+            />
+            <div class="text-h6 text-start mt-4 font-weight-bold">Upload File</div>
+            <VFileInput
+              @click:input.stop
+              @change="handleFileChange"
+              label="Click to upload file or drag and drop here"
+              class="file-upload-input"
+            />
           </VContainer>
           <VBtn
             class="mt-5"
@@ -405,16 +393,15 @@ onMounted(async () => {
   height: 120px;
   display: flex;
   flex-direction: column;
-  align-items: center; /* Center items horizontally */
-  justify-content: center; /* Center items vertically */
+  align-items: center;
+  justify-content: center;
   opacity: 0.8;
-  position: relative; /* For positioning the close button absolutely */
+  position: relative;
 }
 
 .document-card img {
-  /* Assuming you use an <img> tag for the image */
-  width: 50px; /* Adjust as needed */
-  margin: auto; /* This will center the image */
+  width: 50px;
+  margin: auto;
 }
 
 .file-name {
@@ -434,5 +421,18 @@ onMounted(async () => {
   top: 1px;
   right: 1px;
   z-index: 10;
+}
+
+.select-template {
+  border: 1px solid #aaa;
+  border-radius: 4px;
+}
+
+.file-upload-input {
+  border: 2px dashed #aaa;
+  border-radius: 4px;
+  padding: 20px;
+  text-align: center;
+  color: #aaa;
 }
 </style>

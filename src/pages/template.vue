@@ -12,7 +12,7 @@ const fetchTemplate = async () => {
     if (company_id) {
       const { data: templates, error } = await supabase
         .from('template')
-        .select('template_name')
+        .select('id, template_name')
         .eq('company_id', company_id)
 
       if (templates) {
@@ -71,45 +71,14 @@ const addNewTemplate = async () => {
   fetchTemplate()
 }
 
-const editTemplate = async template => {
-  const { value: newTemplateName } = await Swal.fire({
-    title: 'Enter new template name',
-    input: 'text',
-    inputLabel: 'Template Name',
-    inputValue: template.template_name,
-    showCancelButton: true,
-    inputValidator: value => {
-      if (!value) {
-        return 'Template name cannot be empty!'
-      }
-    },
-  })
-
-  if (newTemplateName) {
-    try {
-      const updatedData = { template_name: newTemplateName, company_id: template.company_id }
-
-      const { error } = await supabase.from('template').upsert([updatedData], { onConflict: 'id' })
-
-      if (error) {
-        throw error
-      }
-
-      const index = templateList.value.findIndex(t => t.id === template.id)
-      if (index !== -1) {
-        templateList.value[index] = updatedData
-      }
-
-      Swal.fire('Updated!', 'Template updated successfully.', 'success')
-    } catch (error) {
-      console.error('Error updating template:', error.message)
-      Swal.fire('Error!', 'Error updating template: ' + error.message, 'error')
-    }
-  }
-}
-
-// Function to confirm and delete a template
 const confirmDelete = async template => {
+  console.log('Template to delete:', template)
+
+  if (typeof template.id === 'undefined') {
+    console.error('Error: Template ID is undefined')
+    return
+  }
+
   Swal.fire({
     title: 'Are you sure?',
     text: 'You will not be able to recover this template!',
@@ -121,13 +90,14 @@ const confirmDelete = async template => {
   }).then(async result => {
     if (result.isConfirmed) {
       try {
-        const { error } = await supabase.from('template').delete().match({ id: template.id }) // Ensure 'template.id' is defined
+        console.log('Deleting template with ID:', template.id)
+        const { error } = await supabase.from('template').delete().match({ id: template.id })
 
         if (error) {
           throw error
         }
 
-        templateList.value = templateList.value.filter(t => t.id !== template.id) // Update the templateList after deletion
+        templateList.value = templateList.value.filter(t => t.id !== template.id)
 
         Swal.fire('Deleted!', 'Template has been deleted.', 'success')
       } catch (error) {
@@ -161,12 +131,11 @@ onMounted(() => {
       <tbody>
         <tr
           v-for="template in templateList"
-          :key="template.template_name"
+          :key="template.id"
         >
           <td>{{ template.template_name }}</td>
           <td class="text-center">
             <div class="icon-wrapper">
-              <VIcon @click="editTemplate(template)">mdi-pencil</VIcon>
               <VIcon @click="confirmDelete(template)">mdi-delete</VIcon>
             </div>
           </td>
@@ -219,6 +188,5 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px; /* Adjust the gap between icons as needed */
 }
 </style>
