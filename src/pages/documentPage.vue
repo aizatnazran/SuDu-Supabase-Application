@@ -1,5 +1,9 @@
 <script setup>
-import csvimg from '@images/images/csv.png'
+import blankImage from '@images/images/blank.png'
+import csvImage from '@images/images/csv.png'
+import pdfImage from '@images/images/pdf.png'
+import xlsImage from '@images/images/xls.png'
+
 import axios from 'axios'
 import FormData from 'form-data'
 import Swal from 'sweetalert2'
@@ -12,6 +16,20 @@ const selectedFiles = ref([])
 const selectedTemplate = ref(null)
 const sheet = ref(false)
 const filesList = ref([])
+
+function getImageSrc(fileName) {
+  const extension = fileName.split('.').pop()
+  switch (extension.toLowerCase()) {
+    case 'csv':
+      return csvImage
+    case 'pdf':
+      return pdfImage
+    case 'xlsx':
+      return xlsImage
+    default:
+      return blankImage // Or a default image if you have one
+  }
+}
 
 async function fetchTemplates() {
   try {
@@ -77,7 +95,6 @@ const uploadFiles = async () => {
 
   let uploadErrors = []
 
-  // Fetch the ID of the selected template
   let selectedTemplateId = null
   let selectedTemplateName = selectedTemplate.value
   if (selectedTemplateName) {
@@ -101,7 +118,6 @@ const uploadFiles = async () => {
     const newFileName = `${userUUID}_${originalFileName}`
     const filePath = `${newFileName}`
 
-    // Upload each file to Supabase Storage
     const { error: uploadError } = await supabase.storage.from('documents').upload(filePath, file)
 
     if (uploadError) {
@@ -110,7 +126,6 @@ const uploadFiles = async () => {
       continue
     }
 
-    // Insert file information into 'uploadfile' table
     const { error: dbError } = await supabase.from('uploadfile').insert([
       {
         uploadfile_filename: originalFileName,
@@ -310,28 +325,27 @@ onMounted(async () => {
         <!-- Files associated with the template -->
         <VRow>
           <template v-if="filesList[templateName] && filesList[templateName].length">
-            <template
+            <VCard
+              class="document-card ma-1"
               v-for="file in filesList[templateName]"
               :key="file.uploadfile_filename"
             >
-              <VCard class="document-card ma-1">
-                <v-btn
-                  icon
-                  flat
-                  color="transparent"
-                  class="dots-button"
-                  v-on="on"
-                  @click="confirmDelete(file)"
-                >
-                  <v-icon>mdi-dots-vertical</v-icon>
-                </v-btn>
-                <img
-                  :src="csvimg"
-                  alt="CSV Icon"
-                />
-                <p class="file-name">{{ file.uploadfile_filename }}</p>
-              </VCard>
-            </template>
+              <v-btn
+                icon
+                flat
+                color="transparent"
+                class="dots-button"
+                v-on="on"
+                @click="confirmDelete(file)"
+              >
+                <v-icon>mdi-dots-vertical</v-icon>
+              </v-btn>
+              <img
+                :src="getImageSrc(file.uploadfile_filename)"
+                alt="Document Icon"
+              />
+              <p class="file-name">{{ file.uploadfile_filename }}</p>
+            </VCard>
           </template>
           <div
             v-else
