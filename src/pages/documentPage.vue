@@ -3,10 +3,15 @@ import csvimg from '@images/images/csv.png'
 import axios from 'axios'
 import FormData from 'form-data'
 import Swal from 'sweetalert2'
-import { ref } from 'vue'
-import { useTheme } from 'vuetify'
+import { ref, watch } from 'vue'
 import { supabase } from '../lib/supaBaseClient.js'
 // Components
+
+const templateOptions = ref([])
+const selectedFiles = ref([])
+const selectedTemplate = ref(null)
+const sheet = ref(false)
+const filesList = ref([])
 
 async function fetchTemplates() {
   try {
@@ -20,27 +25,23 @@ async function fetchTemplates() {
       return []
     }
 
-    return templates
+    return templates.map(template => template.template_name)
   } catch (error) {
     console.error('Error fetching templates:', error)
     return []
   }
 }
 
-const templateOptions = ref([])
-
-const vuetifyTheme = useTheme()
-
-const selectedFiles = ref([])
+watch(sheet, newVal => {
+  if (!newVal) {
+    selectedFiles.value = []
+  }
+})
 
 const handleFileChange = event => {
-  selectedFiles.value = Array.from(event.target.files) // Store all selected files
+  selectedFiles.value = Array.from(event.target.files)
   console.log('Selected files:', selectedFiles.value)
 }
-
-const selectedTemplate = ref('template1')
-
-const sheet = ref(false)
 
 // const props = defineProps({
 
@@ -63,9 +64,20 @@ const uploadFiles = async () => {
     return
   }
 
+  if (!selectedTemplate.value) {
+    await Swal.fire({
+      title: 'Error!',
+      text: 'Please select a template before uploading.',
+      icon: 'error',
+      customClass: { container: 'high-z-index-swal' },
+    })
+    selectedFiles.value = []
+    return
+  }
+
   let uploadErrors = []
 
-  // Fetch the ID and name of the selected template
+  // Fetch the ID of the selected template
   let selectedTemplateId = null
   let selectedTemplateName = selectedTemplate.value
   if (selectedTemplateName) {
@@ -73,7 +85,7 @@ const uploadFiles = async () => {
       .from('template')
       .select('id')
       .eq('template_name', selectedTemplateName)
-
+      .eq('company_id', companyId)
       .single()
 
     if (templateError) {
@@ -98,6 +110,7 @@ const uploadFiles = async () => {
       continue
     }
 
+    // Insert file information into 'uploadfile' table
     const { error: dbError } = await supabase.from('uploadfile').insert([
       {
         uploadfile_filename: originalFileName,
@@ -116,7 +129,6 @@ const uploadFiles = async () => {
     const form = new FormData()
     form.append('file', file, originalFileName)
 
-    // Prepare parameters
     const collectionName = selectedTemplateName.replace(/\s+/g, '_')
     const params = {
       uuid: userUUID,
@@ -137,16 +149,13 @@ const uploadFiles = async () => {
     }
   }
 
-  // Clear the selected files
   selectedFiles.value = []
 
-  // Update the files list
   filesList.value = await fetchFiles()
 
   if (uploadErrors.length === 0) {
     Swal.fire({
       title: 'Success!',
-
       text: 'File uploaded and processed.',
       icon: 'success',
       customClass: { container: 'high-z-index-swal' },
@@ -162,16 +171,44 @@ const uploadFiles = async () => {
 }
 
 async function fetchFiles() {
-  let { data: files, error } = await supabase
-    .from('uploadfile')
-    .select('uploadfile_filename')
-    .eq('uploadfile_company', companyId)
+  try {
+    let { data: files, error } = await supabase
+      .from('uploadfile')
+      .select(
+        `
+        uploadfile_filename,
+        template (
+          id,
+          template_name
+        )
+      `,
+      )
+      .eq('uploadfile_company', companyId)
 
-  if (error) console.log('Error fetching files:', error)
-  else return files
+    if (error) {
+      console.error('Error fetching files:', error)
+      return {}
+    }
+
+    const filesByTemplate = files.reduce((acc, file) => {
+      if (file.template && file.template.template_name) {
+        const templateName = file.template.template_name
+        if (!acc[templateName]) {
+          acc[templateName] = []
+        }
+        acc[templateName].push(file)
+      } else {
+        console.warn('File without template:', file)
+      }
+      return acc
+    }, {})
+
+    return filesByTemplate
+  } catch (error) {
+    console.error('Error fetching files:', error)
+    return {}
+  }
 }
-
-const filesList = ref([])
 
 const confirmDelete = async file => {
   Swal.fire({
@@ -185,14 +222,24 @@ const confirmDelete = async file => {
   }).then(async result => {
     if (result.isConfirmed) {
       try {
-        let { error } = await supabase
+        let { error: deletionError } = await supabase
           .from('uploadfile')
           .delete()
           .match({ uploadfile_filename: file.uploadfile_filename, uploadfile_company: companyId })
 
-        if (error) throw error
+        if (deletionError) {
+          throw deletionError
+        }
 
-        filesList.value = filesList.value.filter(f => f.uploadfile_filename !== file.uploadfile_filename)
+        // Find the template key for the file and update the array
+        for (const template in filesList.value) {
+          if (filesList.value[template].some(f => f.uploadfile_filename === file.uploadfile_filename)) {
+            filesList.value[template] = filesList.value[template].filter(
+              f => f.uploadfile_filename !== file.uploadfile_filename,
+            )
+            break
+          }
+        }
 
         Swal.fire({
           title: 'Deleted!',
@@ -200,6 +247,7 @@ const confirmDelete = async file => {
           icon: 'success',
         })
       } catch (error) {
+        console.error('Deletion error:', error)
         Swal.fire({
           title: 'Error!',
           text: 'There was a problem deleting your file.',
@@ -233,54 +281,66 @@ onMounted(async () => {
   </VRow>
   <div>
     <VContainer>
-      <!-- Submitted Document Docs -->
-      <VRow>
-        <VChip class="mb-3 mt-6">
-          <p class="text-title ma-5">Submitted Document</p>
-        </VChip>
-      </VRow>
-
-      <VRow>
-        <div
-          v-if="filesList.length === 0"
-          class="text-center my-5"
-        >
-          <p>No documents submitted yet.</p>
-        </div>
-        <template v-else>
-          <template
-            v-for="file in filesList"
-            :key="file.uploadfile_filename"
+      <template
+        v-for="(templateName, index) in templateOptions"
+        :key="index"
+      >
+        <!-- Styled Template Name Row -->
+        <v-row class="mb-4">
+          <v-col
+            cols="5"
+            class="d-flex align-center"
           >
-            <VCard class="document-card ma-1">
-              <VBtn
-                icon
-                class="m-2"
-                style="
-                  position: absolute;
-                  top: 0;
-                  right: 0;
-                  z-index: 2;
-                  width: 24px;
-                  height: 24px;
-                  min-width: 24px;
-                  padding: 0;
-                  margin: 2px;
-                "
-                @click="confirmDelete(file)"
-              >
-                <VIcon size="x-small">mdi-close</VIcon>
-              </VBtn>
-              <VImg
-                class="ma-3"
-                max-width="100"
-                :src="csvimg"
-              />
-              <p class="text-center text-caption px-2 file-name">{{ file.uploadfile_filename }}</p>
-            </VCard>
+            <v-divider></v-divider>
+          </v-col>
+          <v-col
+            cols="2"
+            class="text-center"
+          >
+            <span class="subtitle-1">{{ templateName }}</span>
+          </v-col>
+          <v-col
+            cols="5"
+            class="d-flex align-center"
+          >
+            <v-divider></v-divider>
+          </v-col>
+        </v-row>
+
+        <!-- Files associated with the template -->
+        <VRow>
+          <template v-if="filesList[templateName] && filesList[templateName].length">
+            <template
+              v-for="file in filesList[templateName]"
+              :key="file.uploadfile_filename"
+            >
+              <VCard class="document-card ma-1">
+                <v-btn
+                  icon
+                  flat
+                  color="transparent"
+                  class="dots-button"
+                  v-on="on"
+                  @click="confirmDelete(file)"
+                >
+                  <v-icon>mdi-dots-vertical</v-icon>
+                </v-btn>
+                <img
+                  :src="csvimg"
+                  alt="CSV Icon"
+                />
+                <p class="file-name">{{ file.uploadfile_filename }}</p>
+              </VCard>
+            </template>
           </template>
-        </template>
-      </VRow>
+          <div
+            v-else
+            class="text-center my-5"
+          >
+            <p>No documents submitted for {{ templateName }}.</p>
+          </div>
+        </VRow>
+      </template>
     </VContainer>
 
     <div class="text-center">
@@ -291,38 +351,21 @@ onMounted(async () => {
         class="overlaying-component-class"
       >
         <VCard class="pa-10">
-          <VContainer
-            class="pa-5 rounded-lg mt-2 border-2"
-            style="background-color: var(--v-theme-on-surface); border: 2px solid #8a8d93"
-          >
-            <!--
-                <div class="text-overline text-start ml-10">
-                File Menu :
-                </div> 
-              -->
-            <div class="text-overline text-start ml-10 text-title">File Upload :</div>
-            <VFileInput
-              @change="handleFileChange"
-              counter
-              truncate-length="15"
-            />
-            <div class="text-overline text-start ml-10 text-title">Select Template:</div>
-            <VRadioGroup
+          <VContainer>
+            <div class="text-h6 text-start mb-2 font-weight-bold">Select File Type</div>
+            <VSelect
               v-model="selectedTemplate"
-              row
-            >
-              <template v-if="templateOptions instanceof Array">
-                <VRadio
-                  v-for="option in templateOptions"
-                  :key="option.template_name"
-                  :label="option.template_name"
-                  :value="option.template_name"
-                />
-              </template>
-              <template v-else>
-                <p>Loading template options...</p>
-              </template>
-            </VRadioGroup>
+              :items="templateOptions"
+              label="Templates"
+              class="select-template"
+            />
+            <div class="text-h6 text-start mt-4 font-weight-bold">Upload File</div>
+            <VFileInput
+              @click:input.stop
+              @change="handleFileChange"
+              label="Click to upload file or drag and drop here"
+              class="file-upload-input"
+            />
           </VContainer>
           <VBtn
             class="mt-5"
@@ -346,19 +389,50 @@ onMounted(async () => {
 }
 
 .document-card {
-  width: 100px;
-  height: 150px;
+  width: 180px;
+  height: 120px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  border-radius: 5%;
+  align-items: center;
+  justify-content: center;
   opacity: 0.8;
+  position: relative;
+}
+
+.document-card img {
+  width: 50px;
+  margin: auto;
 }
 
 .file-name {
+  text-align: center;
+  margin-bottom: 2px;
+  padding: 0 10px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 100%;
+  max-width: 170px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.dots-button {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  z-index: 10;
+}
+
+.select-template {
+  border: 1px solid #aaa;
+  border-radius: 4px;
+}
+
+.file-upload-input {
+  border: 2px dashed #aaa;
+  border-radius: 4px;
+  padding: 20px;
+  text-align: center;
+  color: #aaa;
 }
 </style>
