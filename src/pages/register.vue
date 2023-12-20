@@ -99,7 +99,7 @@ const handleSignUp = async () => {
           </div>
         </template>
 
-        <VCardTitle class="font-weight-semibold text-2xl text-uppercase"> SuDu.ai </VCardTitle>
+        <VCardTitle class="font-weight-semibold text-2xl text-uppercase"> SuDu Business </VCardTitle>
       </VCardItem>
 
       <VCardText class="pt-2">

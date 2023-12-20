@@ -102,7 +102,16 @@ const confirmDelete = async template => {
         Swal.fire('Deleted!', 'Template has been deleted.', 'success')
       } catch (error) {
         console.error('Error deleting template:', error.message)
-        Swal.fire('Error!', 'Error deleting template: ' + error.message, 'error')
+        // Check for foreign key constraint violation
+        if (error.message.includes('foreign key constraint')) {
+          Swal.fire(
+            'Error!',
+            `There are still remaining uploaded files associated with the '${template.template_name}' template. Delete remaining files to proceed.`,
+            'error',
+          )
+        } else {
+          Swal.fire('Error!', 'Error deleting template: ' + error.message, 'error')
+        }
       }
     }
   })
