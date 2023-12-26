@@ -27,7 +27,7 @@ function getImageSrc(fileName) {
     case 'xlsx':
       return xlsImage
     default:
-      return blankImage // Or a default image if you have one
+      return blankImage
   }
 }
 
@@ -246,7 +246,6 @@ const confirmDelete = async file => {
           throw deletionError
         }
 
-        // Find the template key for the file and update the array
         for (const template in filesList.value) {
           if (filesList.value[template].some(f => f.uploadfile_filename === file.uploadfile_filename)) {
             filesList.value[template] = filesList.value[template].filter(
