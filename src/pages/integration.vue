@@ -285,18 +285,18 @@ const integrations = ref({
 
 <style scoped>
 .dots-button {
-  padding: 0px; /* Reduce padding to make the button smaller */
-  font-size: 18px; /* Adjust font size for the icon inside the button */
+  padding: 0px;
+  font-size: 18px;
 }
 
 .fixed-height {
-  height: 100px; /* Or whatever height you find appropriate */
-  overflow: auto; /* To allow scrolling if the text is longer */
+  height: 100px;
+  overflow: auto;
 }
 
 .my-custom-button {
-  padding: 4px 12px; /* Reduce vertical padding, keep horizontal padding */
-  font-size: 0.875rem; /* Optional: Adjust font size if needed */
-  height: 28px; /* Set a fixed height for the button */
+  padding: 4px 12px;
+  font-size: 0.875rem;
+  height: 28px;
 }
 </style>
