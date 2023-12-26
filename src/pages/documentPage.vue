@@ -300,7 +300,7 @@ onMounted(async () => {
         :key="index"
       >
         <!-- Styled Template Name Row -->
-        <v-row class="mb-4">
+        <v-row class="mb-4 mt-6">
           <v-col
             cols="5"
             class="d-flex align-center"
