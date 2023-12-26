@@ -46,10 +46,9 @@ const addNewContact = async () => {
             throw error
           }
 
-          if (data && data.length > 0) {
-            console.log('Newly added contact data:', data[0])
-            allowedContacts.value.push(data[0])
-          }
+          const addedContact = { contact_number: newContactNumber.value, company_id }
+          allowedContacts.value.push(addedContact)
+          newContactNumber.value = ''
 
           newContactNumber.value = ''
 
