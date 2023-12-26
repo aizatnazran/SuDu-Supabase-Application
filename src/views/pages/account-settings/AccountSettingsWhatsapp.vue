@@ -46,9 +46,10 @@ const addNewContact = async () => {
             throw error
           }
 
-          const addedContact = { contact_number: newContactNumber.value, company_id }
-          allowedContacts.value.push(addedContact)
-          newContactNumber.value = ''
+          // Update the allowedContacts array with the newly added contact data
+          if (data && data.length > 0) {
+            allowedContacts.value.push(data[0])
+          }
 
           newContactNumber.value = ''
 
@@ -77,9 +78,9 @@ const addNewContact = async () => {
       })
     }
   } else {
-    // Handle the case when form validation fails
     console.error('Form validation failed')
   }
+  fetchContact() // Refresh the contact list after adding a new contact
 }
 
 const editContact = async contact => {
