@@ -4,7 +4,30 @@ import Swal from 'sweetalert2'
 import { onMounted, ref } from 'vue'
 
 const templateList = ref([])
-const newTemplateName = ref('')
+const tagList = ref([])
+const selectedTags = ref([])
+const dialog = ref(false)
+const newTemplate = ref({
+  name: '',
+  description: '',
+  tag: 'Report',
+})
+
+const fetchTags = async () => {
+  try {
+    const { data: tags, error } = await supabase.from('tag').select('id, tag_name')
+
+    if (error) {
+      throw error
+    }
+
+    if (tags) {
+      tagList.value = tags
+    }
+  } catch (error) {
+    console.error('Error fetching tags:', error.message)
+  }
+}
 
 const fetchTemplate = async () => {
   try {
@@ -12,7 +35,14 @@ const fetchTemplate = async () => {
     if (company_id) {
       const { data: templates, error } = await supabase
         .from('template')
-        .select('id, template_name')
+        .select(
+          `
+          id,
+          template_name,
+          template_description,
+          template_tag:template_tag(id, tag_name) 
+        `,
+        )
         .eq('company_id', company_id)
 
       if (templates) {
@@ -25,11 +55,18 @@ const fetchTemplate = async () => {
 }
 
 const addNewTemplate = async () => {
-  if (newTemplateName.value) {
+  if (newTemplate.value.name && selectedTags.value.length === 1) {
+    // Check if exactly one tag is selected
     try {
       const company_id = localStorage.getItem('company_id')
       if (company_id) {
-        const requestData = { template_name: newTemplateName.value, company_id }
+        const selectedTagId = selectedTags.value[0].id // Get the ID of the selected tag
+        const requestData = {
+          template_name: newTemplate.value.name,
+          template_description: newTemplate.value.description,
+          company_id,
+          template_tag: selectedTagId, // Pass the selected tag ID as a single integer
+        }
 
         const { data, error } = await supabase.from('template').insert([requestData])
 
@@ -40,14 +77,19 @@ const addNewTemplate = async () => {
         if (data && data.length > 0) {
           console.log('Newly added template data:', data[0])
           templateList.value.push(data[0])
+          selectedTags.value = []
         }
 
-        newTemplateName.value = ''
+        // Resetting newTemplate values
+        newTemplate.value.name = ''
+        newTemplate.value.description = ''
+        dialog.value = false // Close the dialog after successful insertion
 
         Swal.fire({
           title: 'Success!',
           text: 'Template successfully added!',
           icon: 'success',
+          customClass: { container: 'high-z-index-swal' },
           confirmButtonColor: '#3085d6',
         })
       }
@@ -57,18 +99,20 @@ const addNewTemplate = async () => {
         title: 'Error!',
         text: 'Error adding template: ' + error.message,
         icon: 'error',
+        customClass: { container: 'high-z-index-swal' },
         confirmButtonColor: '#d33',
       })
     }
   } else {
     Swal.fire({
       title: 'Attention!',
-      text: 'Please enter a template name before submitting.',
+      text: 'Please enter a template name and select exactly one tag.',
       icon: 'warning',
+      customClass: { container: 'high-z-index-swal' },
       confirmButtonColor: '#3085d6',
     })
   }
-  fetchTemplate()
+  fetchTemplate() // Refresh the template list
 }
 
 const confirmDelete = async template => {
@@ -122,19 +166,32 @@ onMounted(() => {
   if (company_id) {
     fetchTemplate()
   }
+  fetchTags()
 })
 </script>
 
 <template>
-  <VCard title="Templates">
+  <VCard>
+    <VCardText class="d-flex align-items-center justify-content-between">
+      <h2 class="font-weight-light mt-1 mr-3">Templates</h2>
+      <VBtn
+        class="custom-create-btn"
+        @click="dialog = true"
+      >
+        <VIcon left>mdi-plus</VIcon>
+        Create New Template
+      </VBtn>
+    </VCardText>
     <VCardText>
       Create templates to choose from when uploading your documents.
       <a href="javascript:void(0)">Learn More</a>
     </VCardText>
 
-    <VTable class="text-no-wrap">
+    <VTable class="text-no-wrap ml-5 my-custom-table">
       <thead>
         <th scope="col">Template Name</th>
+        <th scope="col">Description</th>
+        <th scope="col">Tag</th>
         <th scope="col">Action</th>
       </thead>
       <tbody>
@@ -143,6 +200,8 @@ onMounted(() => {
           :key="template.id"
         >
           <td>{{ template.template_name }}</td>
+          <td>{{ template.template_description }}</td>
+          <td>{{ template.template_tag ? template.template_tag.tag_name : '' }}</td>
           <td class="text-center">
             <div class="icon-wrapper">
               <VIcon @click="confirmDelete(template)">mdi-delete</VIcon>
@@ -152,43 +211,73 @@ onMounted(() => {
       </tbody>
     </VTable>
     <VDivider />
-
-    <VCardText>
-      <VForm @submit.prevent="() => {}">
-        <p class="text-base font-weight-medium">Add new template</p>
-
-        <VRow>
-          <VCol
-            cols="12"
-            sm="6"
-          >
-            <VTextField
-              label="Template Name"
-              v-model="newTemplateName"
-              variant="solo-filled"
-            />
-            <!--
-              <VSelect
-              v-model="selectedNotification"
-              mandatory
-              :items="['Only when I\'m online', 'Anytime']"
-              /> 
-            -->
-          </VCol>
-        </VRow>
-
-        <div class="d-flex flex-wrap gap-4 mt-4">
-          <VBtn @click="addNewTemplate"> Add Template </VBtn>
+    <VDialog
+      v-model="dialog"
+      max-width="1000px"
+    >
+      <VCard>
+        <VCardText>
+          <VCardTitle class="text-h5 text-start font-weight-bold">Template Name</VCardTitle>
+          <VTextField
+            label="Template Name"
+            v-model="newTemplate.name"
+            outlined
+            dense
+            class="mb-4"
+          />
+          <VCardTitle class="text-h5 text-start font-weight-bold">Description</VCardTitle>
+          <VTextarea
+            label="Description"
+            v-model="newTemplate.description"
+            outlined
+            dense
+            rows="5"
+            no-resize
+          />
+          <VCardTitle class="text-h5 text-start font-weight-bold mt-5">Insert Tags</VCardTitle>
+          <div class="my-4">
+            <!-- Container for available tags -->
+            <div style="display: flex; flex-wrap: wrap; gap: 8px">
+              <!-- Generate tags dynamically from fetched tags -->
+              <v-chip
+                v-for="tag in tagList"
+                :key="tag.id"
+                @click="selectedTags.push(tag)"
+                v-if="!selectedTags.includes(tag)"
+              >
+                {{ tag.tag_name }}
+              </v-chip>
+            </div>
+            <!-- Container for selected tags -->
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px">
+              <!-- Display selected tags -->
+              <v-chip
+                v-for="tag in selectedTags"
+                :key="tag.id"
+                color="primary"
+                @click:close="selectedTags.splice(selectedTags.indexOf(tag), 1)"
+              >
+                {{ tag.tag_name }}
+              </v-chip>
+            </div>
+          </div>
+        </VCardText>
+        <VCardActions>
+          <VSpacer></VSpacer>
           <VBtn
-            color="secondary"
-            variant="tonal"
-            type="reset"
+            text
+            @click="dialog = false"
+            >Cancel</VBtn
           >
-            Reset
+          <VBtn
+            class="custom-btn primary-btn"
+            @click="addNewTemplate"
+          >
+            Confirm
           </VBtn>
-        </div>
-      </VForm>
-    </VCardText>
+        </VCardActions>
+      </VCard>
+    </VDialog>
   </VCard>
 </template>
 
@@ -197,5 +286,54 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+.text-h5 {
+  font-size: 1.25rem;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-right: 16px;
+}
+
+.custom-create-btn {
+  border-radius: 20px;
+  padding: 4px 12px;
+  color: white;
+  background-color: #6200ea;
+  text-transform: none;
+  font-size: 0.87rem;
+  line-height: 0.1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: auto;
+  min-height: 0;
+}
+
+.custom-create-btn .v-icon {
+  color: white;
+}
+
+.high-z-index-swal {
+  z-index: 9999999 !important;
+}
+
+.v-table thead th {
+  text-align: left;
+}
+
+.v-table thead th:last-child {
+  text-align: center;
+}
+
+.my-custom-table .v-table tbody tr td:nth-child(-n + 3) {
+  text-align: left;
+}
+
+.my-custom-table .v-table tbody tr td:last-child {
+  text-align: center;
 }
 </style>
