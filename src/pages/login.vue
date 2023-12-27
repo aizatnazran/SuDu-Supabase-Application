@@ -11,6 +11,8 @@ import { useRouter } from 'vue-router'
 import { useTheme } from 'vuetify'
 import { supabase } from '../lib/supaBaseClient.js'
 
+const userInfo = ref({})
+
 // Vue Composition API References
 const router = useRouter()
 const vuetifyTheme = useTheme()
@@ -28,11 +30,46 @@ const authThemeMask = computed(() => {
   return vuetifyTheme.global.name.value === 'light' ? authV1MaskLight : authV1MaskDark
 })
 
+const dialog = ref(false)
+const emailForRecovery = ref('')
+
+const forgotPassword = async () => {
+  if (!emailForRecovery.value) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Email Required',
+      text: 'Please enter your email address.',
+      customClass: { container: 'high-z-index-swal' },
+    })
+    return
+  }
+
+  try {
+    const { data, error } = await supabase.auth.resetPasswordForEmail(emailForRecovery.value)
+
+    if (error) {
+      // Handle error
+      console.error('Error sending password reset email:', error.message)
+    } else {
+      // Notify user that email has been sent
+      Swal.fire({
+        icon: 'success',
+        title: 'Recovery Email Sent',
+        text: 'Please check your inbox for password recovery instructions.',
+      })
+      dialog.value = false // Close the dialog
+    }
+  } catch (e) {
+    console.error('Error in forgotPassword:', e.message)
+  }
+}
+
+const openDialog = () => {
+  dialog.value = true
+}
+
 // Function Definition
 const login = async () => {
-  console.log('Login button clicked')
-  console.log('Email:', form.value.email)
-  console.log('Password:', form.value.password)
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
       email: form.value.email,
@@ -134,6 +171,7 @@ const login = async () => {
                 <a
                   class="ms-2 mb-1"
                   href="javascript:void(0)"
+                  @click="openDialog"
                 >
                   Forgot Password?
                 </a>
@@ -202,8 +240,44 @@ const login = async () => {
       :src="authThemeMask"
     />
   </div>
+  <VDialog
+    v-model="dialog"
+    width="40%"
+    class="overlaying-component-class"
+  >
+    <VCard>
+      <VCard-title class="text-h5 mt-4">Reset Password</VCard-title>
+      <p
+        class="ml-4"
+        style="margin-bottom: 0"
+      >
+        Please enter your email address for us to send the password recovery email.
+      </p>
+      <VCardText>
+        <VTextField
+          v-model="emailForRecovery"
+          label="Email"
+          type="email"
+          required
+        ></VTextField>
+      </VCardText>
+      <VCard-actions>
+        <VSpacer></VSpacer>
+        <VBtn
+          color="primary"
+          text
+          @click="forgotPassword"
+          >Send</VBtn
+        >
+      </VCard-actions>
+    </VCard>
+  </VDialog>
 </template>
 
 <style lang="scss">
 @use '@core/scss/pages/page-auth.scss';
+
+.high-z-index-swal {
+  z-index: 9999999 !important;
+}
 </style>

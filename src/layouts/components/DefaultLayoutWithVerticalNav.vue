@@ -112,6 +112,13 @@ const upgradeBanner = computed(() => {
           to: '/template',
         }"
       />
+      <VerticalNavLink
+        :item="{
+          title: 'Feedback',
+          icon: 'mdi-message-draw',
+          to: '/feedback',
+        }"
+      />
       <!--
         <VerticalNavLink
         :item="{

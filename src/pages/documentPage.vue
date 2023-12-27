@@ -295,64 +295,71 @@ onMounted(async () => {
   </VRow>
   <div>
     <VContainer>
-      <template
-        v-for="(templateName, index) in templateOptions"
-        :key="index"
-      >
-        <!-- Styled Template Name Row -->
-        <v-row class="mb-4 mt-6">
-          <v-col
-            cols="5"
-            class="d-flex align-center"
-          >
-            <v-divider></v-divider>
-          </v-col>
-          <v-col
-            cols="2"
-            class="text-center"
-          >
-            <span class="subtitle-1">{{ templateName }}</span>
-          </v-col>
-          <v-col
-            cols="5"
-            class="d-flex align-center"
-          >
-            <v-divider></v-divider>
-          </v-col>
-        </v-row>
-
-        <!-- Files associated with the template -->
-        <VRow>
-          <template v-if="filesList[templateName] && filesList[templateName].length">
-            <VCard
-              class="document-card ma-1"
-              v-for="file in filesList[templateName]"
-              :key="file.uploadfile_filename"
+      <template v-if="templateOptions.length > 0">
+        <template
+          v-for="(templateName, index) in templateOptions"
+          :key="index"
+        >
+          <!-- Styled Template Name Row -->
+          <v-row class="mb-4 mt-6">
+            <v-col
+              cols="5"
+              class="d-flex align-center"
             >
-              <v-btn
-                icon
-                flat
-                color="transparent"
-                class="dots-button"
-                v-on="on"
-                @click="confirmDelete(file)"
+              <v-divider></v-divider>
+            </v-col>
+            <v-col
+              cols="2"
+              class="text-center"
+            >
+              <span class="subtitle-1">{{ templateName }}</span>
+            </v-col>
+            <v-col
+              cols="5"
+              class="d-flex align-center"
+            >
+              <v-divider></v-divider>
+            </v-col>
+          </v-row>
+
+          <!-- Files associated with the template -->
+          <VRow>
+            <template v-if="filesList[templateName] && filesList[templateName].length">
+              <VCard
+                class="document-card ma-1"
+                v-for="file in filesList[templateName]"
+                :key="file.uploadfile_filename"
               >
-                <v-icon>mdi-dots-vertical</v-icon>
-              </v-btn>
-              <img
-                :src="getImageSrc(file.uploadfile_filename)"
-                alt="Document Icon"
-              />
-              <p class="file-name">{{ file.uploadfile_filename }}</p>
-            </VCard>
-          </template>
-          <div
-            v-else
-            class="text-center my-5"
-          >
-            <p>No documents submitted for {{ templateName }}.</p>
-          </div>
-        </VRow>
+                <v-btn
+                  icon
+                  flat
+                  color="transparent"
+                  class="dots-button"
+                  v-on="on"
+                  @click="confirmDelete(file)"
+                >
+                  <v-icon>mdi-dots-vertical</v-icon>
+                </v-btn>
+                <img
+                  :src="getImageSrc(file.uploadfile_filename)"
+                  alt="Document Icon"
+                />
+                <p class="file-name">{{ file.uploadfile_filename }}</p>
+              </VCard>
+            </template>
+            <div
+              v-else
+              class="text-center my-5"
+            >
+              <p class="subtitle-1">No documents submitted for {{ templateName }}.</p>
+            </div>
+          </VRow>
+        </template>
+      </template>
+      <template v-else>
+        <div class="text-center my-5">
+          <p class="subtitle-1">No templates created yet.</p>
+        </div>
       </template>
     </VContainer>
 
