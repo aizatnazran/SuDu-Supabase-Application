@@ -1,10 +1,47 @@
 <script setup>
+import { supabase } from '@/lib/supaBaseClient'
+import Swal from 'sweetalert2'
+import { ref } from 'vue'
+
 const isCurrentPasswordVisible = ref(false)
 const isNewPasswordVisible = ref(false)
 const isConfirmPasswordVisible = ref(false)
-const currentPassword = ref('12345678')
-const newPassword = ref('87654321')
-const confirmPassword = ref('87654321')
+const currentPassword = ref('')
+const newPassword = ref('')
+const confirmPassword = ref('')
+
+const validatePassword = () => {
+  // Check for empty fields
+  if (!currentPassword.value || !newPassword.value || !confirmPassword.value) {
+    Swal.fire('Error', 'All fields are required.', 'error')
+    return false
+  }
+
+  // Check if current password is different from the new password
+  if (currentPassword.value === newPassword.value) {
+    Swal.fire('Error', 'New password cannot be the same as the current password.', 'error')
+    return false
+  }
+
+  // Check if new password matches confirmation password
+  if (newPassword.value !== confirmPassword.value) {
+    Swal.fire('Error', 'New password and confirmation password do not match.', 'error')
+    return false
+  }
+
+  return true
+}
+
+const updatePassword = async () => {
+  if (!validatePassword()) return
+  try {
+    const { error } = await supabase.auth.updateUser({ password: newPassword.value })
+    if (error) throw error
+    Swal.fire('Success', 'Password changed successfully.', 'success')
+  } catch (err) {
+    Swal.fire('Error', err.message, 'error')
+  }
+}
 
 const passwordRequirements = [
   'Minimum 8 characters long - the more, the better',
@@ -155,9 +192,7 @@ const recentDevices = [
 
           <!-- 👉 Password Requirements -->
           <VCardText>
-            <p class="text-base font-weight-medium mt-2">
-              Password Requirements:
-            </p>
+            <p class="text-base font-weight-medium mt-2">Password Requirements:</p>
 
             <ul class="d-flex flex-column gap-y-3">
               <li
@@ -179,7 +214,7 @@ const recentDevices = [
 
           <!-- 👉 Action Buttons -->
           <VCardText class="d-flex flex-wrap gap-4">
-            <VBtn>Save changes</VBtn>
+            <VBtn @click="updatePassword">Save changes</VBtn>
 
             <VBtn
               type="reset"
@@ -198,20 +233,18 @@ const recentDevices = [
     <VCol cols="12">
       <VCard title="Two-steps verification">
         <VCardText>
-          <p class="font-weight-semibold">
-            Two factor authentication is not enabled yet.
-          </p>
+          <p class="font-weight-semibold">Two factor authentication is not enabled yet.</p>
           <p>
-            Two-factor authentication adds an additional layer of security to your account by requiring more than just a password to log in.
+            Two-factor authentication adds an additional layer of security to your account by requiring more than just a
+            password to log in.
             <a
               href="javascript:void(0)"
               class="text-decoration-none"
-            >Learn more.</a>
+              >Learn more.</a
+            >
           </p>
 
-          <VBtn>
-            Enable two-factor authentication
-          </VBtn>
+          <VBtn> Enable two-factor authentication </VBtn>
         </VCardText>
       </VCard>
     </VCol>
@@ -235,7 +268,14 @@ const recentDevices = [
                   <VCol cols="12">
                     <VSelect
                       label="Choose the API key type you want to create"
-                      :items="['Full Control', 'Modify', 'Read & Execute', 'List Folder Contents', 'Read Only', 'Read & Write']"
+                      :items="[
+                        'Full Control',
+                        'Modify',
+                        'Read & Execute',
+                        'List Folder Contents',
+                        'Read Only',
+                        'Read & Write',
+                      ]"
                     />
                   </VCol>
 
@@ -259,14 +299,16 @@ const recentDevices = [
           </VCol>
         </VRow>
       </VCard>
-    <!-- !SECTION -->
+      <!-- !SECTION -->
     </VCol>
 
     <VCol cols="12">
       <!-- SECTION: API Keys List -->
       <VCard title="API Key List &amp; Access">
         <VCardText>
-          An API key is a simple encrypted string that identifies an application without any principal. They are useful for accessing public data anonymously, and are used to associate API requests with your project for quota and billing.
+          An API key is a simple encrypted string that identifies an application without any principal. They are useful
+          for accessing public data anonymously, and are used to associate API requests with your project for quota and
+          billing.
         </VCardText>
 
         <!-- 👉 Server Status -->
@@ -310,18 +352,10 @@ const recentDevices = [
         <VTable class="text-no-wrap">
           <thead>
             <tr>
-              <th scope="col">
-                BROWSER
-              </th>
-              <th scope="col">
-                DEVICE
-              </th>
-              <th scope="col">
-                LOCATION
-              </th>
-              <th scope="col">
-                RECENT ACTIVITIES
-              </th>
+              <th scope="col">BROWSER</th>
+              <th scope="col">DEVICE</th>
+              <th scope="col">LOCATION</th>
+              <th scope="col">RECENT ACTIVITIES</th>
             </tr>
           </thead>
           <tbody>
