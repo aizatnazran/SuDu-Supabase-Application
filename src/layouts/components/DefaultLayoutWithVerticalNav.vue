@@ -119,6 +119,13 @@ const upgradeBanner = computed(() => {
           to: '/feedback',
         }"
       />
+      <VerticalNavLink
+        :item="{
+          title: 'Roles',
+          icon: 'mdi-account-settings',
+          to: '/roles',
+        }"
+      />
       <!--
         <VerticalNavLink
         :item="{

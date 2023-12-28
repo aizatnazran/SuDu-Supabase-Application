@@ -82,6 +82,11 @@ const router = createRouter({
           component: () => import('../pages/feedback.vue'),
           meta: { requiresAuth: true },
         },
+        {
+          path: 'roles',
+          component: () => import('../pages/roles.vue'),
+          meta: { requiresAuth: true },
+        },
       ],
     },
     {
