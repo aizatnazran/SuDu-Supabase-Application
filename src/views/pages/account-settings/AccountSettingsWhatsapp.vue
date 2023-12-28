@@ -21,10 +21,26 @@ const fetchContact = async () => {
   try {
     const company_id = localStorage.getItem('company_id')
     if (company_id) {
-      const { data: contact, error } = await supabase.from('contact').select('*').eq('company_id', company_id)
+      const { data: contacts, error } = await supabase
+        .from('contact')
+        .select(
+          `
+          id,
+          contact_name,
+          contact_number,
+          contact_role:role(role_name, role_colour),
+          contact_status
+        `,
+        )
+        .eq('company_id', company_id)
 
-      if (contact) {
-        allowedContacts.value = contact
+      if (contacts) {
+        allowedContacts.value = contacts.map(contact => ({
+          ...contact,
+          role: contact.contact_role.role_name,
+          roleColor: contact.contact_role.role_colour,
+          active: contact.contact_status,
+        }))
       }
     }
   } catch (error) {
@@ -167,23 +183,41 @@ onMounted(() => {
 
     <VTable class="text-no-wrap">
       <thead>
-        <th scope="col">Contact Number (6017*******)</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col">Contact</th>
+        <th scope="col">Roles</th>
         <th scope="col">Active</th>
         <th scope="col">Action</th>
       </thead>
       <tbody>
         <tr
-          v-for="device in allowedContacts"
-          :key="device.contact_number"
+          v-for="(contact, index) in allowedContacts"
+          :key="contact.id"
         >
-          <td>{{ device.contact_number }}</td>
+          <td class="text-center">{{ index + 1 }}</td>
           <td class="text-center">
-            <VCheckbox v-model="device.active" />
+            {{ contact.contact_name }}
+            <VIcon @click="editContact(contact)">mdi-pencil</VIcon>
+          </td>
+          <td class="text-center">{{ contact.contact_number }}</td>
+          <td class="text-center">
+            <div class="role-container">
+              <span
+                class="role-color-indicator"
+                :style="{ backgroundColor: contact.roleColor }"
+              ></span>
+              <span class="role-label">
+                {{ contact.role }}
+              </span>
+            </div>
+          </td>
+          <td class="text-center">
+            <VSwitch v-model="contact.active" />
           </td>
           <td class="text-center">
             <div class="icon-wrapper">
-              <VIcon @click="editContact(device)">mdi-pencil</VIcon>
-              <VIcon @click="confirmDelete(device)">mdi-delete</VIcon>
+              <VIcon @click="confirmDelete(contact)">mdi-delete</VIcon>
             </div>
           </td>
         </tr>
@@ -230,6 +264,27 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px; /* Adjust the gap between icons as needed */
+  gap: 10px;
+}
+
+.role-container {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25em 0.75em;
+  background-color: #eae8e8;
+  border-radius: 16px;
+  gap: 10px;
+}
+
+.role-label {
+  font-size: 0.875em;
+  line-height: 1;
+  color: black;
+}
+
+.role-color-indicator {
+  height: 15px;
+  width: 15px;
+  border-radius: 50%; /* Makes it a circle */
 }
 </style>
