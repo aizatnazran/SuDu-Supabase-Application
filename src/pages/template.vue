@@ -187,29 +187,37 @@ onMounted(() => {
       <a href="javascript:void(0)">Learn More</a>
     </VCardText>
 
-    <VTable class="text-no-wrap ml-5 my-custom-table">
-      <thead>
-        <th scope="col">Template Name</th>
-        <th scope="col">Description</th>
-        <th scope="col">Tag</th>
-        <th scope="col">Action</th>
-      </thead>
-      <tbody>
-        <tr
-          v-for="template in templateList"
-          :key="template.id"
-        >
-          <td>{{ template.template_name }}</td>
-          <td>{{ template.template_description }}</td>
-          <td>{{ template.template_tag ? template.template_tag.tag_name : '' }}</td>
-          <td class="text-center">
-            <div class="icon-wrapper">
-              <VIcon @click="confirmDelete(template)">mdi-delete</VIcon>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </VTable>
+    <div v-if="templateList.length > 0">
+      <VTable class="text-no-wrap ml-5 my-custom-table">
+        <thead>
+          <th scope="col">Template Name</th>
+          <th scope="col">Description</th>
+          <th scope="col">Tag</th>
+          <th scope="col">Action</th>
+        </thead>
+        <tbody>
+          <tr
+            v-for="template in templateList"
+            :key="template.id"
+          >
+            <td>{{ template.template_name }}</td>
+            <td>{{ template.template_description }}</td>
+            <td>{{ template.template_tag ? template.template_tag.tag_name : '' }}</td>
+            <td class="text-center">
+              <div class="icon-wrapper">
+                <VIcon @click="confirmDelete(template)">mdi-delete</VIcon>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </VTable>
+    </div>
+    <div
+      v-else
+      class="text-center my-5"
+    >
+      <p class="subtitle-1">No templates created yet.</p>
+    </div>
     <VDivider />
     <VDialog
       v-model="dialog"

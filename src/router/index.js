@@ -1,12 +1,17 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import BlankLayout from '../layouts/blank.vue';
+import { supabase } from '../lib/supaBaseClient.js';
 import Login from '../pages/login.vue';
 import Register from '../pages/register.vue';
   
-function checkAuth() {
-  const uuid = localStorage.getItem('uuid');
-  const accessToken = localStorage.getItem('accessToken');
-  return uuid && accessToken;
+async function checkAuth() {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    return !!user;
+  } catch (error) {
+    console.error('Error checking auth:', error);
+    return false;
+  }
 }
 
 const router = createRouter({
@@ -72,6 +77,16 @@ const router = createRouter({
           component: () => import('../pages/form-layouts.vue'),
           meta: { requiresAuth: true },
         },
+        {
+          path: 'feedback',
+          component: () => import('../pages/feedback.vue'),
+          meta: { requiresAuth: true },
+        },
+        {
+          path: 'roles',
+          component: () => import('../pages/roles.vue'),
+          meta: { requiresAuth: true },
+        },
       ],
     },
     {
@@ -98,13 +113,18 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
-  const isAuthenticated = checkAuth();
+  const isAuthenticated = await checkAuth();
 
   if (requiresAuth && !isAuthenticated) {
     next('/login');
-  } else {
+  } 
+  else if (isAuthenticated && (to.path === '/login' || to.path === '/register')) {
+    next('/dashboard');
+  } 
+  // In all other cases, allow the navigation
+  else {
     next();
   }
 });

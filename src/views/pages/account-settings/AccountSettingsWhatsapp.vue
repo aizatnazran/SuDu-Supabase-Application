@@ -1,30 +1,58 @@
 <script setup>
 import { supabase } from '@/lib/supaBaseClient'
 import Swal from 'sweetalert2'
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 
 const allowedContacts = ref([])
 const newContactNumber = ref('')
+const dialog = ref(false) // For controlling the visibility of the VDialog
+const roles = ref([]) // For storing the roles fetched from the database
+const form = ref({
+  // For storing the new contact's information
+  contact_name: '',
+  contact_number: '',
+  contact_role: null,
+})
 
-const phoneRules = value => {
-  if (!value) return true
-  const pattern = /^60(\+\d{1,3}[- ]?)?\d{8,10}$/
-  return pattern.test(value) || 'Invalid phone number format'
+const fetchRoles = async () => {
+  try {
+    const { data, error } = await supabase.from('role').select('id, role_name, role_colour')
+    if (error) throw error
+    roles.value = data
+  } catch (error) {
+    console.error('Error fetching roles:', error)
+  }
 }
 
-const isFormValid = computed(() => {
-  // Assuming newContactNumber is the only field that needs validation
-  return phoneRules(newContactNumber.value) === true
-})
+// Function to handle the "Add Contact" button click
+const handleAddContactClick = () => {
+  dialog.value = true // Show the VDialog
+}
 
 const fetchContact = async () => {
   try {
     const company_id = localStorage.getItem('company_id')
     if (company_id) {
-      const { data: contact, error } = await supabase.from('contact').select('*').eq('company_id', company_id)
+      const { data: contacts, error } = await supabase
+        .from('contact')
+        .select(
+          `
+          id,
+          contact_name,
+          contact_number,
+          contact_role:role(role_name, role_colour),
+          contact_status
+        `,
+        )
+        .eq('company_id', company_id)
 
-      if (contact) {
-        allowedContacts.value = contact
+      if (contacts) {
+        allowedContacts.value = contacts.map(contact => ({
+          ...contact,
+          role: contact.contact_role.role_name,
+          roleColor: contact.contact_role.role_colour,
+          active: contact.contact_status,
+        }))
       }
     }
   } catch (error) {
@@ -32,55 +60,46 @@ const fetchContact = async () => {
   }
 }
 
-const addNewContact = async () => {
-  if (isFormValid.value) {
-    if (newContactNumber.value) {
-      try {
-        const company_id = localStorage.getItem('company_id')
-        if (company_id) {
-          const requestData = { contact_number: newContactNumber.value, company_id }
-
-          const { data, error } = await supabase.from('contact').insert([requestData])
-
-          if (error) {
-            throw error
-          }
-
-          // Update the allowedContacts array with the newly added contact data
-          if (data && data.length > 0) {
-            allowedContacts.value.push(data[0])
-          }
-
-          newContactNumber.value = ''
-
-          Swal.fire({
-            title: 'Success!',
-            text: 'Contact successfully added!',
-            icon: 'success',
-            confirmButtonColor: '#3085d6',
-          })
-        }
-      } catch (error) {
-        console.error('Error adding contact:', error.message)
-        Swal.fire({
-          title: 'Error!',
-          text: 'Error adding contact: ' + error.message,
-          icon: 'error',
-          confirmButtonColor: '#d33',
-        })
+const submitNewContact = async () => {
+  try {
+    const company_id = localStorage.getItem('company_id')
+    if (company_id) {
+      const requestData = {
+        contact_name: form.value.contact_name,
+        contact_number: form.value.contact_number,
+        contact_role: form.value.contact_role,
+        company_id,
       }
-    } else {
+
+      const { data, error } = await supabase.from('contact').insert([requestData])
+      if (error) throw error
+
+      // Add the new contact to the allowedContacts array
+      if (data && data.length > 0) {
+        allowedContacts.value.push(data[0])
+      }
+
+      // Reset the form and close the dialog
+      form.value = { contact_name: '', contact_number: '', contact_role: null }
+      dialog.value = false
+
       Swal.fire({
-        title: 'Attention!',
-        text: 'Please enter a contact number before submitting.',
-        icon: 'warning',
+        title: 'Success!',
+        text: 'Contact successfully added!',
+        icon: 'success',
         confirmButtonColor: '#3085d6',
       })
     }
-  } else {
-    console.error('Form validation failed')
+  } catch (error) {
+    console.error('Error adding contact:', error.message)
+    Swal.fire({
+      title: 'Error!',
+      text: 'Error adding contact: ' + error.message,
+      icon: 'error',
+      confirmButtonColor: '#d33',
+    })
   }
-  fetchContact() // Refresh the contact list after adding a new contact
+  fetchContact()
 }
 
 const editContact = async contact => {
@@ -152,6 +171,7 @@ const confirmDelete = async contact => {
 
 onMounted(() => {
   const company_id = localStorage.getItem('company_id')
+  fetchRoles()
   if (company_id) {
     fetchContact()
   }
@@ -159,7 +179,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <VCard title="Recent Devices">
+  <VCard title="Devices">
     <VCardText>
       We need permission to provide access to specific user who allow to use SuDu whatsapp.
       <a href="javascript:void(0)">Learn More</a>
@@ -167,23 +187,41 @@ onMounted(() => {
 
     <VTable class="text-no-wrap">
       <thead>
-        <th scope="col">Contact Number (6017*******)</th>
+        <th scope="col"></th>
+        <th scope="col">Name</th>
+        <th scope="col">Contact</th>
+        <th scope="col">Roles</th>
         <th scope="col">Active</th>
         <th scope="col">Action</th>
       </thead>
       <tbody>
         <tr
-          v-for="device in allowedContacts"
-          :key="device.contact_number"
+          v-for="(contact, index) in allowedContacts"
+          :key="contact.id"
         >
-          <td>{{ device.contact_number }}</td>
+          <td class="text-center">{{ index + 1 }}</td>
           <td class="text-center">
-            <VCheckbox v-model="device.active" />
+            {{ contact.contact_name }}
+            <VIcon @click="editContact(contact)">mdi-pencil</VIcon>
+          </td>
+          <td class="text-center">{{ contact.contact_number }}</td>
+          <td class="text-center">
+            <div class="role-container">
+              <span
+                class="role-color-indicator"
+                :style="{ backgroundColor: contact.roleColor }"
+              ></span>
+              <span class="role-label">
+                {{ contact.role }}
+              </span>
+            </div>
+          </td>
+          <td class="text-center">
+            <VSwitch v-model="contact.active" />
           </td>
           <td class="text-center">
             <div class="icon-wrapper">
-              <VIcon @click="editContact(device)">mdi-pencil</VIcon>
-              <VIcon @click="confirmDelete(device)">mdi-delete</VIcon>
+              <VIcon @click="confirmDelete(contact)">mdi-delete</VIcon>
             </div>
           </td>
         </tr>
@@ -192,34 +230,72 @@ onMounted(() => {
     <VDivider />
 
     <VCardText>
-      <VForm @submit.prevent="addNewContact">
-        <p class="text-base font-weight-medium">Add new contact to allow whatsapp user</p>
-
-        <VRow>
-          <VCol
-            cols="12"
-            sm="6"
-          >
-            <VTextField
-              label="6012*******"
-              v-model="newContactNumber"
-              :rules="[phoneRules]"
-              variant="solo-filled"
-            />
-          </VCol>
-        </VRow>
-
-        <div class="d-flex flex-wrap gap-4 mt-4">
-          <VBtn
-            @click="addNewContact"
-            :disabled="!isFormValid"
-          >
-            Add Contact
-          </VBtn>
-        </div>
-      </VForm>
+      <div class="d-flex flex-wrap gap-4">
+        <VBtn
+          @click="handleAddContactClick"
+          class="custom-create-btn"
+        >
+          <VIcon left>mdi-plus</VIcon>
+          Add Contact
+        </VBtn>
+      </div>
     </VCardText>
   </VCard>
+  <VDialog
+    v-model="dialog"
+    width="500px"
+  >
+    <VCard>
+      <VCardTitle class="text-title font-weight-bold">Add New Contact</VCardTitle>
+      <VCardText>
+        <VTextField
+          v-model="form.contact_name"
+          label="Name"
+        />
+        <VTextField
+          v-model="form.contact_number"
+          label="Contact"
+          class="mt-5"
+        />
+        <div class="roles-container">
+          <h4 class="mt-5">Roles</h4>
+          <div class="role-pills">
+            <template
+              v-for="role in roles"
+              :key="role.id"
+            >
+              <div
+                class="role-pill"
+                :class="{ selected: form.contact_role === role.id }"
+                @click="form.contact_role = role.id"
+              >
+                <span
+                  class="role-color-indicator"
+                  :style="{ backgroundColor: role.role_colour }"
+                ></span>
+                <span class="text-black">{{ role.role_name }}</span>
+              </div>
+            </template>
+          </div>
+        </div>
+      </VCardText>
+      <VCardActions>
+        <VSpacer></VSpacer>
+        <VBtn
+          color="green darken-1"
+          text
+          @click="dialog = false"
+          >Cancel</VBtn
+        >
+        <VBtn
+          color="blue darken-1"
+          text
+          @click="submitNewContact"
+          >Save</VBtn
+        >
+      </VCardActions>
+    </VCard>
+  </VDialog>
 </template>
 
 <style scoped>
@@ -230,6 +306,68 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px; /* Adjust the gap between icons as needed */
+  gap: 10px;
+}
+
+.role-container {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25em 0.75em;
+  background-color: #eae8e8;
+  border-radius: 16px;
+  gap: 10px;
+}
+
+.role-label {
+  font-size: 0.875em;
+  line-height: 1;
+  color: black;
+}
+
+.role-color-indicator {
+  height: 15px;
+  width: 15px;
+  border-radius: 50%;
+}
+
+.custom-create-btn {
+  border-radius: 20px;
+  color: white;
+  background-color: #6200ea;
+  text-transform: none;
+  font-size: 0.87rem;
+  line-height: 0.1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 10px;
+}
+
+.role-pills {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.role-pill {
+  padding: 5px 15px;
+  border-radius: 15px;
+  background-color: #eae8e89b;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.role-pill.selected {
+  border-color: #6200ea;
+}
+
+.role-color-indicator {
+  height: 15px;
+  width: 15px;
+  border-radius: 50%;
+  background-color: currentColor;
 }
 </style>
