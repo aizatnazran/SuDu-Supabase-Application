@@ -329,6 +329,7 @@ onMounted(async () => {
                 class="document-card ma-1"
                 v-for="file in filesList[templateName]"
                 :key="file.uploadfile_filename"
+                cols="6"
               >
                 <v-btn
                   icon
@@ -454,5 +455,11 @@ onMounted(async () => {
   padding: 20px;
   text-align: center;
   color: #aaa;
+}
+
+@media (max-width: 600px) {
+  .document-card {
+    width: calc(50% - 10px);
+  }
 }
 </style>

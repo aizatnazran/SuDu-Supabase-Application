@@ -169,7 +169,7 @@ onMounted(() => {
     </div>
     <VDialog
       v-model="dialog"
-      width="40%"
+      width="500px"
     >
       <VCard>
         <VCardText>
