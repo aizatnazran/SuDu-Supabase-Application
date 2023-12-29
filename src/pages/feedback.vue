@@ -34,7 +34,7 @@ onMounted(async () => {
   <VRow>
     <!-- SECTION: Change Password -->
     <VCol cols="12">
-      <VCard title="Change Password">
+      <VCard title="Customer Support">
         <VForm>
           <VCardText>
             <!-- 👉 Current Password -->

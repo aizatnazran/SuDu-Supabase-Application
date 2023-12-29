@@ -11,6 +11,10 @@ const goToSettings = () => {
   router.push('/account-settings')
 }
 
+const goToFeedback = () => {
+  router.push('/feedback')
+}
+
 const companyName = ref('')
 
 const logout = async () => {
@@ -168,7 +172,11 @@ onMounted(async () => {
               />
             </template>
 
-            <VListItemTitle>Customer Support</VListItemTitle>
+            <VListItemTitle
+              link
+              @click="goToFeedback"
+              >Customer Support</VListItemTitle
+            >
           </VListItem>
 
           <!-- Divider -->

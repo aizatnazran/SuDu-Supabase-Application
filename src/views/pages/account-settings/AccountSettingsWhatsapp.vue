@@ -5,10 +5,11 @@ import { onMounted, ref } from 'vue'
 
 const allowedContacts = ref([])
 const newContactNumber = ref('')
-const dialog = ref(false) // For controlling the visibility of the VDialog
-const roles = ref([]) // For storing the roles fetched from the database
+const dialog = ref(false)
+const roles = ref([])
+const editDialog = ref(false)
+const editingContact = ref({})
 const form = ref({
-  // For storing the new contact's information
   contact_name: '',
   contact_number: '',
   contact_role: null,
@@ -102,40 +103,43 @@ const submitNewContact = async () => {
   fetchContact()
 }
 
-const editContact = async contact => {
-  const { value: newContactNumber } = await Swal.fire({
-    title: 'Enter the new contact number',
-    input: 'text',
-    inputLabel: 'Contact Number',
-    inputValue: contact.contact_number,
-    showCancelButton: true,
-    inputValidator: value => {
-      if (!value) {
-        return 'Contact number cannot be empty!'
-      }
-    },
-  })
+const editContact = contact => {
+  editingContact.value = { ...contact, contact_role: contact.contact_role.id }
+  editDialog.value = true
+}
 
-  if (newContactNumber) {
-    try {
-      const updatedData = { contact_number: newContactNumber, company_id: contact.company_id, id: contact.id }
-
-      const { error } = await supabase.from('contact').upsert([updatedData], { onConflict: 'id' })
-
-      if (error) {
-        throw error
-      }
-
-      const index = allowedContacts.value.findIndex(c => c.id === contact.id)
-      if (index !== -1) {
-        allowedContacts.value[index] = updatedData
-      }
-
-      Swal.fire('Updated!', 'Contact updated successfully.', 'success')
-    } catch (error) {
-      console.error('Error updating contact:', error.message)
-      Swal.fire('Error!', 'Error updating contact: ' + error.message, 'error')
+const submitEditedContact = async () => {
+  try {
+    // Prepare the data for updating
+    const updatedContactData = {
+      contact_name: editingContact.value.contact_name,
+      contact_number: editingContact.value.contact_number,
+      contact_role: editingContact.value.contact_role,
+      id: editingContact.value.id, // Assuming `id` is the primary key in your 'contact' table
     }
+
+    // Send the update request to the database
+    const { error } = await supabase.from('contact').update(updatedContactData).eq('id', editingContact.value.id)
+
+    // Handle any errors
+    if (error) {
+      throw error
+    }
+
+    // Update the allowedContacts array with the updated data
+    const index = allowedContacts.value.findIndex(c => c.id === editingContact.value.id)
+    if (index !== -1) {
+      allowedContacts.value[index] = { ...allowedContacts.value[index], ...updatedContactData }
+    }
+
+    // Reset editingContact and close the edit dialog
+    editingContact.value = {}
+    editDialog.value = false
+
+    Swal.fire('Updated!', 'Contact updated successfully.', 'success')
+  } catch (error) {
+    console.error('Error updating contact:', error.message)
+    Swal.fire('Error!', 'Error updating contact: ' + error.message, 'error')
   }
 }
 
@@ -291,6 +295,61 @@ onMounted(() => {
           color="blue darken-1"
           text
           @click="submitNewContact"
+          >Save</VBtn
+        >
+      </VCardActions>
+    </VCard>
+  </VDialog>
+  <VDialog
+    v-model="editDialog"
+    width="500px"
+  >
+    <VCard>
+      <VCardTitle class="text-title font-weight-bold">Edit Contact</VCardTitle>
+      <VCardText>
+        <VTextField
+          v-model="editingContact.contact_name"
+          label="Name"
+        />
+        <VTextField
+          v-model="editingContact.contact_number"
+          label="Contact"
+          class="mt-5"
+        />
+        <div class="roles-container">
+          <h4 class="mt-5">Roles</h4>
+          <div class="role-pills">
+            <template
+              v-for="role in roles"
+              :key="role.id"
+            >
+              <div
+                class="role-pill"
+                :class="{ selected: editingContact.contact_role === role.id }"
+                @click="editingContact.contact_role = role.id"
+              >
+                <span
+                  class="role-color-indicator"
+                  :style="{ backgroundColor: role.role_colour }"
+                ></span>
+                <span class="text-black">{{ role.role_name }}</span>
+              </div>
+            </template>
+          </div>
+        </div>
+      </VCardText>
+      <VCardActions>
+        <VSpacer></VSpacer>
+        <VBtn
+          color="green darken-1"
+          text
+          @click="editDialog = false"
+          >Cancel</VBtn
+        >
+        <VBtn
+          color="blue darken-1"
+          text
+          @click="submitEditedContact"
           >Save</VBtn
         >
       </VCardActions>
