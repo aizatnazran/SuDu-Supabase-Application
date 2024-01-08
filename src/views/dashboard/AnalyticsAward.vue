@@ -6,11 +6,8 @@ import trophy from '@images/misc/trophy.png'
 import { computed, onMounted, ref } from 'vue'
 import { useTheme } from 'vuetify'
 
-// Vue Composition API References
 const { global } = useTheme()
-
 const companyName = ref('')
-
 const triangleBg = computed(() => (global.name.value === 'light' ? triangleLight : triangleDark))
 
 onMounted(async () => {

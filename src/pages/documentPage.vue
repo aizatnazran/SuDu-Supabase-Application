@@ -1,4 +1,5 @@
 <script setup>
+//Importing document images
 import blankImage from '@images/images/blank.png'
 import csvImage from '@images/images/csv.png'
 import pdfImage from '@images/images/pdf.png'
@@ -9,14 +10,16 @@ import FormData from 'form-data'
 import Swal from 'sweetalert2'
 import { ref, watch } from 'vue'
 import { supabase } from '../lib/supaBaseClient.js'
-// Components
 
+const userUUID = localStorage.getItem('uuid')
+const companyId = localStorage.getItem('company_id')
 const templateOptions = ref([])
 const selectedFiles = ref([])
 const selectedTemplate = ref(null)
 const sheet = ref(false)
 const filesList = ref([])
 
+//Function to set images of document based on its extension
 function getImageSrc(fileName) {
   const extension = fileName.split('.').pop()
   switch (extension.toLowerCase()) {
@@ -31,6 +34,7 @@ function getImageSrc(fileName) {
   }
 }
 
+//Function to fetch templates from table
 async function fetchTemplates() {
   try {
     const { data: templates, error } = await supabase
@@ -61,16 +65,48 @@ const handleFileChange = event => {
   console.log('Selected files:', selectedFiles.value)
 }
 
-// const props = defineProps({
+//Function to fetch files from table
+async function fetchFiles() {
+  try {
+    let { data: files, error } = await supabase
+      .from('uploadfile')
+      .select(
+        `
+        uploadfile_filename,
+        template (
+          id,
+          template_name
+        )
+      `,
+      )
+      .eq('uploadfile_company', companyId)
 
-//   data: {
-//     sheet: false,
-//   },
+    if (error) {
+      console.error('Error fetching files:', error)
+      return {}
+    }
 
-// })
-const userUUID = localStorage.getItem('uuid')
-const companyId = localStorage.getItem('company_id')
+    const filesByTemplate = files.reduce((acc, file) => {
+      if (file.template && file.template.template_name) {
+        const templateName = file.template.template_name
+        if (!acc[templateName]) {
+          acc[templateName] = []
+        }
+        acc[templateName].push(file)
+      } else {
+        console.warn('File without template:', file)
+      }
+      return acc
+    }, {})
 
+    return filesByTemplate
+  } catch (error) {
+    console.error('Error fetching files:', error)
+    return {}
+  }
+}
+
+//Function to upload files
 const uploadFiles = async () => {
   if (!selectedFiles.value.length) {
     await Swal.fire({
@@ -185,46 +221,7 @@ const uploadFiles = async () => {
   }
 }
 
-async function fetchFiles() {
-  try {
-    let { data: files, error } = await supabase
-      .from('uploadfile')
-      .select(
-        `
-        uploadfile_filename,
-        template (
-          id,
-          template_name
-        )
-      `,
-      )
-      .eq('uploadfile_company', companyId)
-
-    if (error) {
-      console.error('Error fetching files:', error)
-      return {}
-    }
-
-    const filesByTemplate = files.reduce((acc, file) => {
-      if (file.template && file.template.template_name) {
-        const templateName = file.template.template_name
-        if (!acc[templateName]) {
-          acc[templateName] = []
-        }
-        acc[templateName].push(file)
-      } else {
-        console.warn('File without template:', file)
-      }
-      return acc
-    }, {})
-
-    return filesByTemplate
-  } catch (error) {
-    console.error('Error fetching files:', error)
-    return {}
-  }
-}
-
+//Function to confirm and delete a file
 const confirmDelete = async file => {
   Swal.fire({
     title: 'Are you sure?',
@@ -300,7 +297,6 @@ onMounted(async () => {
           v-for="(templateName, index) in templateOptions"
           :key="index"
         >
-          <!-- Styled Template Name Row -->
           <v-row class="mb-4 mt-6">
             <v-col
               cols="5"
@@ -322,7 +318,6 @@ onMounted(async () => {
             </v-col>
           </v-row>
 
-          <!-- Files associated with the template -->
           <VRow>
             <template v-if="filesList[templateName] && filesList[templateName].length">
               <VCard
@@ -403,7 +398,7 @@ onMounted(async () => {
 
 <style>
 .high-z-index-swal {
-  z-index: 9999999 !important;
+  z-index: 3000 !important;
 }
 .overlaying-component-class {
   z-index: 1050;

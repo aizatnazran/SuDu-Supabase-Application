@@ -9,10 +9,11 @@ import Swal from 'sweetalert2'
 import { useTheme } from 'vuetify'
 import { supabase } from '../lib/supaBaseClient.js'
 
-// Vue Composition API References
 const vuetifyTheme = useTheme()
+const authThemeMask = computed(() => {
+  return vuetifyTheme.global.name.value === 'light' ? authV1MaskLight : authV1MaskDark
+})
 
-// Component State
 const form = ref({
   username: '',
   email: '',
@@ -21,12 +22,7 @@ const form = ref({
 })
 const isPasswordVisible = ref(false)
 
-// Theme Related
-const authThemeMask = computed(() => {
-  return vuetifyTheme.global.name.value === 'light' ? authV1MaskLight : authV1MaskDark
-})
-
-// Function Definition
+//Function to sign up user
 const handleSignUp = async () => {
   if (form.value.password !== form.value.confirmPassword) {
     Swal.fire({
@@ -46,13 +42,11 @@ const handleSignUp = async () => {
     return
   }
 
-  // Register the user
   const { user, error } = await supabase.auth.signUp({
     email: form.value.email,
     password: form.value.password,
   })
 
-  // Handle any errors during registration
   if (error) {
     Swal.fire({
       icon: 'error',
@@ -62,13 +56,11 @@ const handleSignUp = async () => {
     return
   }
 
-  // If registration is successful, insert the data into the company table
   if (user) {
     const { error: insertError } = await supabase
       .from('company')
       .insert([{ company_email: user.email, user_uuid: user.id }])
 
-    // Handle any errors during insertion
     if (insertError) {
       Swal.fire({
         icon: 'error',
@@ -211,7 +203,6 @@ const handleSignUp = async () => {
       :width="350"
     />
 
-    <!-- bg img -->
     <VImg
       class="auth-footer-mask d-none d-md-block"
       :src="authThemeMask"

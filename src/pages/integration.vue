@@ -12,17 +12,7 @@ const vuetifyTheme = useTheme()
 
 const sheet = ref(false)
 
-// const props = defineProps({
-
-//   data: {
-//     sheet: false,
-//   },
-
-// })
-
-const companyId = localStorage.getItem('company_id')
-
-// Categorized integrations
+// Categorized Integrations
 const integrations = ref({
   accountingSystem: [
     {
@@ -93,7 +83,7 @@ const integrations = ref({
 
 <template>
   <v-container fluid>
-    <!-- Accounting System Section Title -->
+    <!-- Accounting System Section -->
     <v-row class="mb-4">
       <v-col
         cols="5"

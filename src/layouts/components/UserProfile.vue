@@ -6,17 +6,16 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
+const companyName = ref('')
 
 const goToSettings = () => {
   router.push('/account-settings')
 }
-
 const goToFeedback = () => {
   router.push('/feedback')
 }
 
-const companyName = ref('')
-
+//Function to log out a user
 const logout = async () => {
   try {
     const { error } = await supabase.auth.signOut()
@@ -29,7 +28,6 @@ const logout = async () => {
     localStorage.removeItem('uuid')
     localStorage.removeItem('company_id')
 
-    // Notify user of successful logout
     await Swal.fire({
       title: 'Logged Out!',
       text: 'You have logged out successfully.',
@@ -37,7 +35,6 @@ const logout = async () => {
       confirmButtonColor: '#3085d6',
     })
 
-    // Redirect to login page
     router.push('/login')
   } catch (error) {
     Swal.fire({
@@ -147,22 +144,6 @@ onMounted(async () => {
             >
           </VListItem>
 
-          <!-- 👉 Pricing -->
-          <!--
-            <VListItem link>
-            <template #prepend>
-            <VIcon
-            class="me-2"
-            icon="mdi-currency-usd"
-            size="22"
-            />
-            </template>
-
-            <VListItemTitle>Pricing</VListItemTitle>
-            </VListItem> 
-          -->
-
-          <!-- 👉 FAQ -->
           <VListItem link>
             <template #prepend>
               <VIcon

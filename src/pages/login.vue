@@ -12,27 +12,27 @@ import { useTheme } from 'vuetify'
 import { supabase } from '../lib/supaBaseClient.js'
 
 const userInfo = ref({})
-
-// Vue Composition API References
 const router = useRouter()
 const vuetifyTheme = useTheme()
 const isPasswordVisible = ref(false)
+const dialog = ref(false)
+const emailForRecovery = ref('')
 
-// Component State and Functions
+const openDialog = () => {
+  dialog.value = true
+}
+
 const form = ref({
   email: '',
   password: '',
   remember: false,
 })
 
-// Theme Related
 const authThemeMask = computed(() => {
   return vuetifyTheme.global.name.value === 'light' ? authV1MaskLight : authV1MaskDark
 })
 
-const dialog = ref(false)
-const emailForRecovery = ref('')
-
+//Function to reset password using email
 const forgotPassword = async () => {
   if (!emailForRecovery.value) {
     Swal.fire({
@@ -48,27 +48,21 @@ const forgotPassword = async () => {
     const { data, error } = await supabase.auth.resetPasswordForEmail(emailForRecovery.value)
 
     if (error) {
-      // Handle error
       console.error('Error sending password reset email:', error.message)
     } else {
-      // Notify user that email has been sent
       Swal.fire({
         icon: 'success',
         title: 'Recovery Email Sent',
         text: 'Please check your inbox for password recovery instructions.',
       })
-      dialog.value = false // Close the dialog
+      dialog.value = false
     }
   } catch (e) {
     console.error('Error in forgotPassword:', e.message)
   }
 }
 
-const openDialog = () => {
-  dialog.value = true
-}
-
-// Function Definition
+// Function to log in user
 const login = async () => {
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -234,7 +228,6 @@ const login = async () => {
       :width="350"
     />
 
-    <!-- bg img -->
     <VImg
       class="auth-footer-mask d-none d-md-block"
       :src="authThemeMask"
@@ -278,6 +271,6 @@ const login = async () => {
 @use '@core/scss/pages/page-auth.scss';
 
 .high-z-index-swal {
-  z-index: 9999999 !important;
+  z-index: 3000 !important;
 }
 </style>
