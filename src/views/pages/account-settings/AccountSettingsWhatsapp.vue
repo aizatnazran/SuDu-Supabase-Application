@@ -117,6 +117,7 @@ const submitEditedContact = async () => {
       contact_role: editingContact.value.contact_role,
       id: editingContact.value.id,
     }
+
     const { error } = await supabase.from('contact').update(updatedContactData).eq('id', editingContact.value.id)
 
     if (error) {
@@ -125,9 +126,18 @@ const submitEditedContact = async () => {
 
     const index = allowedContacts.value.findIndex(c => c.id === editingContact.value.id)
     if (index !== -1) {
-      allowedContacts.value[index] = { ...allowedContacts.value[index], ...updatedContactData }
-    }
+      allowedContacts.value[index] = {
+        ...allowedContacts.value[index],
+        contact_name: editingContact.value.contact_name,
+        contact_number: editingContact.value.contact_number,
+      }
 
+      const updatedRole = roles.value.find(role => role.id === editingContact.value.contact_role)
+      if (updatedRole) {
+        allowedContacts.value[index].role = updatedRole.role_name
+        allowedContacts.value[index].roleColor = updatedRole.role_colour
+      }
+    }
     editingContact.value = {}
     editDialog.value = false
 
