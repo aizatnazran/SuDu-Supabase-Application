@@ -117,7 +117,7 @@ onMounted(() => {
 <template>
   <VCard>
     <VCardText class="d-flex align-items-center justify-content-between">
-      <VCardText class="text-h4 font-weight-medium mt-1">Roles</VCardText>
+      <h2 class="font-weight-light mt-1 mr-3">Roles</h2>
     </VCardText>
     <div class="ml-10">
       <VCardText
