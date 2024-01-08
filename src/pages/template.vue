@@ -7,12 +7,14 @@ const templateList = ref([])
 const tagList = ref([])
 const selectedTags = ref([])
 const dialog = ref(false)
+
 const newTemplate = ref({
   name: '',
   description: '',
   tag: 'Report',
 })
 
+//Function to fetch tags from table
 const fetchTags = async () => {
   try {
     const { data: tags, error } = await supabase.from('tag').select('id, tag_name')
@@ -29,6 +31,7 @@ const fetchTags = async () => {
   }
 }
 
+//Function to fetch templates from table
 const fetchTemplate = async () => {
   try {
     const company_id = localStorage.getItem('company_id')
@@ -54,18 +57,18 @@ const fetchTemplate = async () => {
   }
 }
 
+//Function to add a new template
 const addNewTemplate = async () => {
   if (newTemplate.value.name && selectedTags.value.length === 1) {
-    // Check if exactly one tag is selected
     try {
       const company_id = localStorage.getItem('company_id')
       if (company_id) {
-        const selectedTagId = selectedTags.value[0].id // Get the ID of the selected tag
+        const selectedTagId = selectedTags.value[0].id
         const requestData = {
           template_name: newTemplate.value.name,
           template_description: newTemplate.value.description,
           company_id,
-          template_tag: selectedTagId, // Pass the selected tag ID as a single integer
+          template_tag: selectedTagId,
         }
 
         const { data, error } = await supabase.from('template').insert([requestData])
@@ -80,11 +83,9 @@ const addNewTemplate = async () => {
           selectedTags.value = []
         }
 
-        // Resetting newTemplate values
         newTemplate.value.name = ''
         newTemplate.value.description = ''
-        dialog.value = false // Close the dialog after successful insertion
-
+        dialog.value = false
         Swal.fire({
           title: 'Success!',
           text: 'Template successfully added!',
@@ -112,7 +113,7 @@ const addNewTemplate = async () => {
       confirmButtonColor: '#3085d6',
     })
   }
-  fetchTemplate() // Refresh the template list
+  fetchTemplate()
 }
 
 const confirmDelete = async template => {
@@ -146,7 +147,6 @@ const confirmDelete = async template => {
         Swal.fire('Deleted!', 'Template has been deleted.', 'success')
       } catch (error) {
         console.error('Error deleting template:', error.message)
-        // Check for foreign key constraint violation
         if (error.message.includes('foreign key constraint')) {
           Swal.fire(
             'Error!',
@@ -244,9 +244,7 @@ onMounted(() => {
           />
           <VCardTitle class="text-h5 text-start font-weight-bold mt-5">Insert Tags</VCardTitle>
           <div class="my-4">
-            <!-- Container for available tags -->
             <div style="display: flex; flex-wrap: wrap; gap: 8px">
-              <!-- Generate tags dynamically from fetched tags -->
               <v-chip
                 v-for="tag in tagList"
                 :key="tag.id"
@@ -256,9 +254,7 @@ onMounted(() => {
                 {{ tag.tag_name }}
               </v-chip>
             </div>
-            <!-- Container for selected tags -->
             <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px">
-              <!-- Display selected tags -->
               <v-chip
                 v-for="tag in selectedTags"
                 :key="tag.id"
@@ -326,7 +322,7 @@ onMounted(() => {
 }
 
 .high-z-index-swal {
-  z-index: 9999999 !important;
+  z-index: 3000 !important;
 }
 
 .v-table thead th {

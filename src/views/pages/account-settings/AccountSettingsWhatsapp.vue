@@ -4,7 +4,6 @@ import Swal from 'sweetalert2'
 import { onMounted, ref } from 'vue'
 
 const allowedContacts = ref([])
-const newContactNumber = ref('')
 const dialog = ref(false)
 const roles = ref([])
 const editDialog = ref(false)
@@ -15,6 +14,7 @@ const form = ref({
   contact_role: null,
 })
 
+//Function to fetch roles from table
 const fetchRoles = async () => {
   try {
     const { data, error } = await supabase.from('role').select('id, role_name, role_colour')
@@ -25,11 +25,7 @@ const fetchRoles = async () => {
   }
 }
 
-// Function to handle the "Add Contact" button click
-const handleAddContactClick = () => {
-  dialog.value = true // Show the VDialog
-}
-
+//Function to fetch contact from table
 const fetchContact = async () => {
   try {
     const company_id = localStorage.getItem('company_id')
@@ -61,6 +57,12 @@ const fetchContact = async () => {
   }
 }
 
+// Function to handle the "Add Contact" button click
+const handleAddContactClick = () => {
+  dialog.value = true
+}
+
+//Function to add new contact
 const submitNewContact = async () => {
   try {
     const company_id = localStorage.getItem('company_id')
@@ -75,12 +77,10 @@ const submitNewContact = async () => {
       const { data, error } = await supabase.from('contact').insert([requestData])
       if (error) throw error
 
-      // Add the new contact to the allowedContacts array
       if (data && data.length > 0) {
         allowedContacts.value.push(data[0])
       }
 
-      // Reset the form and close the dialog
       form.value = { contact_name: '', contact_number: '', contact_role: null }
       dialog.value = false
 
@@ -108,31 +108,26 @@ const editContact = contact => {
   editDialog.value = true
 }
 
+//Function to edit a contact
 const submitEditedContact = async () => {
   try {
-    // Prepare the data for updating
     const updatedContactData = {
       contact_name: editingContact.value.contact_name,
       contact_number: editingContact.value.contact_number,
       contact_role: editingContact.value.contact_role,
-      id: editingContact.value.id, // Assuming `id` is the primary key in your 'contact' table
+      id: editingContact.value.id,
     }
-
-    // Send the update request to the database
     const { error } = await supabase.from('contact').update(updatedContactData).eq('id', editingContact.value.id)
 
-    // Handle any errors
     if (error) {
       throw error
     }
 
-    // Update the allowedContacts array with the updated data
     const index = allowedContacts.value.findIndex(c => c.id === editingContact.value.id)
     if (index !== -1) {
       allowedContacts.value[index] = { ...allowedContacts.value[index], ...updatedContactData }
     }
 
-    // Reset editingContact and close the edit dialog
     editingContact.value = {}
     editDialog.value = false
 

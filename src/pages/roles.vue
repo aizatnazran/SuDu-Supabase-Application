@@ -5,19 +5,11 @@ import { onMounted, ref } from 'vue'
 
 const roleList = ref([])
 const selectedColor = ref('')
-
 const dialog = ref(false)
 const newRole = ref({
   name: '',
   role_colour: '',
 })
-
-const selectColor = color => {
-  selectedColor.value = color
-  newRole.value.role_colour = color
-  // For debugging purposes, let's log the selected color
-  console.log('Selected color:', selectedColor.value)
-}
 
 const colorOptions = ref([
   { name: 'Green', value: '#00FF00' },
@@ -26,6 +18,13 @@ const colorOptions = ref([
   { name: 'Red', value: '#FF0000' },
 ])
 
+const selectColor = color => {
+  selectedColor.value = color
+  newRole.value.role_colour = color
+  console.log('Selected color:', selectedColor.value)
+}
+
+//Function to fetch roles from table
 const fetchRole = async () => {
   try {
     const company_id = localStorage.getItem('company_id')
@@ -50,6 +49,7 @@ const fetchRole = async () => {
   }
 }
 
+//Function to add a new role
 const addNewRole = async () => {
   if (newRole.value.name && newRole.value.role_colour) {
     try {
@@ -72,7 +72,6 @@ const addNewRole = async () => {
           roleList.value.push(data[0])
         }
 
-        // Resetting newRole values
         newRole.value.name = ''
         newRole.value.description = ''
         dialog.value = false
@@ -104,7 +103,7 @@ const addNewRole = async () => {
       confirmButtonColor: '#3085d6',
     })
   }
-  fetchRole() // Refresh the role list
+  fetchRole()
 }
 
 onMounted(() => {
@@ -277,13 +276,12 @@ onMounted(() => {
   border-radius: 50%;
   margin: 5px;
   cursor: pointer;
-  border: 2px solid rgb(171, 171, 171); /* Default border to transparent */
-  transition: border-color 0.3s; /* Smooth transition for the border color */
+  border: 2px solid rgb(171, 171, 171);
+  transition: border-color 0.3s;
 }
 .color-circle:hover,
 .color-circle.selected {
-  /* Apply black border on hover and selected */
-  border-color: #000000 !important; /* Change border color on hover and when selected */
+  border-color: #000000 !important;
 }
 .color-options-container {
   display: flex;
@@ -296,7 +294,7 @@ onMounted(() => {
 }
 
 .high-z-index-swal {
-  z-index: 9999999 !important;
+  z-index: 3000 !important;
 }
 
 .v-table thead th {

@@ -10,6 +10,7 @@ const currentPassword = ref('')
 const newPassword = ref('')
 const confirmPassword = ref('')
 
+//Validating new password
 const validatePassword = () => {
   if (!currentPassword.value || !newPassword.value || !confirmPassword.value) {
     Swal.fire('Error', 'All fields are required.', 'error')
@@ -29,6 +30,7 @@ const validatePassword = () => {
   return true
 }
 
+//Function to update old password to new password
 const updatePassword = async () => {
   if (!validatePassword()) return
   try {
@@ -44,27 +46,6 @@ const passwordRequirements = [
   'Minimum 8 characters long - the more, the better',
   'At least one lowercase character',
   'At least one number, symbol, or whitespace character',
-]
-
-const serverKeys = [
-  {
-    name: 'Server Key 1',
-    key: '23eaf7f0-f4f7-495e-8b86-fad3261282ac',
-    createdOn: '28 Apr 2021, 18:20 GTM+4:10',
-    permission: 'Full Access',
-  },
-  {
-    name: 'Server Key 2',
-    key: 'bb98e571-a2e2-4de8-90a9-2e231b5e99',
-    createdOn: '12 Feb 2021, 10:30 GTM+2:30',
-    permission: 'Read Only',
-  },
-  {
-    name: 'Server Key 3',
-    key: '2e915e59-3105-47f2-8838-6e46bf83b711',
-    createdOn: '28 Dec 2020, 12:21 GTM+4:10',
-    permission: 'Full Access',
-  },
 ]
 
 const recentDevices = [
@@ -144,7 +125,7 @@ const recentDevices = [
                 cols="12"
                 md="6"
               >
-                <!-- 👉 current password -->
+                <!-- 👉 Current password -->
                 <VTextField
                   v-model="currentPassword"
                   :type="isCurrentPasswordVisible ? 'text' : 'password'"
@@ -161,7 +142,7 @@ const recentDevices = [
                 cols="12"
                 md="6"
               >
-                <!-- 👉 new password -->
+                <!-- 👉 New password -->
                 <VTextField
                   v-model="newPassword"
                   :type="isNewPasswordVisible ? 'text' : 'password'"
@@ -175,7 +156,7 @@ const recentDevices = [
                 cols="12"
                 md="6"
               >
-                <!-- 👉 confirm password -->
+                <!-- 👉 Confirm password -->
                 <VTextField
                   v-model="confirmPassword"
                   :type="isConfirmPasswordVisible ? 'text' : 'password'"
