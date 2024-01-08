@@ -373,7 +373,6 @@ onMounted(async () => {
               v-model="selectedTemplate"
               :items="templateOptions"
               label="Templates"
-              class="select-template"
             />
             <div class="text-h6 text-start mt-4 font-weight-bold">Upload File</div>
             <VFileInput
@@ -437,11 +436,6 @@ onMounted(async () => {
   top: 1px;
   right: 1px;
   z-index: 10;
-}
-
-.select-template {
-  border: 1px solid #aaa;
-  border-radius: 4px;
 }
 
 .file-upload-input {

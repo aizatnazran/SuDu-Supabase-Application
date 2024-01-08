@@ -17,9 +17,18 @@ const form = ref({
 //Function to fetch roles from table
 const fetchRoles = async () => {
   try {
-    const { data, error } = await supabase.from('role').select('id, role_name, role_colour')
-    if (error) throw error
-    roles.value = data
+    const company_id = localStorage.getItem('company_id')
+    if (company_id) {
+      const { data, error } = await supabase
+        .from('role')
+        .select('id, role_name, role_colour')
+        .eq('company_id', company_id)
+
+      if (error) throw error
+      roles.value = data
+    } else {
+      console.error('No company_id found in localStorage')
+    }
   } catch (error) {
     console.error('Error fetching roles:', error)
   }
@@ -88,6 +97,7 @@ const submitNewContact = async () => {
         title: 'Success!',
         text: 'Contact successfully added!',
         icon: 'success',
+        customClass: { container: 'high-z-index-swal' },
         confirmButtonColor: '#3085d6',
       })
     }
@@ -97,6 +107,7 @@ const submitNewContact = async () => {
       title: 'Error!',
       text: 'Error adding contact: ' + error.message,
       icon: 'error',
+      customClass: { container: 'high-z-index-swal' },
       confirmButtonColor: '#d33',
     })
   }
@@ -363,6 +374,10 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.high-z-index-swal {
+  z-index: 3000 !important;
+}
+
 .text-center {
   text-align: center;
 }
