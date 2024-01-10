@@ -146,10 +146,8 @@ const uploadFiles = async () => {
     }).toString()
 
     try {
-      // Upload to the API first
       await axios.post(`http://sudu.ai:8082/upload?${queryParams}`, form)
 
-      // If the API upload is successful, fetch the template ID
       if (selectedTemplateName) {
         const { data: templateData, error: templateError } = await supabase
           .from('template')
@@ -162,11 +160,9 @@ const uploadFiles = async () => {
         selectedTemplateId = templateData.id
       }
 
-      // Then upload to Supabase storage
       const { error: uploadError } = await supabase.storage.from('documents').upload(newFileName, file)
       if (uploadError) throw uploadError
 
-      // And insert record into Supabase database
       const { error: dbError } = await supabase.from('uploadfile').insert([
         {
           uploadfile_filename: originalFileName,
@@ -179,7 +175,7 @@ const uploadFiles = async () => {
     } catch (error) {
       console.error('Error during file upload process:', error)
       uploadErrors.push(originalFileName)
-      continue // Skip to the next file
+      continue
     }
   }
 
@@ -187,7 +183,6 @@ const uploadFiles = async () => {
 
   filesList.value = await fetchFiles()
 
-  // Display success or failure messages
   if (uploadErrors.length === 0) {
     Swal.fire({
       title: 'Success!',
