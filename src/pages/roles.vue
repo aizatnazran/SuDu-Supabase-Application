@@ -2,9 +2,9 @@
 import { supabase } from '@/lib/supaBaseClient'
 import Swal from 'sweetalert2'
 import { onMounted, ref } from 'vue'
+import { ColorPicker } from 'vue-accessible-color-picker'
 
 const roleList = ref([])
-const selectedColor = ref('')
 const dialog = ref(false)
 const newRole = ref({
   name: '',
@@ -18,13 +18,12 @@ const colorOptions = ref([
   { name: 'Red', value: '#FF0000' },
 ])
 
-const selectColor = color => {
-  selectedColor.value = color
-  newRole.value.role_colour = color
-  console.log('Selected color:', selectedColor.value)
+const color = ref('#000000'); 
+
+function updateColor(eventData) {
+  color.value = eventData.cssColor;
 }
 
-//Function to fetch roles from table
 const fetchRole = async () => {
   try {
     const company_id = localStorage.getItem('company_id')
@@ -49,15 +48,14 @@ const fetchRole = async () => {
   }
 }
 
-//Function to add a new role
 const addNewRole = async () => {
-  if (newRole.value.name && newRole.value.role_colour) {
+  if (newRole.value.name && color.value) {
     try {
       const company_id = localStorage.getItem('company_id')
       if (company_id) {
         const requestData = {
           role_name: newRole.value.name,
-          role_colour: newRole.value.role_colour,
+          role_colour: color.value,
           company_id,
         }
 
@@ -182,17 +180,11 @@ onMounted(() => {
               dense
               class="mb-4"
             />
-            <VCardTitle class="text-h6">Colour</VCardTitle>
-            <div class="color-options-container">
-              <div
-                v-for="option in colorOptions"
-                :key="option.value"
-                class="color-circle"
-                :class="{ selected: selectedColor.value === option.value }"
-                :style="{ backgroundColor: option.value }"
-                @click="selectColor(option.value)"
-              ></div>
-            </div>
+            <div>
+            
+            <ColorPicker :color="color"
+    @color-change="updateColor"/>
+          </div>
           </div>
         </VCardText>
         <VCardActions>
@@ -213,6 +205,10 @@ onMounted(() => {
     </VDialog>
   </VCard>
 </template>
+
+<style>
+@import url('vue-accessible-color-picker/styles');
+</style>
 
 <style scoped>
 .icon-wrapper {
