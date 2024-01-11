@@ -342,7 +342,7 @@ const currentItem = ref(null);
                   <v-list-item
                     v-for="(item, index) in items"
                     :key="index"
-                    @click="item.action(file)()"
+                    @click="item.action(file)"
                   >
                     <v-list-item-title>{{ item.title }}</v-list-item-title>
                   </v-list-item>
