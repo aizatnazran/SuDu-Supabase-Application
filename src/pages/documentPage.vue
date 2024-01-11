@@ -221,7 +221,6 @@ const confirmDelete = async file => {
           .from('uploadfile')
           .delete()
           .match({ uploadfile_filename: file.uploadfile_filename, uploadfile_company: companyId })
-
         if (deletionError) {
           throw deletionError
         }
@@ -260,6 +259,22 @@ onMounted(async () => {
     console.error('Error during onMounted:', error)
   }
 })
+
+const editItem = () => {
+      console.log("Edit action triggered");
+    };
+
+    const items = ref([
+      { title: 'Edit', action: file => editItem(file) },
+      { title: 'Delete', action: file => confirmDelete(file) },
+    ]);
+
+const handleDelete = (file) => {
+  confirmDelete(file);
+};
+
+const currentItem = ref(null); 
+
 </script>
 
 <template>
@@ -309,16 +324,31 @@ onMounted(async () => {
                 :key="file.uploadfile_filename"
                 cols="6"
               >
-                <v-btn
-                  icon
-                  flat
-                  color="transparent"
-                  class="dots-button"
-                  v-on="on"
-                  @click="confirmDelete(file)"
-                >
-                  <v-icon>mdi-dots-vertical</v-icon>
-                </v-btn>
+              <v-menu :location="location">
+                <template v-slot:activator="{ props, on }">
+                  <v-btn
+                    icon
+                    flat
+                    color="transparent"
+                    class="dots-button"
+                    v-bind="props"
+                    v-on="on"
+                  >
+                    <v-icon>mdi-dots-vertical</v-icon>
+                  </v-btn>
+                </template>
+
+                <v-list>
+                  <v-list-item
+                    v-for="(item, index) in items"
+                    :key="index"
+                    @click="item.action(file)"
+                  >
+                    <v-list-item-title>{{ item.title }}</v-list-item-title>
+                  </v-list-item>
+                </v-list>
+              </v-menu>
+                
                 <img
                   :src="getImageSrc(file.uploadfile_filename)"
                   alt="Document Icon"
@@ -363,7 +393,7 @@ onMounted(async () => {
               @change="handleFileChange"
               label="Click to upload file or drag and drop here"
               class="file-upload-input"
-            />
+            /> 
           </VContainer>
           <VBtn
             class="mt-5"
