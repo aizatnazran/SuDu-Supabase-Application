@@ -19,9 +19,10 @@ const colorOptions = ref([
 ])
 
 const color = ref('#000000'); 
+const colorInHex = ref('#000000'); // Default Hex color
 
 function updateColor(eventData) {
-  color.value = eventData.cssColor;
+  color.value = hslToHex(eventData.cssColor);
 }
 
 const fetchRole = async () => {
@@ -110,6 +111,27 @@ onMounted(() => {
     fetchRole()
   }
 })
+
+function hslToHex(hsl) {
+  let [h, s, l] = hsl.match(/\d+\.?\d*/g).map(Number);
+
+  if (h > 360) h = 360;
+  if (s > 100) s = 100;
+  if (l > 100) l = 100;
+
+  s /= 100;
+  l /= 100;
+
+  const k = (n) => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n) => l - a * Math.max(Math.min(k(n) - 3, 9 - k(n), 1), -1);  
+
+  const rgb = [f(0), f(8), f(4)].map((val) => Math.round(val * 255));
+  const hex = rgb.map((val) => val.toString(16).padStart(2, '0')).join('');
+
+  return `#${hex}`;
+}
+
 </script>
 
 <template>
