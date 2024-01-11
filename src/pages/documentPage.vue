@@ -130,73 +130,56 @@ const uploadFiles = async () => {
   }
 
   let uploadErrors = []
-
   let selectedTemplateId = null
   let selectedTemplateName = selectedTemplate.value
-  if (selectedTemplateName) {
-    const { data: templateData, error: templateError } = await supabase
-      .from('template')
-      .select('id')
-      .eq('template_name', selectedTemplateName)
-      .eq('company_id', companyId)
-      .single()
-
-    if (templateError) {
-      console.error('Error fetching template ID:', templateError)
-      return
-    }
-
-    selectedTemplateId = templateData.id
-  }
 
   for (const file of selectedFiles.value) {
     const originalFileName = file.name
     const newFileName = `${userUUID}_${originalFileName}`
-    const filePath = `${newFileName}`
-
-    const { error: uploadError } = await supabase.storage.from('documents').upload(filePath, file)
-
-    if (uploadError) {
-      console.error('Error uploading file:', uploadError)
-      uploadErrors.push(originalFileName)
-      continue
-    }
-
-    const { error: dbError } = await supabase.from('uploadfile').insert([
-      {
-        uploadfile_filename: originalFileName,
-        uploadfile_company: companyId,
-        uploadfile_uuid: userUUID,
-        uploadfile_template: selectedTemplateId,
-      },
-    ])
-
-    if (dbError) {
-      console.error('Error saving file info to database:', dbError)
-      uploadErrors.push(originalFileName)
-      continue
-    }
-
     const form = new FormData()
     form.append('file', file, originalFileName)
-
     const collectionName = selectedTemplateName.replace(/\s+/g, '_')
-    const params = {
+    const queryParams = new URLSearchParams({
       uuid: userUUID,
       collection_name: collectionName,
       preprocess: 'false',
-    }
+    }).toString()
 
     try {
-      await axios.post('http://sudu.ai:8082/upload', form, {
-        params: params,
-      })
-    } catch (axiosError) {
-      console.error('Error sending file to API:', axiosError)
-      if (axiosError.response) {
-        console.error('Server responded with:', axiosError.response.status, axiosError.response.data)
+      // Upload to the API first
+      await axios.post(`http://sudu.ai:8082/upload?${queryParams}`, form)
+
+      // If the API upload is successful, fetch the template ID
+      if (selectedTemplateName) {
+        const { data: templateData, error: templateError } = await supabase
+          .from('template')
+          .select('id')
+          .eq('template_name', selectedTemplateName)
+          .eq('company_id', companyId)
+          .single()
+
+        if (templateError) throw templateError
+        selectedTemplateId = templateData.id
       }
+
+      // Then upload to Supabase storage
+      const { error: uploadError } = await supabase.storage.from('documents').upload(newFileName, file)
+      if (uploadError) throw uploadError
+
+      // And insert record into Supabase database
+      const { error: dbError } = await supabase.from('uploadfile').insert([
+        {
+          uploadfile_filename: originalFileName,
+          uploadfile_company: companyId,
+          uploadfile_uuid: userUUID,
+          uploadfile_template: selectedTemplateId,
+        },
+      ])
+      if (dbError) throw dbError
+    } catch (error) {
+      console.error('Error during file upload process:', error)
       uploadErrors.push(originalFileName)
+      continue // Skip to the next file
     }
   }
 
@@ -204,6 +187,7 @@ const uploadFiles = async () => {
 
   filesList.value = await fetchFiles()
 
+  // Display success or failure messages
   if (uploadErrors.length === 0) {
     Swal.fire({
       title: 'Success!',
@@ -238,7 +222,6 @@ const confirmDelete = async file => {
           .from('uploadfile')
           .delete()
           .match({ uploadfile_filename: file.uploadfile_filename, uploadfile_company: companyId })
-
         if (deletionError) {
           throw deletionError
         }
@@ -277,6 +260,22 @@ onMounted(async () => {
     console.error('Error during onMounted:', error)
   }
 })
+
+const editItem = () => {
+      console.log("Edit action triggered");
+    };
+
+    const items = ref([
+      { title: 'Edit', action: file => editItem(file) },
+      { title: 'Delete', action: file => confirmDelete(file) },
+    ]);
+
+const handleDelete = (file) => {
+  confirmDelete(file);
+};
+
+const currentItem = ref(null); 
+
 </script>
 
 <template>
@@ -326,16 +325,31 @@ onMounted(async () => {
                 :key="file.uploadfile_filename"
                 cols="6"
               >
-                <v-btn
-                  icon
-                  flat
-                  color="transparent"
-                  class="dots-button"
-                  v-on="on"
-                  @click="confirmDelete(file)"
-                >
-                  <v-icon>mdi-dots-vertical</v-icon>
-                </v-btn>
+              <v-menu :location="location">
+                <template v-slot:activator="{ props, on }">
+                  <v-btn
+                    icon
+                    flat
+                    color="transparent"
+                    class="dots-button"
+                    v-bind="props"
+                    v-on="on"
+                  >
+                    <v-icon>mdi-dots-vertical</v-icon>
+                  </v-btn>
+                </template>
+
+                <v-list>
+                  <v-list-item
+                    v-for="(item, index) in items"
+                    :key="index"
+                    @click="item.action(file)()"
+                  >
+                    <v-list-item-title>{{ item.title }}</v-list-item-title>
+                  </v-list-item>
+                </v-list>
+              </v-menu>
+                
                 <img
                   :src="getImageSrc(file.uploadfile_filename)"
                   alt="Document Icon"
@@ -380,7 +394,7 @@ onMounted(async () => {
               @change="handleFileChange"
               label="Click to upload file or drag and drop here"
               class="file-upload-input"
-            />
+            /> 
           </VContainer>
           <VBtn
             class="mt-5"
