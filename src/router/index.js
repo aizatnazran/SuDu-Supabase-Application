@@ -37,11 +37,11 @@ const router = createRouter({
           component: () => import('../pages/integration.vue'),
           meta: { requiresAuth: true },
         },
-        {
-          path: 'template',
-          component: () => import('../pages/template.vue'),
-          meta: { requiresAuth: true },
-        },
+        // {
+        //   path: 'template',
+        //   component: () => import('../pages/template.vue'),
+        //   meta: { requiresAuth: true },
+        // },
         {
           path: 'comingsoon2',
           component: () => import('../pages/comingsoon.vue'),

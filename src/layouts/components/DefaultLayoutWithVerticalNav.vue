@@ -105,13 +105,13 @@ const upgradeBanner = computed(() => {
           to: '/integration',
         }"
       />
-      <VerticalNavLink
+      <!-- <VerticalNavLink
         :item="{
           title: 'Template',
           icon: 'mdi-arrange-send-backward',
           to: '/template',
         }"
-      />
+      /> -->
       <VerticalNavLink
         :item="{
           title: 'Roles',
