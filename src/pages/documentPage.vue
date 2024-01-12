@@ -18,6 +18,27 @@ const selectedFiles = ref([])
 const selectedTemplate = ref(null)
 const sheet = ref(false)
 const filesList = ref([])
+const tableDescription = ref('')
+const selectedMonth = ref(null)
+const selectedYear = ref(null)
+
+const months = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+]
+
+const currentYear = new Date().getFullYear()
+const years = Array.from({ length: 5 }, (_, index) => currentYear + index)
 
 //Function to set images of document based on its extension
 function getImageSrc(fileName) {
@@ -34,20 +55,32 @@ function getImageSrc(fileName) {
   }
 }
 
-//Function to fetch templates from table
+// Function to fetch templates from table
 async function fetchTemplates() {
   try {
-    const { data: templates, error } = await supabase
+    const { data: templatesWithCompany, error: companyError } = await supabase
       .from('template')
       .select('template_name')
       .eq('company_id', companyId)
 
-    if (error) {
-      console.error('Error fetching templates:', error)
+    if (companyError) {
+      console.error('Error fetching templates with company ID:', companyError)
       return []
     }
 
-    return templates.map(template => template.template_name)
+    const { data: templatesWithoutCompany, error: nullCompanyError } = await supabase
+      .from('template')
+      .select('template_name')
+      .is('company_id', null)
+
+    if (nullCompanyError) {
+      console.error('Error fetching templates with null company ID:', nullCompanyError)
+      return []
+    }
+
+    const allTemplates = [...templatesWithCompany, ...templatesWithoutCompany]
+
+    return allTemplates.map(template => template.template_name)
   } catch (error) {
     console.error('Error fetching templates:', error)
     return []
@@ -138,23 +171,27 @@ const uploadFiles = async () => {
     const newFileName = `${userUUID}_${originalFileName}`
     const form = new FormData()
     form.append('file', file, originalFileName)
-    const collectionName = selectedTemplateName.replace(/\s+/g, '_')
+    const collectionName = selectedTemplateName.trim().replace(/\s+/g, '_')
+
+    console.log('selectedMonth:', selectedMonth)
+    console.log('selectedYear:', selectedYear)
+    const dynamicDesc = `This table consists of a company's ${selectedTemplateName} from ${selectedMonth.value} ${selectedYear.value}. ${tableDescription.value}`
+
     const queryParams = new URLSearchParams({
       uuid: userUUID,
       collection_name: collectionName,
       preprocess: 'false',
+      desc: dynamicDesc,
     }).toString()
 
     try {
       await axios.post(`http://sudu.ai:8082/upload?${queryParams}`, form)
 
-
       if (selectedTemplateName) {
         const { data: templateData, error: templateError } = await supabase
           .from('template')
           .select('id')
-          .eq('template_name', selectedTemplateName)
-          .eq('company_id', companyId)
+          .eq('template_name', selectedTemplateName.trim())
           .single()
 
         if (templateError) throw templateError
@@ -164,21 +201,22 @@ const uploadFiles = async () => {
       const { error: uploadError } = await supabase.storage.from('documents').upload(newFileName, file)
       if (uploadError) throw uploadError
 
-
-      const { error: dbError } = await supabase.from('uploadfile').insert([
+      const { error: dbError, data } = await supabase.from('uploadfile').insert([
         {
           uploadfile_filename: originalFileName,
           uploadfile_company: companyId,
           uploadfile_uuid: userUUID,
           uploadfile_template: selectedTemplateId,
+          uploadfile_desc: dynamicDesc,
         },
       ])
+
+      console.log('Supabase Response:', dbError)
       if (dbError) throw dbError
     } catch (error) {
       console.error('Error during file upload process:', error)
       uploadErrors.push(originalFileName)
       continue
-
     }
   }
 
@@ -261,20 +299,13 @@ onMounted(async () => {
 })
 
 const editItem = () => {
-      console.log("Edit action triggered");
-    };
+  console.log('Edit action triggered')
+}
 
-    const items = ref([
-      { title: 'Edit', action: file => editItem(file) },
-      { title: 'Delete', action: file => confirmDelete(file) },
-    ]);
-
-const handleDelete = (file) => {
-  confirmDelete(file);
-};
-
-const currentItem = ref(null); 
-
+const items = ref([
+  { title: 'Edit', action: file => editItem(file) },
+  { title: 'Delete', action: file => confirmDelete(file) },
+])
 </script>
 
 <template>
@@ -324,31 +355,31 @@ const currentItem = ref(null);
                 :key="file.uploadfile_filename"
                 cols="6"
               >
-              <v-menu :location="location">
-                <template v-slot:activator="{ props, on }">
-                  <v-btn
-                    icon
-                    flat
-                    color="transparent"
-                    class="dots-button"
-                    v-bind="props"
-                    v-on="on"
-                  >
-                    <v-icon>mdi-dots-vertical</v-icon>
-                  </v-btn>
-                </template>
+                <v-menu :location="location">
+                  <template v-slot:activator="{ props, on }">
+                    <v-btn
+                      icon
+                      flat
+                      color="transparent"
+                      class="dots-button"
+                      v-bind="props"
+                      v-on="on"
+                    >
+                      <v-icon>mdi-dots-vertical</v-icon>
+                    </v-btn>
+                  </template>
 
-                <v-list>
-                  <v-list-item
-                    v-for="(item, index) in items"
-                    :key="index"
-                    @click="item.action(file)"
-                  >
-                    <v-list-item-title>{{ item.title }}</v-list-item-title>
-                  </v-list-item>
-                </v-list>
-              </v-menu>
-                
+                  <v-list>
+                    <v-list-item
+                      v-for="(item, index) in items"
+                      :key="index"
+                      @click="item.action(file)"
+                    >
+                      <v-list-item-title>{{ item.title }}</v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </v-menu>
+
                 <img
                   :src="getImageSrc(file.uploadfile_filename)"
                   alt="Document Icon"
@@ -367,7 +398,7 @@ const currentItem = ref(null);
       </template>
       <template v-else>
         <div class="text-center my-5">
-          <p class="subtitle-1">No templates created yet.</p>
+          <p class="subtitle-1"></p>
         </div>
       </template>
     </VContainer>
@@ -381,20 +412,47 @@ const currentItem = ref(null);
       >
         <VCard class="pa-10">
           <VContainer>
-            <div class="text-h6 text-start mb-2 font-weight-bold">Select File Type</div>
+            <div class="text-h6 text-start mb-2 font-weight-bold">Select Use Case</div>
             <VSelect
               v-model="selectedTemplate"
               :items="templateOptions"
-              label="Templates"
+              label="Use Case"
             />
+
+            <div class="text-h6 text-start mt-4 font-weight-bold">Table Description</div>
+            <VTextarea
+              v-model="tableDescription"
+              placeholder="Each columns in the table includes: 'Doc.No': unique document identifier. 'Doc.Date_Year': Year of document creation. 'Doc.Date_Month': Month of document creation. 'Doc.Date_Day': Day of document creation. 'Name': name of client company. 'Code': probably order ID. 'Disc': Discount Amount. 'Amt': Amount before tax. 'Tax Amt': Amount of Tax charged.'Amt with Tax': Amount with tax added."
+              rows="5"
+            />
+
             <div class="text-h6 text-start mt-4 font-weight-bold">Upload File</div>
             <VFileInput
               @click:input.stop
               @change="handleFileChange"
               label="Click to upload file or drag and drop here"
               class="file-upload-input"
-            /> 
+            />
+
+            <div class="text-h6 text-start mt-4 font-weight-bold">Choose Date</div>
+            <VRow>
+              <VCol cols="6">
+                <VSelect
+                  v-model="selectedMonth"
+                  :items="months"
+                  label="Month"
+                />
+              </VCol>
+              <VCol cols="6">
+                <VSelect
+                  v-model="selectedYear"
+                  :items="years"
+                  label="Year"
+                />
+              </VCol>
+            </VRow>
           </VContainer>
+
           <VBtn
             class="mt-5"
             prepend-icon="mdi-send-variant"
