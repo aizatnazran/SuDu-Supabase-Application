@@ -21,6 +21,17 @@ const filesList = ref([])
 const tableDescription = ref('')
 const selectedMonth = ref(null)
 const selectedYear = ref(null)
+const subTemplateOptions = ref([])
+const selectedSubTemplate = ref(null)
+
+const resetFields = () => {
+  selectedTemplate.value = null
+  selectedSubTemplate.value = null
+  tableDescription.value = ''
+  selectedFiles.value = []
+  selectedMonth.value = null
+  selectedYear.value = null
+}
 
 const months = [
   'January',
@@ -93,6 +104,45 @@ watch(sheet, newVal => {
   }
 })
 
+async function fetchSubTemplates(templateName) {
+  try {
+    const { data: templateData, error: templateError } = await supabase
+      .from('template')
+      .select('id')
+      .eq('template_name', templateName)
+      .single()
+
+    if (templateError) {
+      console.error('Error fetching template ID:', templateError)
+      return []
+    }
+
+    const templateId = templateData.id
+
+    const { data: subTemplates, error } = await supabase
+      .from('stemplate')
+      .select('stemplate_name')
+      .eq('stemplate_template', templateId)
+
+    if (error) {
+      console.error('Error fetching sub templates:', error)
+      return []
+    }
+
+    return subTemplates.map(subTemplate => subTemplate.stemplate_name)
+  } catch (error) {
+    console.error('Error fetching sub templates:', error)
+    return []
+  }
+}
+
+watch(selectedTemplate, async newVal => {
+  if (newVal) {
+    subTemplateOptions.value = await fetchSubTemplates(newVal)
+    selectedSubTemplate.value = null
+  }
+})
+
 const handleFileChange = event => {
   selectedFiles.value = Array.from(event.target.files)
   console.log('Selected files:', selectedFiles.value)
@@ -141,23 +191,45 @@ async function fetchFiles() {
 
 //Function to upload files
 const uploadFiles = async () => {
-  if (!selectedFiles.value.length) {
-    await Swal.fire({
-      title: 'Error!',
-      text: 'No file selected.',
-      icon: 'error',
-      customClass: { container: 'high-z-index-swal' },
-    })
-    return
-  }
+  if (
+    !selectedFiles.value.length ||
+    !selectedTemplate.value ||
+    !selectedSubTemplate.value ||
+    !tableDescription.value.trim() ||
+    !selectedMonth.value ||
+    !selectedYear.value
+  ) {
+    let errorMessage = 'Please provide the following information before uploading:<br>'
 
-  if (!selectedTemplate.value) {
+    if (!selectedTemplate.value) {
+      errorMessage += '- Use case not selected.<br>'
+    }
+
+    if (!selectedSubTemplate.value) {
+      errorMessage += '- Sub use case not selected.<br>'
+    }
+
+    if (!tableDescription.value.trim()) {
+      errorMessage += '- Table description is empty.<br>'
+    }
+
+    if (!selectedFiles.value.length) {
+      errorMessage += '- No file selected.<br>'
+    }
+
+    if (!selectedMonth.value || !selectedYear.value) {
+      errorMessage += '- Month and/or Year not selected.<br>'
+    }
+
     await Swal.fire({
       title: 'Error!',
-      text: 'Please select a template before uploading.',
+      html: errorMessage,
       icon: 'error',
       customClass: { container: 'high-z-index-swal' },
+    }).then(() => {
+      resetFields()
     })
+
     selectedFiles.value = []
     return
   }
@@ -171,37 +243,28 @@ const uploadFiles = async () => {
     const newFileName = `${userUUID}_${originalFileName}`
     const form = new FormData()
     form.append('file', file, originalFileName)
-    const collectionName = selectedTemplateName.trim().replace(/\s+/g, '_')
+    const collectionName = `${selectedTemplateName.trim().replace(/\s+/g, '_')}_${
+      selectedSubTemplate.value ? selectedSubTemplate.value.trim().replace(/\s+/g, '_') : ''
+    }`
 
-    console.log('selectedMonth:', selectedMonth)
-    console.log('selectedYear:', selectedYear)
     const dynamicDesc = `This table consists of a company's ${selectedTemplateName} from ${selectedMonth.value} ${selectedYear.value}. ${tableDescription.value}`
 
-    const queryParams = new URLSearchParams({
-      uuid: userUUID,
-      collection_name: collectionName,
-      preprocess: 'false',
-      desc: dynamicDesc,
-    }).toString()
-
     try {
-      await axios.post(`http://sudu.ai:8082/upload?${queryParams}`, form)
+      // Upload to Supabase storage
+      const { error: uploadErrorStorage } = await supabase.storage.from('documents').upload(newFileName, file)
+      if (uploadErrorStorage) throw uploadErrorStorage
 
-      if (selectedTemplateName) {
-        const { data: templateData, error: templateError } = await supabase
-          .from('template')
-          .select('id')
-          .eq('template_name', selectedTemplateName.trim())
-          .single()
+      // Upload to Supabase database
+      const { data: templateData, error: templateError } = await supabase
+        .from('template')
+        .select('id')
+        .eq('template_name', selectedTemplateName.trim())
+        .single()
 
-        if (templateError) throw templateError
-        selectedTemplateId = templateData.id
-      }
+      if (templateError) throw templateError
+      selectedTemplateId = templateData.id
 
-      const { error: uploadError } = await supabase.storage.from('documents').upload(newFileName, file)
-      if (uploadError) throw uploadError
-
-      const { error: dbError, data } = await supabase.from('uploadfile').insert([
+      const { error: dbError } = await supabase.from('uploadfile').insert([
         {
           uploadfile_filename: originalFileName,
           uploadfile_company: companyId,
@@ -211,12 +274,41 @@ const uploadFiles = async () => {
         },
       ])
 
-      console.log('Supabase Response:', dbError)
-      if (dbError) throw dbError
+      if (dbError) {
+        // Check for Duplicate error
+        if (dbError.statusCode === '409' && dbError.error === 'Duplicate') {
+          throw { customError: 'Duplicate' }
+        }
+        throw dbError
+      }
+
+      // Continue with axios API call
+      const queryParams = new URLSearchParams({
+        uuid: userUUID,
+        collection_name: collectionName.toLowerCase(),
+        preprocess: 'false',
+        desc: dynamicDesc,
+      }).toString()
+
+      await axios.post(`http://sudu.ai:8082/upload?${queryParams}`, form)
+
+      resetFields()
     } catch (error) {
       console.error('Error during file upload process:', error)
-      uploadErrors.push(originalFileName)
-      continue
+
+      if (error.customError === 'Duplicate') {
+        // Handle duplicate file error
+        Swal.fire({
+          title: 'File Already Exists!',
+          text: `The file '${originalFileName}' has already been uploaded previously.`,
+          icon: 'warning',
+          customClass: { container: 'high-z-index-swal' },
+        }).then(() => {
+          resetFields()
+        })
+      } else {
+        uploadErrors.push(originalFileName)
+      }
     }
   }
 
@@ -231,13 +323,17 @@ const uploadFiles = async () => {
       text: 'File uploaded and processed.',
       icon: 'success',
       customClass: { container: 'high-z-index-swal' },
+    }).then(() => {
+      resetFields()
     })
   } else {
     Swal.fire({
-      title: 'File failed to upload or process',
+      title: 'File failed to upload or process.',
       text: `The file '${uploadErrors.join(', ')}' could not be processed`,
       icon: 'warning',
       customClass: { container: 'high-z-index-swal' },
+    }).then(() => {
+      resetFields()
     })
   }
 }
@@ -418,7 +514,12 @@ const items = ref([
               :items="templateOptions"
               label="Use Case"
             />
-
+            <div class="text-h6 text-start mt-4 font-weight-bold">Select Sub Template</div>
+            <VSelect
+              v-model="selectedSubTemplate"
+              :items="subTemplateOptions"
+              label="Sub Template"
+            />
             <div class="text-h6 text-start mt-4 font-weight-bold">Table Description</div>
             <VTextarea
               v-model="tableDescription"
