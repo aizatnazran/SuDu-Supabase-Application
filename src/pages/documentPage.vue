@@ -274,13 +274,7 @@ const uploadFiles = async () => {
         },
       ])
 
-      if (dbError) {
-        // Check for Duplicate error
-        if (dbError.statusCode === '409' && dbError.error === 'Duplicate') {
-          throw { customError: 'Duplicate' }
-        }
-        throw dbError
-      }
+      if (dbError) throw dbError
 
       // Continue with axios API call
       const queryParams = new URLSearchParams({
@@ -295,20 +289,8 @@ const uploadFiles = async () => {
       resetFields()
     } catch (error) {
       console.error('Error during file upload process:', error)
-
-      if (error.customError === 'Duplicate') {
-        // Handle duplicate file error
-        Swal.fire({
-          title: 'File Already Exists!',
-          text: `The file '${originalFileName}' has already been uploaded previously.`,
-          icon: 'warning',
-          customClass: { container: 'high-z-index-swal' },
-        }).then(() => {
-          resetFields()
-        })
-      } else {
-        uploadErrors.push(originalFileName)
-      }
+      uploadErrors.push(originalFileName)
+      continue
     }
   }
 
@@ -328,7 +310,7 @@ const uploadFiles = async () => {
     })
   } else {
     Swal.fire({
-      title: 'File failed to upload or process.',
+      title: 'File failed to upload or process',
       text: `The file '${uploadErrors.join(', ')}' could not be processed`,
       icon: 'warning',
       customClass: { container: 'high-z-index-swal' },
