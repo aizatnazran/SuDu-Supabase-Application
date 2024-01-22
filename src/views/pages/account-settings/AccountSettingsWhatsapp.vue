@@ -71,11 +71,23 @@ const handleAddContactClick = () => {
   dialog.value = true
 }
 
-//Function to add new contact
+// Function to add new contact
 const submitNewContact = async () => {
   try {
     const company_id = localStorage.getItem('company_id')
     if (company_id) {
+      // Check if a role is selected
+      if (!form.value.contact_role) {
+        Swal.fire({
+          title: 'Error!',
+          text: 'Please select a role for the contact.',
+          icon: 'error',
+          customClass: { container: 'high-z-index-swal' },
+          confirmButtonColor: '#d33',
+        })
+        return // Exit the function if no role is selected
+      }
+
       const requestData = {
         contact_name: form.value.contact_name,
         contact_number: form.value.contact_number,
