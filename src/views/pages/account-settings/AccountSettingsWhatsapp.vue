@@ -55,8 +55,8 @@ const fetchContact = async () => {
       if (contacts) {
         allowedContacts.value = contacts.map(contact => ({
           ...contact,
-          role: contact.contact_role.role_name,
-          roleColor: contact.contact_role.role_colour,
+          role: contact.contact_role ? contact.contact_role.role_name : 'N/A',
+          roleColor: contact.contact_role ? contact.contact_role.role_colour : 'N/A',
           active: contact.contact_status,
         }))
       }
