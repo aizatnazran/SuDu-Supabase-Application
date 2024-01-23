@@ -379,6 +379,7 @@ onMounted(() => {
         <VCardText>
           <div>
             <VCheckbox
+              class="d-flex justify-start"
               v-model="isAccountDeactivated"
               label="I confirm my account deactivation"
             />

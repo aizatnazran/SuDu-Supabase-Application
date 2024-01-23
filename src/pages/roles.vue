@@ -2,29 +2,21 @@
 import { supabase } from '@/lib/supaBaseClient'
 import Swal from 'sweetalert2'
 import { onMounted, ref } from 'vue'
+import { ColorPicker } from 'vue-accessible-color-picker'
 
 const roleList = ref([])
-const selectedColor = ref('')
 const dialog = ref(false)
 const newRole = ref({
   name: '',
   role_colour: '',
 })
 
-const colorOptions = ref([
-  { name: 'Green', value: '#00FF00' },
-  { name: 'Cyan', value: '#00FFFF' },
-  { name: 'Yellow', value: '#FFFF00' },
-  { name: 'Red', value: '#FF0000' },
-])
+const color = ref('#000000')
 
-const selectColor = color => {
-  selectedColor.value = color
-  newRole.value.role_colour = color
-  console.log('Selected color:', selectedColor.value)
+function updateColor(eventData) {
+  color.value = hslToHex(eventData.cssColor)
 }
 
-//Function to fetch roles from table
 const fetchRole = async () => {
   try {
     const company_id = localStorage.getItem('company_id')
@@ -49,15 +41,14 @@ const fetchRole = async () => {
   }
 }
 
-//Function to add a new role
 const addNewRole = async () => {
-  if (newRole.value.name && newRole.value.role_colour) {
+  if (newRole.value.name && color.value) {
     try {
       const company_id = localStorage.getItem('company_id')
       if (company_id) {
         const requestData = {
           role_name: newRole.value.name,
-          role_colour: newRole.value.role_colour,
+          role_colour: color.value,
           company_id,
         }
 
@@ -112,6 +103,26 @@ onMounted(() => {
     fetchRole()
   }
 })
+
+function hslToHex(hsl) {
+  let [h, s, l] = hsl.match(/\d+\.?\d*/g).map(Number)
+
+  if (h > 360) h = 360
+  if (s > 100) s = 100
+  if (l > 100) l = 100
+
+  s /= 100
+  l /= 100
+
+  const k = n => (n + h / 30) % 12
+  const a = s * Math.min(l, 1 - l)
+  const f = n => l - a * Math.max(Math.min(k(n) - 3, 9 - k(n), 1), -1)
+
+  const rgb = [f(0), f(8), f(4)].map(val => Math.round(val * 255))
+  const hex = rgb.map(val => val.toString(16).padStart(2, '0')).join('')
+
+  return `#${hex}`
+}
 </script>
 
 <template>
@@ -152,7 +163,6 @@ onMounted(() => {
                 ></span>
                 {{ role.role_name }}
               </td>
-              <td>test</td>
             </tr>
           </tbody>
         </VTable>
@@ -182,16 +192,11 @@ onMounted(() => {
               dense
               class="mb-4"
             />
-            <VCardTitle class="text-h6">Colour</VCardTitle>
-            <div class="color-options-container">
-              <div
-                v-for="option in colorOptions"
-                :key="option.value"
-                class="color-circle"
-                :class="{ selected: selectedColor.value === option.value }"
-                :style="{ backgroundColor: option.value }"
-                @click="selectColor(option.value)"
-              ></div>
+            <div>
+              <ColorPicker
+                :color="color"
+                @color-change="updateColor"
+              />
             </div>
           </div>
         </VCardText>
@@ -213,6 +218,10 @@ onMounted(() => {
     </VDialog>
   </VCard>
 </template>
+
+<style>
+@import url('vue-accessible-color-picker/styles');
+</style>
 
 <style scoped>
 .icon-wrapper {
