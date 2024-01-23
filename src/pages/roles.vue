@@ -15,7 +15,7 @@ const color = ref('#000000')
 
 function updateColor(eventData) {
   color.value = hslToHex(eventData.cssColor)
-}
+
 
 const fetchRole = async () => {
   try {
@@ -105,6 +105,7 @@ onMounted(() => {
 })
 
 function hslToHex(hsl) {
+
   let [h, s, l] = hsl.match(/\d+\.?\d*/g).map(Number)
 
   if (h > 360) h = 360
