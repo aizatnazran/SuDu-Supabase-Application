@@ -158,6 +158,7 @@ const login = async () => {
               <!-- remember me checkbox -->
               <div class="d-flex align-center justify-space-between flex-wrap mt-1 mb-4">
                 <VCheckbox
+                  class="d-flex justify-start"
                   v-model="form.remember"
                   label="Remember me"
                 />

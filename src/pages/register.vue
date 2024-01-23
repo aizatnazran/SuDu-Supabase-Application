@@ -129,7 +129,7 @@ const handleSignUp = async () => {
                 @click:append-inner="isPasswordVisible = !isPasswordVisible"
               />
 
-              <div class="d-flex align-center mt-1 mb-4">
+              <div class="d-flex align-left mt-1 mb-4">
                 <VCheckbox
                   id="privacy-policy"
                   v-model="form.privacyPolicies"
@@ -138,6 +138,7 @@ const handleSignUp = async () => {
                 <VLabel
                   for="privacy-policy"
                   style="opacity: 1"
+                  class="d-flex align-left"
                 >
                   <span class="me-1">I agree to</span>
                   <a
