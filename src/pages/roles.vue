@@ -1,8 +1,8 @@
 <script setup>
-import { supabase } from '@/lib/supaBaseClient'
-import Swal from 'sweetalert2'
-import { onMounted, ref } from 'vue'
-import { ColorPicker } from 'vue-accessible-color-picker'
+import { supabase } from '@/lib/supaBaseClient';
+import Swal from 'sweetalert2';
+import { onMounted, ref } from 'vue';
+import { ColorPicker } from 'vue-accessible-color-picker';
 
 const roleList = ref([])
 const dialog = ref(false)
@@ -15,6 +15,7 @@ const color = ref('#000000')
 
 function updateColor(eventData) {
   color.value = hslToHex(eventData.cssColor)
+  }
 
 
 const fetchRole = async () => {
