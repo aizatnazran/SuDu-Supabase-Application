@@ -14,6 +14,34 @@ const form = ref({
   contact_role: null,
 })
 
+function LightenDarkenColor(col, amt) {
+  var usePound = false
+
+  if (col[0] === '#') {
+    col = col.slice(1)
+    usePound = true
+  }
+
+  var num = parseInt(col, 16)
+
+  var r = (num >> 16) + amt
+  r = r > 255 ? 255 : r < 0 ? 0 : r
+
+  var g = ((num >> 8) & 0x00ff) + amt
+  g = g > 255 ? 255 : g < 0 ? 0 : g
+
+  var b = (num & 0x0000ff) + amt
+  b = b > 255 ? 255 : b < 0 ? 0 : b
+
+  // Zero pad each component to ensure it's two characters long
+  return (
+    (usePound ? '#' : '') +
+    ('0' + r.toString(16)).slice(-2) +
+    ('0' + g.toString(16)).slice(-2) +
+    ('0' + b.toString(16)).slice(-2)
+  )
+}
+
 //Function to fetch roles from table
 const fetchRoles = async () => {
   try {
@@ -58,6 +86,8 @@ const fetchContact = async () => {
           role: contact.contact_role ? contact.contact_role.role_name : 'N/A',
           roleColor: contact.contact_role ? contact.contact_role.role_colour : 'N/A',
           active: contact.contact_status,
+          backgroundRoleColor: LightenDarkenColor(contact.contact_role.role_colour, 200),
+          textRoleColor: LightenDarkenColor(contact.contact_role.role_colour, -50),
         }))
       }
     }
@@ -238,12 +268,18 @@ onMounted(() => {
           </td>
           <td class="text-center">{{ contact.contact_number }}</td>
           <td class="text-center">
-            <div class="role-container">
+            <div
+              class="role-container"
+              :style="{ backgroundColor: contact.backgroundRoleColor }"
+            >
               <span
                 class="role-color-indicator"
                 :style="{ backgroundColor: contact.roleColor }"
               ></span>
-              <span class="role-label">
+              <span
+                class="role-label"
+                :style="{ color: contact.textRoleColor }"
+              >
                 {{ contact.role }}
               </span>
             </div>
