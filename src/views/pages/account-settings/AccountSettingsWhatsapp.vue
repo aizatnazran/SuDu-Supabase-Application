@@ -106,7 +106,6 @@ const submitNewContact = async () => {
   try {
     const company_id = localStorage.getItem('company_id')
     if (company_id) {
-      // Check if a role is selected
       if (!form.value.contact_role) {
         Swal.fire({
           title: 'Error!',
@@ -115,7 +114,29 @@ const submitNewContact = async () => {
           customClass: { container: 'high-z-index-swal' },
           confirmButtonColor: '#d33',
         })
-        return // Exit the function if no role is selected
+        return
+      }
+
+      const phoneNumber = form.value.contact_number.trim()
+      if (!phoneNumber.startsWith('60')) {
+        Swal.fire({
+          title: 'Error!',
+          text: 'Phone number must start with "60"',
+          icon: 'error',
+          customClass: { container: 'high-z-index-swal' },
+          confirmButtonColor: '#d33',
+        })
+        return
+      }
+      if (phoneNumber.length !== 11 && phoneNumber.length !== 12) {
+        Swal.fire({
+          title: 'Error!',
+          text: 'Phone number must have a length of 11 or 12 digits.',
+          icon: 'error',
+          customClass: { container: 'high-z-index-swal' },
+          confirmButtonColor: '#d33',
+        })
+        return
       }
 
       const requestData = {
@@ -169,6 +190,28 @@ const submitEditedContact = async () => {
       contact_number: editingContact.value.contact_number,
       contact_role: editingContact.value.contact_role,
       id: editingContact.value.id,
+    }
+
+    const phoneNumber = updatedContactData.contact_number.trim()
+    if (!phoneNumber.startsWith('60')) {
+      Swal.fire({
+        title: 'Error!',
+        text: 'Phone number must start with "60"',
+        icon: 'error',
+        customClass: { container: 'high-z-index-swal' },
+        confirmButtonColor: '#d33',
+      })
+      return
+    }
+    if (phoneNumber.length !== 11 && phoneNumber.length !== 12) {
+      Swal.fire({
+        title: 'Error!',
+        text: 'Phone number must have a length of 11 or 12 digits.',
+        icon: 'error',
+        customClass: { container: 'high-z-index-swal' },
+        confirmButtonColor: '#d33',
+      })
+      return
     }
 
     const { error } = await supabase.from('contact').update(updatedContactData).eq('id', editingContact.value.id)
