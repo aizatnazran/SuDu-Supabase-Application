@@ -118,10 +118,20 @@ const submitNewContact = async () => {
       }
 
       const phoneNumber = form.value.contact_number.trim()
-      if (!phoneNumber.startsWith('60') || (phoneNumber.length !== 11 && phoneNumber.length !== 12)) {
+      if (!phoneNumber.startsWith('60')) {
         Swal.fire({
           title: 'Error!',
-          text: 'Phone number must start with "60" and have a length of 11 or 12 digits.',
+          text: 'Phone number must start with "60"',
+          icon: 'error',
+          customClass: { container: 'high-z-index-swal' },
+          confirmButtonColor: '#d33',
+        })
+        return
+      }
+      if (phoneNumber.length !== 11 && phoneNumber.length !== 12) {
+        Swal.fire({
+          title: 'Error!',
+          text: 'Phone number must have a length of 11 or 12 digits.',
           icon: 'error',
           customClass: { container: 'high-z-index-swal' },
           confirmButtonColor: '#d33',
@@ -183,10 +193,20 @@ const submitEditedContact = async () => {
     }
 
     const phoneNumber = updatedContactData.contact_number.trim()
-    if (!phoneNumber.startsWith('60') || (phoneNumber.length !== 11 && phoneNumber.length !== 12)) {
+    if (!phoneNumber.startsWith('60')) {
       Swal.fire({
         title: 'Error!',
-        text: 'Phone number must start with "60" and have a length of 11 or 12 digits.',
+        text: 'Phone number must start with "60"',
+        icon: 'error',
+        customClass: { container: 'high-z-index-swal' },
+        confirmButtonColor: '#d33',
+      })
+      return
+    }
+    if (phoneNumber.length !== 11 && phoneNumber.length !== 12) {
+      Swal.fire({
+        title: 'Error!',
+        text: 'Phone number must have a length of 11 or 12 digits.',
         icon: 'error',
         customClass: { container: 'high-z-index-swal' },
         confirmButtonColor: '#d33',
