@@ -105,6 +105,13 @@ const upgradeBanner = computed(() => {
           to: '/integration',
         }"
       />
+      <VerticalNavLink
+        :item="{
+          title: 'Scheduler',
+          icon: 'mdi-invoice-text-clock-outline',
+          to: '/scheduler',
+        }"
+      />
       <!-- <VerticalNavLink
         :item="{
           title: 'Template',
@@ -112,13 +119,7 @@ const upgradeBanner = computed(() => {
           to: '/template',
         }"
       /> -->
-      <VerticalNavLink
-        :item="{
-          title: 'Roles',
-          icon: 'mdi-account-settings',
-          to: '/roles',
-        }"
-      />
+
       <!--
         <VerticalNavLink
         :item="{
