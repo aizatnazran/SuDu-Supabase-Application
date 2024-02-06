@@ -5,6 +5,7 @@ import Swal from 'sweetalert2'
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
+const windowObj = window
 const router = useRouter()
 const companyName = ref('')
 
@@ -13,6 +14,8 @@ const goToSettings = () => {
 }
 const goToFeedback = () => {
   router.push('/feedback')
+  const whatsappLink = 'https://wa.me/60108760154?text=I%27m%20inquiring%20about%20the%20SuDu%20Web '
+  windowObj.open(whatsappLink, '_blank')
 }
 
 //Function to log out a user
