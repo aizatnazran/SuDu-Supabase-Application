@@ -1,9 +1,12 @@
 <script setup>
-import { ref } from 'vue'
-
-import { onMounted } from 'vue'
+import zoho from '@images/logos/zoho.png'
+import { onMounted, ref } from 'vue'
 import { supabase } from '../lib/supaBaseClient.js'
-const dialog = ref(false)
+const dialogs = ref({
+  questions: false,
+  scheduler: false,
+  useCase: false,
+})
 const templateOptions = ref([])
 const selectedTemplate = ref(null)
 const selectedPhoneNumber = ref(null)
@@ -11,6 +14,54 @@ const selectedDays = ref([])
 const phoneNumbers = ref([])
 const userUUID = localStorage.getItem('uuid')
 const companyId = localStorage.getItem('company_id')
+let input = ref('')
+const useCases = ref(['Sales', 'Customer', 'Quotation'])
+const selectedQuestionsDialog = ref(false)
+
+const searchInput = ref('')
+const items = ref(['What is the total sales?', 'What is the invoice?', 'How much is the order?']) // replace with actual items
+const selectedItems = ref([])
+
+function openSelectedQuestions() {
+  selectedQuestionsDialog.value = true
+}
+
+function updateSelection(item) {
+  const index = selectedItems.value.indexOf(item)
+  if (index > -1) {
+    // If the item is already selected, remove it
+    selectedItems.value.splice(index, 1)
+  } else {
+    // Otherwise, add the item to the selected items
+    selectedItems.value.push(item)
+  }
+}
+
+function saveSelections() {
+  // Assuming selectedItems is an array of selected questions
+  console.log(selectedItems.value) // This should show the updated array in the console
+
+  if (selectedItems.value.length > 0) {
+    // Only close the questions dialog if there are selected items
+    dialogs.questions = false // Close current dialog
+    openSelectedQuestions() // Open selected questions dialog
+  } else {
+    // Handle the case when no items are selected
+    console.error('No items selected')
+  }
+}
+
+function getFilteredList() {
+  return useCases.value.filter(useCase => useCase.toLowerCase().includes(input.value.toLowerCase()))
+}
+
+// Logic to filter the list based on the search input
+const filteredItems = computed(() => {
+  if (!searchInput.value) {
+    return items.value
+  }
+  return items.value.filter(item => item.toLowerCase().includes(searchInput.value.toLowerCase()))
+})
 
 async function fetchPhoneNumbers() {
   try {
@@ -81,16 +132,123 @@ onMounted(async () => {
     <VCardTitle class="font-weight-bold">Scheduler</VCardTitle>
     <div class="d-flex flex-wrap gap-4">
       <VBtn
-        @click="dialog = true"
+        @click="dialogs.questions = true"
         class="rounded-pill"
       >
         <VIcon left>mdi-plus</VIcon>
-        Add New
+        Open Questions
+      </VBtn>
+      <VBtn
+        @click="dialogs.scheduler = true"
+        class="rounded-pill"
+      >
+        <VIcon left>mdi-plus</VIcon>
+        Open Use Case
+      </VBtn>
+      <VBtn
+        @click="dialogs.useCase = true"
+        class="rounded-pill"
+      >
+        <VIcon left>mdi-plus</VIcon>
+        Open Edit
       </VBtn>
     </div>
   </VRow>
   <VDialog
-    v-model="dialog"
+    v-model="dialogs.questions"
+    max-width="600px"
+    class="dialog-container"
+    @click:outside="dialog = false"
+  >
+    <VCard>
+      <VCardTitle class="dialog-header">
+        <span>Questions</span>
+        <VTextField
+          v-model="searchInput"
+          append-icon="mdi-magnify"
+          placeholder="Search..."
+          dense
+          flat
+          solo-inverted
+          hide-details
+          class="search-input"
+        ></VTextField>
+      </VCardTitle>
+      <VCardSubtitle class="mb-5">What questions would you like to ask SuDu AI?</VCardSubtitle>
+      <VTabs
+        class="custom-tabs"
+        background-color="transparent"
+      >
+        <VTab class="tab-item">Reporting</VTab>
+        <VTab class="tab-item">Analysis</VTab>
+        <VTab class="tab-item">Automation</VTab>
+      </VTabs>
+      <VCardText>
+        <VList dense>
+          <VListItemGroup
+            v-model="selectedItems"
+            multiple
+          >
+            <VListItem
+              v-for="(item, index) in filteredItems"
+              :key="index"
+              class="list-item"
+            >
+              <VListItemAction>
+                <!-- Ensure the VCheckbox is correctly updating the selectedItems array -->
+                <VCheckbox
+                  :value="item"
+                  @change="() => updateSelection(item)"
+                ></VCheckbox>
+              </VListItemAction>
+              <VListItemContent>{{ item }}</VListItemContent>
+            </VListItem>
+          </VListItemGroup>
+        </VList>
+      </VCardText>
+      <VCardActions class="justify-end">
+        <VBtn
+          color="primary"
+          @click="saveSelections"
+          >Next</VBtn
+        >
+      </VCardActions>
+    </VCard>
+  </VDialog>
+  <VDialog
+    v-model="selectedQuestionsDialog"
+    max-width="600px"
+    persistent
+  >
+    <VCard>
+      <VCardTitle class="font-weight-bold">Selected Questions</VCardTitle>
+      <VCardSubtitle>Please confirm the questions that selected.</VCardSubtitle>
+      <VCardText>
+        <div
+          v-for="(question, index) in selectedItems"
+          :key="index"
+          class="my-3"
+        >
+          {{ question }}
+        </div>
+      </VCardText>
+      <VCardActions class="justify-end">
+        <VBtn
+          text
+          @click="selectedQuestionsDialog = false"
+          >Back</VBtn
+        >
+        <VBtn
+          color="primary"
+          @click="saveScheduler"
+          >Save</VBtn
+        >
+      </VCardActions>
+    </VCard>
+  </VDialog>
+
+  <VDialog
+    v-model="dialogs.useCase"
     max-width="600px"
     @click:outside="dialog = false"
   >
@@ -180,6 +338,132 @@ onMounted(async () => {
       </VCardActions>
     </VCard>
   </VDialog>
+  <VDialog
+    v-model="dialogs.scheduler"
+    max-width="90%"
+    @click:outside="dialog = false"
+  >
+    <VCard>
+      <VCardTitle class="font-weight-bold d-flex justify-space-between">
+        <div class="text-start font-weight-bold">Select Use Case</div>
+      </VCardTitle>
+      <VCardText>
+        <VRow class="mb-5">
+          <div class="text-h6 font-weight-bold mx-5 text-center">Use Case</div>
+          <VTextField
+            v-model="input"
+            append-icon="mdi-magnify"
+            label="Search..."
+            single-line
+            hide-details
+          ></VTextField>
+        </VRow>
+        <VContainer>
+          <VRow>
+            <VCol
+              cols="12"
+              sm="6"
+              md="4"
+              v-for="useCase in getFilteredList()"
+              :key="useCase"
+            >
+              <VCard class="use-case-card mb-4 d-flex flex-column">
+                <div class="d-flex justify-start align-start">
+                  <div class="flex-grow-1 text-container">
+                    <VCardTitle class="font-weight-bold text-body-1 text-black">{{ useCase }}</VCardTitle>
+                  </div>
+                  <!-- use case title -->
+                  <VImg
+                    :src="zoho"
+                    class="card-image mx-2"
+                  ></VImg>
+                  <!-- fixed-size image -->
+                </div>
+                <!-- Card actions with date and select button -->
+                <div class="mt-auto d-flex justify-space-between align-end">
+                  <!-- mt-auto pushes content to bottom -->
+                  <VCardSubtitle class="text-caption mb-3">{{ '12th Oct 2023' }}</VCardSubtitle>
+                  <!-- date -->
+                  <VBtn
+                    text
+                    color="primary"
+                    class="rounded-pill"
+                    >Select</VBtn
+                  >
+                  <!-- select button -->
+                </div>
+              </VCard>
+            </VCol>
+          </VRow>
+        </VContainer>
+      </VCardText>
+    </VCard>
+  </VDialog>
 </template>
 
-<style></style>
+<style scoped>
+.dialog-container {
+  max-width: 800px; /* Adjust based on your requirements */
+}
+
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.search-input {
+  max-width: 250px; /* Adjust as needed */
+}
+
+.custom-tabs .v-tab {
+  text-transform: none;
+  color: #5f5f5f; /* Your inactive tab color */
+  margin-right: 20px;
+}
+
+.custom-tabs .v-tab--active {
+  color: #000000; /* Your active tab color */
+  border-bottom: 4px solid #6200ea; /* Your indicator color */
+}
+
+.list-item {
+  align-items: center;
+}
+
+.use-case-card {
+  border-radius: 10px;
+  box-shadow: 2px;
+  transition: box-shadow 0.3s ease-in-out;
+  background-color: #f5f5f5;
+}
+
+.card-image {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+}
+
+.text-container {
+  max-width: calc(100% - 110px);
+  margin-right: 10px;
+}
+
+.rounded-pill {
+  margin-bottom: 5px;
+  margin-right: 5px;
+}
+
+.use-case-card:hover {
+  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 600px) {
+  .use-case-card > div {
+    flex-direction: column;
+  }
+  .text-container {
+    max-width: 100%;
+  }
+}
+</style>
