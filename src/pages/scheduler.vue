@@ -1,8 +1,16 @@
 <script setup>
 import { ref } from 'vue'
 
+import { Background } from '@vue-flow/background'
+import { Controls } from '@vue-flow/controls'
+import { VueFlow, useVueFlow } from '@vue-flow/core'
+import { MiniMap } from '@vue-flow/minimap'
 import { onMounted } from 'vue'
 import { supabase } from '../lib/supaBaseClient.js'
+import ContactNode from './ContactNode.vue'
+import PickQuestionNode from './PickQuestionNode.vue'
+import SelectDateNode from './SelectDateNode.vue'
+import UseCaseNode from './UseCaseNode.vue'
 const dialog = ref(false)
 const templateOptions = ref([])
 const selectedTemplate = ref(null)
@@ -11,6 +19,14 @@ const selectedDays = ref([])
 const phoneNumbers = ref([])
 const userUUID = localStorage.getItem('uuid')
 const companyId = localStorage.getItem('company_id')
+
+const { onConnect, addEdges } = useVueFlow()
+
+const nodes = ref([{ id: '1', type: 'custom', label: 'Node 1', position: { x: 250, y: 100 } }])
+
+onConnect(params => {
+  addEdges([params])
+})
 
 async function fetchPhoneNumbers() {
   try {
@@ -91,95 +107,60 @@ onMounted(async () => {
   </VRow>
   <VDialog
     v-model="dialog"
-    max-width="600px"
+    max-width="100%"
     @click:outside="dialog = false"
   >
     <VCard>
-      <VCardText>
-        <VContainer>
-          <VRow>
-            <VCol
-              cols="12"
-              md="6"
-            >
-              <div class="text-h6 text-start mb-2 font-weight-bold">Use Case</div>
-              <VSelect
-                v-model="selectedTemplate"
-                :items="templateOptions"
-                label="Use Case"
-                item-text="name"
-                item-value="id"
-                return-object
-              ></VSelect>
-            </VCol>
-            <VCol
-              cols="12"
-              md="6"
-            >
-              <div class="text-h6 text-start font-weight-bold">Phone Number</div>
-              <VSelect
-                v-model="selectedPhoneNumber"
-                :items="phoneNumbers"
-                label="Phone Number"
-                item-text="number"
-                item-value="id"
-                return-object
-              ></VSelect>
-            </VCol>
-          </VRow>
-          <VRow>
-            <VCol>
-              <div class="text-h6 text-start mt-4 font-weight-bold">Selected Questions</div>
-              <div>1. What is my weekly average sales?</div>
-              <div>2. Which day has the highest sales?</div>
-            </VCol>
-          </VRow>
-          <VRow>
-            <VCol>
-              <div class="text-h6 text-start mb-5 font-weight-bold">Repeat</div>
-              <VRow>
-                <VBtnToggle v-model="selectedFrequency">
-                  <VBtn
-                    value="daily"
-                    class="primary"
-                    >Daily</VBtn
-                  >
-                  <VBtn value="weekly">Weekly</VBtn>
-                  <VBtn value="monthly">Monthly</VBtn>
-                  <VBtn value="custom">Custom</VBtn>
-                </VBtnToggle>
-              </VRow>
-              <VBtnToggle
-                v-model="selectedDays"
-                multiple
-              >
-                <VBtn value="Mon">Mon</VBtn>
-                <VBtn value="Tue">Tue</VBtn>
-                <VBtn value="Wed">Wed</VBtn>
-                <VBtn value="Thu">Thu</VBtn>
-                <VBtn value="Fri">Fri</VBtn>
-                <VBtn value="Sat">Sat</VBtn>
-                <VBtn value="Sun">Sun</VBtn>
-              </VBtnToggle>
-            </VCol>
-          </VRow>
-        </VContainer>
-      </VCardText>
-      <VCardActions>
-        <VSpacer></VSpacer>
-        <VBtn
-          @click="saveScheduler"
-          class="primary rounded-pill"
-          >Edit</VBtn
+      <div class="h-screen">
+        <VueFlow
+          v-model:nodes="nodes"
+          v-model:edges="edges"
+          fit-view-on-init
+          class="vue-flow-basic-example"
+          :default-zoom="1.5"
+          :min-zoom="0.2"
+          :max-zoom="4"
+          style="width: 100%; height: 100%"
         >
-        <VBtn
-          @click="saveScheduler"
-          class="primary rounded-pill"
-          >Save</VBtn
-        >
-      </VCardActions>
+          <Background
+            pattern-color="#aaa"
+            :gap="8"
+          />
+
+          <MiniMap />
+
+          <Controls />
+
+          <template #node-custom="nodeProps">
+            <UseCaseNode v-bind="nodeProps" />
+          </template>
+          <template #node-custom2="nodeProps2">
+            <PickQuestionNode v-bind="nodeProps2" />
+          </template>
+          <template #node-custom3="nodeProps3">
+            <SelectDateNode v-bind="nodeProps3" />
+          </template>
+          <template #node-custom4="nodeProps4">
+            <SelectDateNode v-bind="nodeProps4" />
+          </template>
+          <template #node-custom5="nodeProps5">
+            <SelectDateNode v-bind="nodeProps5" />
+          </template>
+          <template #node-custom6="nodeProps6">
+            <ContactNode v-bind="nodeProps6" />
+          </template>
+        </VueFlow>
+      </div>
     </VCard>
   </VDialog>
 </template>
 
-<style></style>
+<style>
+@import '@vue-flow/core/dist/style.css';
+
+/* import the default theme (optional) */
+@import '@vue-flow/core/dist/theme-default.css';
+
+@import '@vue-flow/controls/dist/style.css';
+@import '@vue-flow/minimap/dist/style.css';
+</style>
