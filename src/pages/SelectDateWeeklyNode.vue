@@ -3,19 +3,18 @@ import { Handle, Position, useVueFlow } from '@vue-flow/core'
 import { ref } from 'vue'
 const { nodes, addNodes, addEdges, dimensions, toObject, fromObject } = useVueFlow()
 
-const showDialogNode3 = ref(false)
-const selectNode3 = ref(false)
+const selected = ref(nodes.value[2].selected)
+const showDialog = ref(false)
 let newNode
 
-const toggleDialogNode3 = () => {
-  showDialogNode3.value = !showDialogNode3.value
+const toggleDialog = () => {
+  showDialog.value = !showDialog.value
 }
 
-function onAdd3() {
+function onAdd() {
   if (nodes.value.length < 4) {
     for (let i = 0; i < 3; i++) {
       const id = nodes.value.length + 1
-      // const latestNode = nodes.value[nodes.value.length - 1]
 
       if (id == 4) {
         newNode = {
@@ -27,6 +26,11 @@ function onAdd3() {
             y: nodes.value[2].position.y + 200,
           },
         }
+        selected.value = true
+        showDialog.value = false
+        nodes.value[0].selected = true
+        nodes.value[1].selected = true
+        nodes.value[2].selected = true
       } else if (id == 5) {
         newNode = {
           id: `random_node-${id}`,
@@ -37,6 +41,8 @@ function onAdd3() {
             y: nodes.value[2].position.y - 200,
           },
         }
+        selected.value = true
+        nodes.value[3].selected = true
       } else {
         newNode = {
           id: `random_node-${id}`,
@@ -47,6 +53,8 @@ function onAdd3() {
             y: nodes.value[2].position.y,
           },
         }
+        selected.value = true
+        nodes.value[4].selected = true
       }
 
       addNodes([newNode])
@@ -63,8 +71,6 @@ function onAdd3() {
   } else {
     console.log('You cannot make more not on select date node')
   }
-  selectNode3.value = true
-  showDialogNode3.value = false
 }
 </script>
 
@@ -85,9 +91,9 @@ function onAdd3() {
         :position="Position.Right"
       />
       <div class="text-warning text-h6"><VIcon icon="mdi-calendar-clock"></VIcon>Select Date</div>
-      <div class="mb-4 text-black">Select a date and time.</div>
+      <div class="mb-4 text-black">Select a date and time weekly.</div>
       <div class="d-flex justify-center">
-        <VHover v-if="selectNode3">
+        <VHover v-if="selected">
           <template v-slot:default="{ isHovering, props }">
             <VBtn
               v-bind="props"
@@ -97,7 +103,7 @@ function onAdd3() {
               :prepend-icon="isHovering ? 'mdi-pencil-outline ' : 'mdi-check'"
               :text="isHovering ? 'Edit' : 'Selected'"
               color="warning"
-              @click="toggleDialogNode3"
+              @click="toggleDialog"
               class="d-flex justify-center align-center"
             >
             </VBtn>
@@ -109,17 +115,17 @@ function onAdd3() {
           density="comfortable"
           color="warning"
           v-else
-          @click="toggleDialogNode3"
+          @click="toggleDialog"
         >
           <VIcon left>mdi-plus</VIcon> Select
         </VBtn>
       </div>
       <VDialog
-        v-model="showDialogNode3"
+        v-model="showDialog"
         max-width="25%"
       >
         <VCard>
-          <button @click="onAdd3">Select</button>
+          <button @click="onAdd">Select</button>
         </VCard>
       </VDialog>
     </div>

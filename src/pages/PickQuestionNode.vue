@@ -3,14 +3,14 @@ import { Handle, Position, useVueFlow } from '@vue-flow/core'
 import { ref } from 'vue'
 const { nodes, addNodes, addEdges } = useVueFlow()
 
-const showDialogNode2 = ref(false)
-const selectedNode2 = ref(false)
+const selected = ref(nodes.value[1].selected)
+const showDialog = ref(false)
 
-const toggleDialogNode2 = () => {
-  showDialogNode2.value = !showDialogNode2.value
+const toggleDialog = () => {
+  showDialog.value = !showDialog.value
 }
 
-function onAdd2() {
+function onAdd() {
   if (nodes.value.length < 3) {
     const id = nodes.value.length + 1
     const latestNode = nodes.value[nodes.value.length - 1]
@@ -39,9 +39,9 @@ function onAdd2() {
   } else {
     console.log('You cannot make more not on pick question node')
   }
-  selectedNode2.value = true
-  showDialogNode2.value = false
-  console.log(selectedNode2.value)
+  selected.value = true
+  showDialog.value = false
+  nodes.value[0].selected = true
 }
 </script>
 
@@ -64,7 +64,7 @@ function onAdd2() {
       <div class="text-success text-h6"><VIcon icon="mdi-help-circle"></VIcon>Pick Question</div>
       <div class="mb-4 text-black">Pick the question you would like to.</div>
       <div class="d-flex justify-center">
-        <VHover v-if="selectedNode2 == true">
+        <VHover v-if="selected">
           <template v-slot:default="{ isHovering, props }">
             <VBtn
               v-bind="props"
@@ -74,7 +74,7 @@ function onAdd2() {
               :prepend-icon="isHovering ? 'mdi-pencil-outline ' : 'mdi-check'"
               :text="isHovering ? 'Edit' : 'Selected'"
               color="success"
-              @click="toggleDialogNode2"
+              @click="toggleDialog"
               class="d-flex justify-center align-center"
             >
             </VBtn>
@@ -86,17 +86,17 @@ function onAdd2() {
           density="comfortable"
           color="success"
           v-else
-          @click="toggleDialogNode2"
+          @click="toggleDialog"
         >
           <VIcon left>mdi-plus</VIcon> Select
         </VBtn>
       </div>
       <VDialog
-        v-model="showDialogNode2"
+        v-model="showDialog"
         max-width="25%"
       >
         <VCard>
-          <button @click="onAdd2">Select</button>
+          <button @click="onAdd">Select</button>
         </VCard>
       </VDialog>
     </div>
