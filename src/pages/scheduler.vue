@@ -1,7 +1,19 @@
 <script setup>
-import zoho from '@images/logos/zoho.png'
+import { Background } from '@vue-flow/background'
+import { Controls } from '@vue-flow/controls'
+import { Panel, VueFlow, useVueFlow } from '@vue-flow/core'
+import { MiniMap } from '@vue-flow/minimap'
 import { onMounted, ref } from 'vue'
 import { supabase } from '../lib/supaBaseClient.js'
+import ContactNode from './ContactNode.vue'
+import PickQuestionNode from './PickQuestionNode.vue'
+import SelectDateCustomNode from './SelectDateCustomNode.vue'
+import SelectDateDailyNode from './SelectDateDailyNode.vue'
+import SelectDateWeeklyNode from './SelectDateWeeklyNode.vue'
+import UseCaseNode from './UseCaseNode.vue'
+const dialog = ref(false)
+import zoho from '@images/logos/zoho.png'
+
 const dialogs = ref({
   questions: false,
   scheduler: false,
@@ -61,6 +73,14 @@ const filteredItems = computed(() => {
     return items.value
   }
   return items.value.filter(item => item.toLowerCase().includes(searchInput.value.toLowerCase()))
+})
+
+const { onConnect, addEdges } = useVueFlow()
+
+const nodes = ref([{ id: '1', type: 'custom', label: 'Node 1', position: { x: 30, y: 190 } }])
+
+onConnect(params => {
+  addEdges([params])
 })
 
 async function fetchPhoneNumbers() {
@@ -128,7 +148,74 @@ onMounted(async () => {
 </script>
 
 <template>
-  <VRow>
+  <VCard
+    v-if="dialog"
+    max-width="100%"
+    class="mt-4"
+    @click:outside="dialog = false"
+  >
+    <div style="height: 548px">
+      <VueFlow
+        v-model:nodes="nodes"
+        v-model:edges="edges"
+        class="vue-flow-basic-example"
+        :default-zoom="1.5"
+        :min-zoom="0.2"
+        :max-zoom="4"
+        style="width: 100%; height: 100%"
+      >
+        <Background
+          pattern-color="#aaa"
+          :gap="8"
+        />
+
+        <MiniMap />
+
+        <Controls />
+
+        <Panel position="top-right">
+          <div class="d-flex justify-end align-center gap-4">
+            <VBtn
+              width="105"
+              variant="outlined"
+              density="comfortable"
+              @click="dialog = false"
+              class="rounded-pill"
+              >Cancel</VBtn
+            >
+            <VBtn
+              width="105"
+              class="rounded-pill"
+              density="comfortable"
+              @click="saveScheduler"
+              >Save</VBtn
+            >
+          </div>
+        </Panel>
+
+        <template #node-custom="nodeProps">
+          <UseCaseNode v-bind="nodeProps" />
+        </template>
+        <template #node-custom2="nodeProps2">
+          <PickQuestionNode v-bind="nodeProps2" />
+        </template>
+        <template #node-custom3="nodeProps3">
+          <SelectDateWeeklyNode v-bind="nodeProps3" />
+        </template>
+        <template #node-custom4="nodeProps4">
+          <SelectDateCustomNode v-bind="nodeProps4" />
+        </template>
+        <template #node-custom5="nodeProps5">
+          <SelectDateDailyNode v-bind="nodeProps5" />
+        </template>
+        <template #node-custom6="nodeProps6">
+          <ContactNode v-bind="nodeProps6" />
+        </template>
+      </VueFlow>
+    </div>
+  </VCard>
+
+  <VRow v-else>
     <VCardTitle class="font-weight-bold">Scheduler</VCardTitle>
     <div class="d-flex flex-wrap gap-4">
       <VBtn
@@ -154,6 +241,16 @@ onMounted(async () => {
       </VBtn>
     </div>
   </VRow>
+</template>
+
+<style>
+@import '@vue-flow/core/dist/style.css';
+
+/* import the default theme (optional) */
+@import '@vue-flow/core/dist/theme-default.css';
+
+@import '@vue-flow/controls/dist/style.css';
+@import '@vue-flow/minimap/dist/style.css';
   <VDialog
     v-model="dialogs.questions"
     max-width="600px"
