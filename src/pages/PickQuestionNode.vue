@@ -3,23 +3,20 @@ import { Handle, Position, useVueFlow } from '@vue-flow/core'
 import { ref } from 'vue'
 const { nodes, addNodes, addEdges } = useVueFlow()
 
-const items = ref(['What is the total sales?', 'What is the invoice?', 'How much is the order?']) // replace with actual item
+const items = ref(['What is the total sales?', 'What is the invoice?', 'How much is the order?'])
 function saveSelections() {
-  // Assuming selectedItems is an array of selected questions
-  console.log(selectedItems.value) // This should show the updated array in the console
+  console.log(selectedItems.value)
 
   if (selectedItems.value.length > 0) {
-    // Only close the questions dialog if there are selected items
-    showDialog.value = false // Close the first dialog
+    showDialog.value = false
     selectedQuestionsDialog.value = true
   } else {
-    // Handle the case when no items are selected
     console.error('No items selected')
   }
 }
 function handleBackButtonClick() {
-  selectedQuestionsDialog.value = false // Close the current dialog
-  showDialog.value = true // Reopen the previous dialog
+  selectedQuestionsDialog.value = false
+  showDialog.value = true
 }
 
 const selected = ref(nodes.value[1].selected)
@@ -41,10 +38,8 @@ const selectedItems = ref([])
 function updateSelection(item) {
   const index = selectedItems.value.indexOf(item)
   if (index > -1) {
-    // If the item is already selected, remove it
     selectedItems.value.splice(index, 1)
   } else {
-    // Otherwise, add the item to the selected items
     selectedItems.value.push(item)
   }
 }
@@ -168,7 +163,6 @@ function onAdd() {
                   class="list-item"
                 >
                   <VListItemAction>
-                    <!-- Ensure the VCheckbox is correctly updating the selectedItems array -->
                     <VCheckbox
                       :value="item"
                       @change="() => updateSelection(item)"
@@ -222,3 +216,23 @@ function onAdd() {
     </div>
   </VCard>
 </template>
+
+<style scoped>
+.list-item {
+  align-items: center;
+}
+.custom-tabs .v-tab {
+  text-transform: none;
+  color: #5f5f5f;
+  margin-right: 20px;
+}
+
+.custom-tabs .v-tab--active {
+  color: #000000;
+  border-bottom: 4px solid #6200ea;
+}
+
+.search-input {
+  max-width: 250px;
+}
+</style>
