@@ -10,10 +10,13 @@
 </head>
 
 <body>
-  <div id="app">
-    <div id="loading-bg">
-      <div class="loading-logo">
-        <img src="/src/assets/images/images/Frame.png"></img>
+  <div id="app" class="loading-container">
+    <video autoplay muted loop id="loadingVideo" class="loading-video">
+      <source src="/src/assets/images/images/logoloading.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+    <!-- Your app's content here -->
+  </div>
         <!-- SVG Logo -->
         <!-- <svg width="86" height="48" viewBox="0 0 30 24" xmlns="http://www.w3.org/2000/svg">
           <g fill="none" fill-rule="evenodd">
@@ -30,7 +33,7 @@
               fill="#FFF" />
           </g>
         </svg> -->
-      </div>
+      
       
     </div>
   </div>
@@ -48,3 +51,26 @@
 </body>
 
 </html>
+
+<style>
+  .loading-container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+}
+
+.loading-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; 
+}
+
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+</style>

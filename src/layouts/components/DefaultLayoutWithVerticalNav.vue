@@ -107,11 +107,19 @@ const upgradeBanner = computed(() => {
       />
       <VerticalNavLink
         :item="{
+          title: 'Scheduler',
+          icon: 'mdi-invoice-text-clock-outline',
+          to: '/scheduler',
+        }"
+      />
+      <!-- <VerticalNavLink
+        :item="{
           title: 'Template',
           icon: 'mdi-arrange-send-backward',
           to: '/template',
         }"
-      />
+      /> -->
+
       <!--
         <VerticalNavLink
         :item="{

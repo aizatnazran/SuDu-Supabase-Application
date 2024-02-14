@@ -1,31 +1,97 @@
 <script setup>
-import csvimg from '@images/images/csv.png'
+//Importing document images
+import blankImage from '@images/images/blank.png'
+import csvImage from '@images/images/csv.png'
+import pdfImage from '@images/images/pdf.png'
+import xlsImage from '@images/images/xls.png'
+
 import axios from 'axios'
 import FormData from 'form-data'
 import Swal from 'sweetalert2'
 import { ref, watch } from 'vue'
 import { supabase } from '../lib/supaBaseClient.js'
-// Components
 
+const userUUID = localStorage.getItem('uuid')
+const companyId = localStorage.getItem('company_id')
 const templateOptions = ref([])
 const selectedFiles = ref([])
 const selectedTemplate = ref(null)
 const sheet = ref(false)
 const filesList = ref([])
+const tableDescription = ref('')
+const selectedMonth = ref(null)
+const selectedYear = ref(null)
+const subTemplateOptions = ref([])
+const selectedSubTemplate = ref(null)
 
+const resetFields = () => {
+  selectedTemplate.value = null
+  selectedSubTemplate.value = null
+  tableDescription.value = ''
+  selectedFiles.value = []
+  selectedMonth.value = null
+  selectedYear.value = null
+}
+
+const months = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+]
+
+const currentYear = new Date().getFullYear()
+const years = Array.from({ length: 5 }, (_, index) => currentYear + index)
+
+//Function to set images of document based on its extension
+function getImageSrc(fileName) {
+  const extension = fileName.split('.').pop()
+  switch (extension.toLowerCase()) {
+    case 'csv':
+      return csvImage
+    case 'pdf':
+      return pdfImage
+    case 'xlsx':
+      return xlsImage
+    default:
+      return blankImage
+  }
+}
+
+// Function to fetch templates from table
 async function fetchTemplates() {
   try {
-    const { data: templates, error } = await supabase
+    const { data: templatesWithCompany, error: companyError } = await supabase
       .from('template')
       .select('template_name')
       .eq('company_id', companyId)
 
-    if (error) {
-      console.error('Error fetching templates:', error)
+    if (companyError) {
+      console.error('Error fetching templates with company ID:', companyError)
       return []
     }
 
-    return templates.map(template => template.template_name)
+    const { data: templatesWithoutCompany, error: nullCompanyError } = await supabase
+      .from('template')
+      .select('template_name')
+      .is('company_id', null)
+
+    if (nullCompanyError) {
+      console.error('Error fetching templates with null company ID:', nullCompanyError)
+      return []
+    }
+
+    const allTemplates = [...templatesWithCompany, ...templatesWithoutCompany]
+
+    return allTemplates.map(template => template.template_name)
   } catch (error) {
     console.error('Error fetching templates:', error)
     return []
@@ -38,138 +104,51 @@ watch(sheet, newVal => {
   }
 })
 
+async function fetchSubTemplates(templateName) {
+  try {
+    const { data: templateData, error: templateError } = await supabase
+      .from('template')
+      .select('id')
+      .eq('template_name', templateName)
+      .single()
+
+    if (templateError) {
+      console.error('Error fetching template ID:', templateError)
+      return []
+    }
+
+    const templateId = templateData.id
+
+    const { data: subTemplates, error } = await supabase
+      .from('stemplate')
+      .select('stemplate_name')
+      .eq('stemplate_template', templateId)
+
+    if (error) {
+      console.error('Error fetching sub templates:', error)
+      return []
+    }
+
+    return subTemplates.map(subTemplate => subTemplate.stemplate_name)
+  } catch (error) {
+    console.error('Error fetching sub templates:', error)
+    return []
+  }
+}
+
+watch(selectedTemplate, async newVal => {
+  if (newVal) {
+    subTemplateOptions.value = await fetchSubTemplates(newVal)
+    selectedSubTemplate.value = null
+  }
+})
+
 const handleFileChange = event => {
   selectedFiles.value = Array.from(event.target.files)
   console.log('Selected files:', selectedFiles.value)
 }
 
-// const props = defineProps({
-
-//   data: {
-//     sheet: false,
-//   },
-
-// })
-const userUUID = localStorage.getItem('uuid')
-const companyId = localStorage.getItem('company_id')
-
-const uploadFiles = async () => {
-  if (!selectedFiles.value.length) {
-    await Swal.fire({
-      title: 'Error!',
-      text: 'No file selected.',
-      icon: 'error',
-      customClass: { container: 'high-z-index-swal' },
-    })
-    return
-  }
-
-  if (!selectedTemplate.value) {
-    await Swal.fire({
-      title: 'Error!',
-      text: 'Please select a template before uploading.',
-      icon: 'error',
-      customClass: { container: 'high-z-index-swal' },
-    })
-    selectedFiles.value = []
-    return
-  }
-
-  let uploadErrors = []
-
-  // Fetch the ID of the selected template
-  let selectedTemplateId = null
-  let selectedTemplateName = selectedTemplate.value
-  if (selectedTemplateName) {
-    const { data: templateData, error: templateError } = await supabase
-      .from('template')
-      .select('id')
-      .eq('template_name', selectedTemplateName)
-      .eq('company_id', companyId)
-      .single()
-
-    if (templateError) {
-      console.error('Error fetching template ID:', templateError)
-      return
-    }
-
-    selectedTemplateId = templateData.id
-  }
-
-  for (const file of selectedFiles.value) {
-    const originalFileName = file.name
-    const newFileName = `${userUUID}_${originalFileName}`
-    const filePath = `${newFileName}`
-
-    // Upload each file to Supabase Storage
-    const { error: uploadError } = await supabase.storage.from('documents').upload(filePath, file)
-
-    if (uploadError) {
-      console.error('Error uploading file:', uploadError)
-      uploadErrors.push(originalFileName)
-      continue
-    }
-
-    // Insert file information into 'uploadfile' table
-    const { error: dbError } = await supabase.from('uploadfile').insert([
-      {
-        uploadfile_filename: originalFileName,
-        uploadfile_company: companyId,
-        uploadfile_uuid: userUUID,
-        uploadfile_template: selectedTemplateId,
-      },
-    ])
-
-    if (dbError) {
-      console.error('Error saving file info to database:', dbError)
-      uploadErrors.push(originalFileName)
-      continue
-    }
-
-    const form = new FormData()
-    form.append('file', file, originalFileName)
-
-    const collectionName = selectedTemplateName.replace(/\s+/g, '_')
-    const params = {
-      uuid: userUUID,
-      collection_name: collectionName,
-      preprocess: 'false',
-    }
-
-    try {
-      await axios.post('http://sudu.ai:8082/upload', form, {
-        params: params,
-      })
-    } catch (axiosError) {
-      console.error('Error sending file to API:', axiosError)
-      if (axiosError.response) {
-        console.error('Server responded with:', axiosError.response.status, axiosError.response.data)
-      }
-      uploadErrors.push(originalFileName)
-    }
-  }
-
-  selectedFiles.value = []
-
-  filesList.value = await fetchFiles()
-
-  if (uploadErrors.length === 0) {
-    Swal.fire({
-      title: 'Success!',
-      text: 'File uploaded and processed.',
-      icon: 'success',
-      customClass: { container: 'high-z-index-swal' },
-    })
-  } else {
-    Swal.fire({
-      title: 'File failed to upload or process',
-      text: `The file '${uploadErrors.join(', ')}' could not be processed`,
-      icon: 'warning',
-      customClass: { container: 'high-z-index-swal' },
-    })
-  }
-}
-
+//Function to fetch files from table
 async function fetchFiles() {
   try {
     let { data: files, error } = await supabase
@@ -210,6 +189,138 @@ async function fetchFiles() {
   }
 }
 
+//Function to upload files
+const uploadFiles = async () => {
+  if (
+    !selectedFiles.value.length ||
+    !selectedTemplate.value ||
+    !selectedSubTemplate.value ||
+    !tableDescription.value.trim() ||
+    !selectedMonth.value ||
+    !selectedYear.value
+  ) {
+    let errorMessage = 'Please provide the following information before uploading:<br>'
+
+    if (!selectedTemplate.value) {
+      errorMessage += '- Use case not selected.<br>'
+    }
+
+    if (!selectedSubTemplate.value) {
+      errorMessage += '- Sub use case not selected.<br>'
+    }
+
+    if (!tableDescription.value.trim()) {
+      errorMessage += '- Table description is empty.<br>'
+    }
+
+    if (!selectedFiles.value.length) {
+      errorMessage += '- No file selected.<br>'
+    }
+
+    if (!selectedMonth.value || !selectedYear.value) {
+      errorMessage += '- Month and/or Year not selected.<br>'
+    }
+
+    await Swal.fire({
+      title: 'Error!',
+      html: errorMessage,
+      icon: 'error',
+      customClass: { container: 'high-z-index-swal' },
+    }).then(() => {
+      resetFields()
+    })
+
+    selectedFiles.value = []
+    return
+  }
+
+  let uploadErrors = []
+  let selectedTemplateId = null
+  let selectedTemplateName = selectedTemplate.value
+
+  for (const file of selectedFiles.value) {
+    const originalFileName = file.name
+    const newFileName = `${userUUID}_${originalFileName}`
+    const form = new FormData()
+    form.append('file', file, originalFileName)
+    const collectionName = `${selectedTemplateName.trim().replace(/\s+/g, '_')}_${
+      selectedSubTemplate.value ? selectedSubTemplate.value.trim().replace(/\s+/g, '_') : ''
+    }`
+
+    const dynamicDesc = `This table consists of a company's ${selectedTemplateName} from ${selectedMonth.value} ${selectedYear.value}. ${tableDescription.value}`
+
+    try {
+      // Upload to Supabase storage
+      const { error: uploadErrorStorage } = await supabase.storage.from('documents').upload(newFileName, file)
+      if (uploadErrorStorage) throw uploadErrorStorage
+
+      // Upload to Supabase database
+      const { data: templateData, error: templateError } = await supabase
+        .from('template')
+        .select('id')
+        .eq('template_name', selectedTemplateName.trim())
+        .single()
+
+      if (templateError) throw templateError
+      selectedTemplateId = templateData.id
+
+      const { error: dbError } = await supabase.from('uploadfile').insert([
+        {
+          uploadfile_filename: originalFileName,
+          uploadfile_company: companyId,
+          uploadfile_uuid: userUUID,
+          uploadfile_template: selectedTemplateId,
+          uploadfile_desc: dynamicDesc,
+        },
+      ])
+
+      if (dbError) throw dbError
+
+      // Continue with axios API call
+      const queryParams = new URLSearchParams({
+        uuid: userUUID,
+        collection_name: collectionName.toLowerCase(),
+        preprocess: 'false',
+        desc: dynamicDesc,
+      }).toString()
+
+      await axios.post(`http://sudu.ai:8082/upload?${queryParams}`, form)
+
+      resetFields()
+    } catch (error) {
+      console.error('Error during file upload process:', error)
+      uploadErrors.push(originalFileName)
+      continue
+    }
+  }
+
+  selectedFiles.value = []
+
+  filesList.value = await fetchFiles()
+
+  // Display success or failure messages
+  if (uploadErrors.length === 0) {
+    Swal.fire({
+      title: 'Success!',
+      text: 'File uploaded and processed.',
+      icon: 'success',
+      customClass: { container: 'high-z-index-swal' },
+    }).then(() => {
+      resetFields()
+    })
+  } else {
+    Swal.fire({
+      title: 'File failed to upload or process',
+      text: `The file '${uploadErrors.join(', ')}' could not be processed`,
+      icon: 'warning',
+      customClass: { container: 'high-z-index-swal' },
+    }).then(() => {
+      resetFields()
+    })
+  }
+}
+
+//Function to confirm and delete a file
 const confirmDelete = async file => {
   Swal.fire({
     title: 'Are you sure?',
@@ -226,12 +337,10 @@ const confirmDelete = async file => {
           .from('uploadfile')
           .delete()
           .match({ uploadfile_filename: file.uploadfile_filename, uploadfile_company: companyId })
-
         if (deletionError) {
           throw deletionError
         }
 
-        // Find the template key for the file and update the array
         for (const template in filesList.value) {
           if (filesList.value[template].some(f => f.uploadfile_filename === file.uploadfile_filename)) {
             filesList.value[template] = filesList.value[template].filter(
@@ -266,6 +375,15 @@ onMounted(async () => {
     console.error('Error during onMounted:', error)
   }
 })
+
+const editItem = () => {
+  console.log('Edit action triggered')
+}
+
+const items = ref([
+  { title: 'Edit', action: file => editItem(file) },
+  { title: 'Delete', action: file => confirmDelete(file) },
+])
 </script>
 
 <template>
@@ -281,65 +399,85 @@ onMounted(async () => {
   </VRow>
   <div>
     <VContainer>
-      <template
-        v-for="(templateName, index) in templateOptions"
-        :key="index"
-      >
-        <!-- Styled Template Name Row -->
-        <v-row class="mb-4">
-          <v-col
-            cols="5"
-            class="d-flex align-center"
-          >
-            <v-divider></v-divider>
-          </v-col>
-          <v-col
-            cols="2"
-            class="text-center"
-          >
-            <span class="subtitle-1">{{ templateName }}</span>
-          </v-col>
-          <v-col
-            cols="5"
-            class="d-flex align-center"
-          >
-            <v-divider></v-divider>
-          </v-col>
-        </v-row>
-
-        <!-- Files associated with the template -->
-        <VRow>
-          <template v-if="filesList[templateName] && filesList[templateName].length">
-            <template
-              v-for="file in filesList[templateName]"
-              :key="file.uploadfile_filename"
+      <template v-if="templateOptions.length > 0">
+        <template
+          v-for="(templateName, index) in templateOptions"
+          :key="index"
+        >
+          <v-row class="mb-4 mt-6">
+            <v-col
+              cols="5"
+              class="d-flex align-center"
             >
-              <VCard class="document-card ma-1">
-                <v-btn
-                  icon
-                  flat
-                  color="transparent"
-                  class="dots-button"
-                  v-on="on"
-                  @click="confirmDelete(file)"
-                >
-                  <v-icon>mdi-dots-vertical</v-icon>
-                </v-btn>
+              <v-divider></v-divider>
+            </v-col>
+            <v-col
+              cols="2"
+              class="text-center"
+            >
+              <span class="subtitle-1">{{ templateName }}</span>
+            </v-col>
+            <v-col
+              cols="5"
+              class="d-flex align-center"
+            >
+              <v-divider></v-divider>
+            </v-col>
+          </v-row>
+
+          <VRow>
+            <template v-if="filesList[templateName] && filesList[templateName].length">
+              <VCard
+                class="document-card ma-1"
+                v-for="file in filesList[templateName]"
+                :key="file.uploadfile_filename"
+                cols="6"
+              >
+                <v-menu :location="location">
+                  <template v-slot:activator="{ props, on }">
+                    <v-btn
+                      icon
+                      flat
+                      color="transparent"
+                      class="dots-button"
+                      v-bind="props"
+                      v-on="on"
+                    >
+                      <v-icon>mdi-dots-vertical</v-icon>
+                    </v-btn>
+                  </template>
+
+                  <v-list>
+                    <v-list-item
+                      v-for="(item, index) in items"
+                      :key="index"
+                      @click="item.action(file)"
+                    >
+                      <v-list-item-title>{{ item.title }}</v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </v-menu>
+
                 <img
-                  :src="csvimg"
-                  alt="CSV Icon"
+                  :src="getImageSrc(file.uploadfile_filename)"
+                  alt="Document Icon"
                 />
                 <p class="file-name">{{ file.uploadfile_filename }}</p>
               </VCard>
             </template>
-          </template>
-          <div
-            v-else
-            class="text-center my-5"
-          >
-            <p>No documents submitted for {{ templateName }}.</p>
-          </div>
-        </VRow>
+            <div
+              v-else
+              class="text-center my-5"
+            >
+              <p class="subtitle-1">No documents submitted for {{ templateName }}.</p>
+            </div>
+          </VRow>
+        </template>
+      </template>
+      <template v-else>
+        <div class="text-center my-5">
+          <p class="subtitle-1"></p>
+        </div>
       </template>
     </VContainer>
 
@@ -352,13 +490,25 @@ onMounted(async () => {
       >
         <VCard class="pa-10">
           <VContainer>
-            <div class="text-h6 text-start mb-2 font-weight-bold">Select File Type</div>
+            <div class="text-h6 text-start mb-2 font-weight-bold">Select Use Case</div>
             <VSelect
               v-model="selectedTemplate"
               :items="templateOptions"
-              label="Templates"
-              class="select-template"
+              label="Use Case"
             />
+            <div class="text-h6 text-start mt-4 font-weight-bold">Select Sub Template</div>
+            <VSelect
+              v-model="selectedSubTemplate"
+              :items="subTemplateOptions"
+              label="Sub Template"
+            />
+            <div class="text-h6 text-start mt-4 font-weight-bold">Table Description</div>
+            <VTextarea
+              v-model="tableDescription"
+              placeholder="Each columns in the table includes: 'Doc.No': unique document identifier. 'Doc.Date_Year': Year of document creation. 'Doc.Date_Month': Month of document creation. 'Doc.Date_Day': Day of document creation. 'Name': name of client company. 'Code': probably order ID. 'Disc': Discount Amount. 'Amt': Amount before tax. 'Tax Amt': Amount of Tax charged.'Amt with Tax': Amount with tax added."
+              rows="5"
+            />
+
             <div class="text-h6 text-start mt-4 font-weight-bold">Upload File</div>
             <VFileInput
               @click:input.stop
@@ -366,7 +516,26 @@ onMounted(async () => {
               label="Click to upload file or drag and drop here"
               class="file-upload-input"
             />
+
+            <div class="text-h6 text-start mt-4 font-weight-bold">Choose Date</div>
+            <VRow>
+              <VCol cols="6">
+                <VSelect
+                  v-model="selectedMonth"
+                  :items="months"
+                  label="Month"
+                />
+              </VCol>
+              <VCol cols="6">
+                <VSelect
+                  v-model="selectedYear"
+                  :items="years"
+                  label="Year"
+                />
+              </VCol>
+            </VRow>
           </VContainer>
+
           <VBtn
             class="mt-5"
             prepend-icon="mdi-send-variant"
@@ -382,7 +551,7 @@ onMounted(async () => {
 
 <style>
 .high-z-index-swal {
-  z-index: 9999999 !important;
+  z-index: 3000 !important;
 }
 .overlaying-component-class {
   z-index: 1050;
@@ -423,16 +592,17 @@ onMounted(async () => {
   z-index: 10;
 }
 
-.select-template {
-  border: 1px solid #aaa;
-  border-radius: 4px;
-}
-
 .file-upload-input {
   border: 2px dashed #aaa;
   border-radius: 4px;
   padding: 20px;
   text-align: center;
   color: #aaa;
+}
+
+@media (max-width: 600px) {
+  .document-card {
+    width: calc(50% - 10px);
+  }
 }
 </style>

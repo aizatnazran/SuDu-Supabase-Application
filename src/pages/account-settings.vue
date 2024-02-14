@@ -1,6 +1,7 @@
 <script setup>
 import AccountSettingsAccount from '@/views/pages/account-settings/AccountSettingsAccount.vue'
 import AccountSettingsNotification from '@/views/pages/account-settings/AccountSettingsNotification.vue'
+import AccountSettingsRoles from '@/views/pages/account-settings/AccountSettingsRoles.vue'
 import AccountSettingsSecurity from '@/views/pages/account-settings/AccountSettingsSecurity.vue'
 import AccountSettingsWhatsapp from '@/views/pages/account-settings/AccountSettingsWhatsapp.vue'
 import { useRoute } from 'vue-router'
@@ -29,6 +30,11 @@ const tabs = [
     title: 'Whatsapp Number',
     icon: 'mdi-whatsapp',
     tab: 'whatsapp',
+  },
+  {
+    title: 'Roles',
+    icon: 'mdi-account-settings-outline',
+    tab: 'roles',
   },
 ]
 </script>
@@ -76,6 +82,11 @@ const tabs = [
       <!-- Whatsapp -->
       <VWindowItem value="whatsapp">
         <AccountSettingsWhatsapp />
+      </VWindowItem>
+
+      <!-- Roles -->
+      <VWindowItem value="roles">
+        <AccountSettingsRoles />
       </VWindowItem>
     </VWindow>
   </div>

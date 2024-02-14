@@ -75,8 +75,10 @@ h6,
 .v-checkbox.v-input,
 .v-switch.v-input {
   --v-input-control-height: auto;
-
-  flex: unset;
+  display: flex; /* Use flexbox */
+  justify-content: center; /* Center horizontally */
+  align-items: center; /* Center vertically */
+  height: 100%; /* Take full height of the parent */
 }
 
 .v-selection-control--density-comfortable {

@@ -1,122 +1,40 @@
 <script setup>
 import { supabase } from '@/lib/supaBaseClient'
-import Swal from 'sweetalert2'
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 
-const isCurrentPasswordVisible = ref(false)
-const isNewPasswordVisible = ref(false)
-const isConfirmPasswordVisible = ref(false)
-const currentPassword = ref('')
-const newPassword = ref('')
-const confirmPassword = ref('')
+const userInfo = ref({})
 
-//Validating new password
-const validatePassword = () => {
-  if (!currentPassword.value || !newPassword.value || !confirmPassword.value) {
-    Swal.fire('Error', 'All fields are required.', 'error')
-    return false
-  }
-
-  if (currentPassword.value === newPassword.value) {
-    Swal.fire('Error', 'New password cannot be the same as the current password.', 'error')
-    return false
-  }
-
-  if (newPassword.value !== confirmPassword.value) {
-    Swal.fire('Error', 'New password and confirmation password do not match.', 'error')
-    return false
-  }
-
-  return true
-}
-
-//Function to update old password to new password
-const updatePassword = async () => {
-  if (!validatePassword()) return
+onMounted(async () => {
   try {
-    const { error } = await supabase.auth.updateUser({ password: newPassword.value })
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser()
+
     if (error) throw error
-    Swal.fire('Success', 'Password changed successfully.', 'success')
-  } catch (err) {
-    Swal.fire('Error', err.message, 'error')
+    if (!user) {
+      console.error('User is not logged in')
+      return
+    }
+
+    console.log('User Info:', user)
+    userInfo.value = user
+  } catch (e) {
+    console.error('Error fetching user details:', e)
   }
-}
-
-const passwordRequirements = [
-  'Minimum 8 characters long - the more, the better',
-  'At least one lowercase character',
-  'At least one number, symbol, or whitespace character',
-]
-
-const recentDevices = [
-  {
-    browser: 'Chrome on Windows',
-    device: 'HP Spectre 360',
-    location: 'New York, NY',
-    recentActivity: '28 Apr 2022, 18:20',
-    deviceIcon: {
-      icon: 'mdi-microsoft-windows',
-      color: 'primary',
-    },
-  },
-  {
-    browser: 'Chrome on iPhone',
-    device: 'iPhone 12x',
-    location: 'Los Angeles, CA',
-    recentActivity: '20 Apr 2022, 10:20',
-    deviceIcon: {
-      icon: 'mdi-cellphone',
-      color: 'error',
-    },
-  },
-  {
-    browser: 'Chrome on Android',
-    device: 'Oneplus 9 Pro',
-    location: 'San Francisco, CA',
-    recentActivity: '16 Apr 2022, 04:20',
-    deviceIcon: {
-      icon: 'mdi-android',
-      color: 'success',
-    },
-  },
-  {
-    browser: 'Chrome on MacOS',
-    device: 'Apple iMac',
-    location: 'New York, NY',
-    recentActivity: '28 Apr 2022, 18:20',
-    deviceIcon: {
-      icon: 'mdi-apple',
-      color: 'secondary',
-    },
-  },
-  {
-    browser: 'Chrome on Windows',
-    device: 'HP Spectre 360',
-    location: 'Los Angeles, CA',
-    recentActivity: '20 Apr 2022, 10:20',
-    deviceIcon: {
-      icon: 'mdi-microsoft-windows',
-      color: 'primary',
-    },
-  },
-  {
-    browser: 'Chrome on Android',
-    device: 'Oneplus 9 Pro',
-    location: 'San Francisco, CA',
-    recentActivity: '16 Apr 2022, 04:20',
-    deviceIcon: {
-      icon: 'mdi-android',
-      color: 'success',
-    },
-  },
-]
+})
 </script>
 
 <template>
+  <div>
+    <VMenu>
+      <VList>test</VList>
+    </VMenu>
+  </div>
   <VRow>
     <!-- SECTION: Change Password -->
     <VCol cols="12">
-      <VCard title="Change Password">
+      <VCard title="Customer Support">
         <VForm>
           <VCardText>
             <!-- 👉 Current Password -->
@@ -125,7 +43,7 @@ const recentDevices = [
                 cols="12"
                 md="6"
               >
-                <!-- 👉 Current password -->
+                <!-- 👉 current password -->
                 <VTextField
                   v-model="currentPassword"
                   :type="isCurrentPasswordVisible ? 'text' : 'password'"
@@ -142,7 +60,7 @@ const recentDevices = [
                 cols="12"
                 md="6"
               >
-                <!-- 👉 New password -->
+                <!-- 👉 new password -->
                 <VTextField
                   v-model="newPassword"
                   :type="isNewPasswordVisible ? 'text' : 'password'"
@@ -156,7 +74,7 @@ const recentDevices = [
                 cols="12"
                 md="6"
               >
-                <!-- 👉 Confirm password -->
+                <!-- 👉 confirm password -->
                 <VTextField
                   v-model="confirmPassword"
                   :type="isConfirmPasswordVisible ? 'text' : 'password'"

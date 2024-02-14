@@ -6,6 +6,9 @@ import { onMounted, ref } from 'vue'
 
 const form = ref(null)
 const companyId = localStorage.getItem('company_id')
+const refInputEl = ref()
+const isAccountDeactivated = ref(false)
+const businessTypes = ref([])
 
 const accountDataLocal = ref({
   avatarImg: avatar1,
@@ -20,9 +23,6 @@ const accountDataLocal = ref({
   company_zipcode: null,
   company_country: null,
 })
-
-const refInputEl = ref()
-const isAccountDeactivated = ref(false)
 
 const resetForm = () => {
   fetchCompanyData()
@@ -43,8 +43,7 @@ const resetAvatar = () => {
   accountDataLocal.value.avatarImg = accountData.avatarImg
 }
 
-const businessTypes = ref([])
-
+//Function to fetch business types from table
 const fetchBusinessTypes = async () => {
   try {
     const { data, error } = await supabase.from('businesstype').select('businesstype_name')
@@ -59,6 +58,7 @@ const fetchBusinessTypes = async () => {
   }
 }
 
+//Function to fetch company data from table
 const fetchCompanyData = async () => {
   const companyId = localStorage.getItem('company_id')
 
@@ -104,6 +104,7 @@ const fetchCompanyData = async () => {
   }
 }
 
+//Function to fetch business type ID from table
 const fetchBusinessTypeId = async businessTypeName => {
   try {
     const { data, error } = await supabase
@@ -123,6 +124,7 @@ const fetchBusinessTypeId = async businessTypeName => {
   }
 }
 
+//Function to save company changes
 const saveChanges = async () => {
   Swal.fire({
     title: 'Are you sure?',
@@ -138,7 +140,6 @@ const saveChanges = async () => {
       delete updateData.avatarImg
       delete updateData.businessType
 
-      // Fetch the businesstype ID based on the selected businesstype_name
       const selectedBusinessTypeName = accountDataLocal.value.businessType
       const businessType = await fetchBusinessTypeId(selectedBusinessTypeName)
 
@@ -168,7 +169,7 @@ const saveChanges = async () => {
 
 onMounted(() => {
   fetchCompanyData()
-  fetchBusinessTypes() // Add this line
+  fetchBusinessTypes()
 })
 </script>
 
@@ -246,7 +247,7 @@ onMounted(() => {
                 />
               </VCol>
 
-              <!-- 👉 Last Name -->
+              <!-- 👉 Company Website -->
               <VCol
                 md="6"
                 cols="12"
@@ -378,6 +379,7 @@ onMounted(() => {
         <VCardText>
           <div>
             <VCheckbox
+              class="d-flex justify-start"
               v-model="isAccountDeactivated"
               label="I confirm my account deactivation"
             />
