@@ -1,16 +1,30 @@
 <script setup>
+import zoho from '@images/logos/zoho.png'
 import { Handle, Position, useVueFlow } from '@vue-flow/core'
 import { ref } from 'vue'
 const { nodes, addNodes, addEdges, dimensions, toObject, fromObject } = useVueFlow()
-
+let input = ref('')
 const selected = ref(nodes.value[0].selected)
 const showDialog = ref(false)
-
+const searchInput = ref('')
 const flowKey = 'example-flow'
 
 const toggleDialog = () => {
   showDialog.value = !showDialog.value
 }
+
+const useCases = ref(['Sales', 'Customer', 'Quotation'])
+
+function getFilteredList() {
+  return useCases.value.filter(useCase => useCase.toLowerCase().includes(input.value.toLowerCase()))
+}
+
+const filteredItems = computed(() => {
+  if (!searchInput.value) {
+    return items.value
+  }
+  return items.value.filter(item => item.toLowerCase().includes(searchInput.value.toLowerCase()))
+})
 
 function onAdd() {
   if (nodes.value.length < 2) {
@@ -89,10 +103,60 @@ function onAdd() {
       </div>
       <VDialog
         v-model="showDialog"
-        max-width="25%"
+        max-width="80%"
       >
         <VCard>
-          <button @click="onAdd">Select</button>
+          <VCardTitle class="font-weight-bold d-flex justify-space-between">
+            <div class="text-start font-weight-bold">Select Use Case</div>
+          </VCardTitle>
+          <VCardText>
+            <VRow class="mb-5">
+              <div class="text-h6 font-weight-bold mx-5 text-center">Use Case</div>
+              <VTextField
+                v-model="input"
+                append-icon="mdi-magnify"
+                label="Search..."
+                single-line
+                hide-details
+              ></VTextField>
+            </VRow>
+            <VContainer>
+              <VRow>
+                <VCol
+                  cols="12"
+                  sm="6"
+                  md="4"
+                  v-for="useCase in getFilteredList()"
+                  :key="useCase"
+                >
+                  <VCard class="use-case-card mb-4 d-flex flex-column">
+                    <div class="d-flex justify-start align-start">
+                      <div class="flex-grow-1 text-container">
+                        <VCardTitle class="font-weight-bold text-body-1 text-black">{{ useCase }}</VCardTitle>
+                      </div>
+
+                      <VImg
+                        :src="zoho"
+                        class="card-image mx-2"
+                      ></VImg>
+                    </div>
+
+                    <div class="mt-auto d-flex justify-space-between align-end">
+                      <VCardSubtitle class="text-caption mb-3">{{ '12th Oct 2023' }}</VCardSubtitle>
+
+                      <VBtn
+                        text
+                        color="primary"
+                        class="rounded-pill"
+                        @click="onAdd"
+                        >Select</VBtn
+                      >
+                    </div>
+                  </VCard>
+                </VCol>
+              </VRow>
+            </VContainer>
+          </VCardText>
         </VCard>
       </VDialog>
     </div>
@@ -102,5 +166,34 @@ function onAdd() {
 <style>
 .text-black {
   color: black;
+}
+
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.search-input {
+  max-width: 250px;
+}
+
+.use-case-card {
+  border-radius: 10px;
+  box-shadow: 2px;
+  transition: box-shadow 0.3s ease-in-out;
+  background-color: #f5f5f5;
+  padding: 5px;
+}
+
+.card-image {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+}
+
+.text-container {
+  max-width: calc(100% - 110px);
+  margin-right: 10px;
 }
 </style>
