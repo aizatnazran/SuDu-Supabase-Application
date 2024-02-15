@@ -105,19 +105,28 @@ function onAdd() {
         v-model="showDialog"
         max-width="80%"
       >
-        <VCard>
+        <VCard
+          class="pa-4"
+          variant="outlined"
+          color="grey-500"
+          rounded="lg"
+          style="background-color: #fff"
+        >
           <VCardTitle class="font-weight-bold d-flex justify-space-between">
-            <div class="text-start font-weight-bold">Select Use Case</div>
+            <div class="text-start font-weight-bold text-black text-h6">Select Use Case</div>
           </VCardTitle>
           <VCardText>
-            <VRow class="mb-5">
-              <div class="text-h6 font-weight-bold mx-5 text-center">Use Case</div>
+            <VRow class="mb-5 d-flex justify-start align-center">
+              <div class="text-h6 font-weight-bold mx-5 text-center text-black">Use Case</div>
               <VTextField
                 v-model="input"
-                append-icon="mdi-magnify"
                 label="Search..."
                 single-line
                 hide-details
+                variant="outlined"
+                rounded="xl"
+                density="compact"
+                class="search-input"
               ></VTextField>
             </VRow>
             <VContainer>
@@ -129,7 +138,11 @@ function onAdd() {
                   v-for="useCase in getFilteredList()"
                   :key="useCase"
                 >
-                  <VCard class="use-case-card mb-4 d-flex flex-column">
+                  <VCard
+                    class="use-case-card mb-4 d-flex flex-column"
+                    variant="outlined"
+                    color="primary"
+                  >
                     <div class="d-flex justify-start align-start">
                       <div class="flex-grow-1 text-container">
                         <VCardTitle class="font-weight-bold text-body-1 text-black">{{ useCase }}</VCardTitle>
@@ -142,12 +155,13 @@ function onAdd() {
                     </div>
 
                     <div class="mt-auto d-flex justify-space-between align-end">
-                      <VCardSubtitle class="text-caption mb-3">{{ '12th Oct 2023' }}</VCardSubtitle>
+                      <VCardSubtitle class="text-caption">{{ '12th Oct 2023' }}</VCardSubtitle>
 
                       <VBtn
                         text
                         color="primary"
-                        class="rounded-pill"
+                        class="rounded-pill px-8"
+                        density="comfortable"
                         @click="onAdd"
                         >Select</VBtn
                       >
@@ -175,7 +189,7 @@ function onAdd() {
 }
 
 .search-input {
-  max-width: 250px;
+  max-width: 350px;
 }
 
 .use-case-card {

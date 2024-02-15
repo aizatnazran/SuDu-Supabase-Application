@@ -128,13 +128,20 @@ function onAdd() {
         v-model="showDialog"
         max-width="80%"
       >
-        <VCard>
+        <VCard
+          class="pa-4"
+          variant="outlined"
+          color="grey-500"
+          rounded="lg"
+          style="background-color: #fff"
+        >
           <VCardTitle class="dialog-header">
-            <span>Questions</span>
+            <span class="font-weight-bold text-h6 text-black">Questions</span>
             <VTextField
               v-model="searchInput"
-              append-icon="mdi-magnify"
-              placeholder="Search..."
+              prepend-icon="mdi-magnify"
+              label="Search..."
+              variant="underlined"
               dense
               flat
               solo-inverted
@@ -142,17 +149,24 @@ function onAdd() {
               class="search-input"
             ></VTextField>
           </VCardTitle>
-          <VCardSubtitle class="mb-5">What questions would you like to ask SuDu AI?</VCardSubtitle>
-          <VTabs
-            class="custom-tabs"
-            background-color="transparent"
+          <VCardSubtitle class="mb-5 text-black">What questions would you like to ask SuDu AI?</VCardSubtitle>
+          <VBtnToggle
+            class="pl-3"
+            mandatory="force"
+            rounded="xl"
+            color="primary"
+            density="comfortable"
+            variant="outlined"
           >
-            <VTab class="tab-item">Reporting</VTab>
-            <VTab class="tab-item">Analysis</VTab>
-            <VTab class="tab-item">Automation</VTab>
-          </VTabs>
+            <VBtn class="tab-item">Reporting</VBtn>
+            <VBtn class="tab-item">Analysis</VBtn>
+            <VBtn class="tab-item">Automation</VBtn>
+          </VBtnToggle>
           <VCardText>
-            <VList dense>
+            <VList
+              dense
+              class="v-list-item-group"
+            >
               <VListItemGroup
                 v-model="selectedItems"
                 multiple
@@ -160,22 +174,25 @@ function onAdd() {
                 <VListItem
                   v-for="(item, index) in filteredItems"
                   :key="index"
-                  class="list-item"
                 >
-                  <VListItemAction>
-                    <VCheckbox
-                      :value="item"
-                      @change="() => updateSelection(item)"
-                    ></VCheckbox>
-                  </VListItemAction>
-                  <VListItemContent>{{ item }}</VListItemContent>
+                  <div class="list-item">
+                    <VListItemAction class="list-item-action">
+                      <VCheckbox
+                        :value="item"
+                        @change="() => updateSelection(item)"
+                      ></VCheckbox>
+                    </VListItemAction>
+                    <VListItemContent>{{ item }}</VListItemContent>
+                  </div>
                 </VListItem>
               </VListItemGroup>
             </VList>
           </VCardText>
           <VCardActions class="justify-end">
             <VBtn
-              color="primary"
+              color="on-secondary"
+              class="rounded-pill px-8 bg-primary"
+              density="comfortable"
               @click="saveSelections"
               >Next</VBtn
             >
@@ -187,14 +204,20 @@ function onAdd() {
         max-width="600px"
         persistent
       >
-        <VCard>
-          <VCardTitle class="font-weight-bold">Selected Questions</VCardTitle>
-          <VCardSubtitle>Please confirm the questions that selected.</VCardSubtitle>
-          <VCardText>
+        <VCard
+          class="pa-4"
+          variant="outlined"
+          color="grey-500"
+          rounded="lg"
+          style="background-color: #fff"
+        >
+          <VCardTitle class="font-weight-bold text-black text-h6">Selected Questions</VCardTitle>
+          <VCardSubtitle class="text-black">Please confirm the questions that selected.</VCardSubtitle>
+          <VCardText class="card-text d-flex flex-column justify-start ga-4 my-2">
             <div
               v-for="(question, index) in selectedItems"
               :key="index"
-              class="my-3"
+              class="text-black"
             >
               {{ question }}
             </div>
@@ -202,11 +225,16 @@ function onAdd() {
           <VCardActions class="justify-end">
             <VBtn
               text
+              class="rounded-pill px-8"
+              density="comfortable"
+              variant="outlined"
               @click="handleBackButtonClick"
               >Back</VBtn
             >
             <VBtn
-              color="primary"
+              color="on-secondary"
+              class="rounded-pill px-8 bg-primary"
+              density="comfortable"
               @click="onAdd"
               >Save</VBtn
             >
@@ -218,13 +246,31 @@ function onAdd() {
 </template>
 
 <style scoped>
+.v-list-item-group {
+  background-color: #eeeeee;
+  padding: 1rem;
+  border-radius: 0.25rem;
+}
+.card-text {
+  background-color: #eeeeee;
+  padding: 1rem;
+}
 .list-item {
+  display: flex;
+  justify-content: start;
   align-items: center;
+}
+.list-item-action {
+  max-width: 40px;
+}
+.custom-tabs {
+  max-width: 330px;
+  border-radius: 9999px;
+  background-color: #f9f9f9;
 }
 .custom-tabs .v-tab {
   text-transform: none;
-  color: #5f5f5f;
-  margin-right: 20px;
+  color: #000000;
 }
 
 .custom-tabs .v-tab--active {
