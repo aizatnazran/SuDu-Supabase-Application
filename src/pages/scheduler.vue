@@ -21,7 +21,6 @@ const selectedTemplate = ref(null)
 const selectedPhoneNumber = ref(null)
 const selectedDays = ref([])
 const phoneNumbers = ref([])
-const userUUID = localStorage.getItem('uuid')
 const companyId = localStorage.getItem('company_id')
 const schedulers = ref([])
 

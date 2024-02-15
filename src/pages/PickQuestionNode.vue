@@ -35,6 +35,12 @@ const searchInput = ref('')
 const selectedQuestionsDialog = ref(false)
 const selectedItems = ref([])
 
+const displayText = computed(() => {
+  return selectedItems.value.length > 0
+    ? `${selectedItems.value.length} question(s) selected`
+    : 'Pick the question you would like to.'
+})
+
 function updateSelection(item) {
   const index = selectedItems.value.indexOf(item)
   if (index > -1) {
@@ -76,6 +82,14 @@ function onAdd() {
   showDialog.value = false
   nodes.value[0].selected = true
 }
+
+watch(
+  selectedItems,
+  (newVal, oldVal) => {
+    console.log('selectedItems changed:', newVal)
+  },
+  { deep: true },
+)
 </script>
 
 <template>
@@ -95,7 +109,7 @@ function onAdd() {
         :position="Position.Right"
       />
       <div class="text-success text-h6"><VIcon icon="mdi-help-circle"></VIcon>Pick Question</div>
-      <div class="mb-4 text-black">Pick the question you would like to.</div>
+      <div class="mb-4 text-black">{{ displayText }}</div>
       <div class="d-flex justify-center">
         <VHover v-if="selected">
           <template v-slot:default="{ isHovering, props }">

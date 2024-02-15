@@ -8,12 +8,12 @@ const selected = ref(nodes.value[0].selected)
 const showDialog = ref(false)
 const searchInput = ref('')
 const flowKey = 'example-flow'
-
+const selectedUseCase = ref(null)
 const toggleDialog = () => {
   showDialog.value = !showDialog.value
 }
 
-const useCases = ref(['Sales', 'Customer', 'Quotation'])
+const useCases = ref(['Sales', 'Customer', 'Quotation', 'Purchase', 'Invoice', 'Delivery', 'Supplier'])
 
 function getFilteredList() {
   return useCases.value.filter(useCase => useCase.toLowerCase().includes(input.value.toLowerCase()))
@@ -26,7 +26,11 @@ const filteredItems = computed(() => {
   return items.value.filter(item => item.toLowerCase().includes(searchInput.value.toLowerCase()))
 })
 
-function onAdd() {
+function onAdd(useCase) {
+  selectedUseCase.value = useCase
+
+  showDialog.value = false
+
   if (nodes.value.length < 2) {
     const id = nodes.value.length + 1
     const latestNode = nodes.value[nodes.value.length - 1]
@@ -54,7 +58,7 @@ function onAdd() {
     addEdges([newEdge])
     localStorage.setItem(flowKey, JSON.stringify(toObject()))
   } else {
-    console.log('You cannot make more not on use case node')
+    console.log('You cannot make more than one use case node')
   }
   selected.value = true
   showDialog.value = false
@@ -74,7 +78,13 @@ function onAdd() {
         :position="Position.Right"
       />
       <div class="text-primary text-h6"><VIcon icon="mdi-text-box-search-outline"></VIcon>Use Case</div>
-      <div class="mb-4 text-black">Select a use case for...</div>
+      <div class="mb-4 text-black">
+        <template v-if="selectedUseCase">
+          <span class="text-decoration-underline">{{ selectedUseCase }}</span
+          ><span> selected</span>
+        </template>
+        <span v-else>Select a use case for...</span>
+      </div>
       <div class="d-flex justify-center">
         <VHover v-if="selected">
           <template v-slot:default="{ isHovering, props }">
@@ -162,7 +172,7 @@ function onAdd() {
                         color="primary"
                         class="rounded-pill px-8"
                         density="comfortable"
-                        @click="onAdd"
+                        @click="onAdd(useCase)"
                         >Select</VBtn
                       >
                     </div>
