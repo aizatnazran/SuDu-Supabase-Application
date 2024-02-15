@@ -1,13 +1,44 @@
 <script setup>
+import { supabase } from '@/lib/supaBaseClient'
 import { Handle, Position, useVueFlow } from '@vue-flow/core'
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 const { nodes, addEdges } = useVueFlow()
 
+const selectedContact = ref(null)
 const selected = ref(false)
 const showDialog = ref(nodes.value[5].selected)
+const contactOption = ref([])
+const companyId = localStorage.getItem('company_id')
 
 const toggleDialog = () => {
   showDialog.value = !showDialog.value
+}
+
+function handleBackButtonClick() {
+  showDialog.value = false
+}
+
+async function fetchContacts() {
+  try {
+    const { data: contactWithName, error: nameError } = await supabase
+      .from('contact')
+      .select('contact_name, contact_number')
+      .eq('company_id', companyId)
+
+    if (nameError) {
+      console.log('Error fetching contact with contact name:', nameError)
+      return []
+    }
+
+    const allContactName = [...contactWithName]
+    console.log(allContactName)
+    return allContactName.map(contact => {
+      return `${contact.contact_name}   ${contact.contact_number}`
+    })
+  } catch (error) {
+    console.error('Error fetching contact:', error)
+    return []
+  }
 }
 
 function onAdd() {
@@ -44,6 +75,15 @@ function onAdd() {
   nodes.value[3].selected = true
   nodes.value[4].selected = true
 }
+
+onMounted(async () => {
+  try {
+    contactOption.value = await fetchContacts()
+    console.log(contactOption.value)
+  } catch (error) {
+    console.error('Error during onMounted:', error)
+  }
+})
 </script>
 
 <template>
@@ -90,10 +130,48 @@ function onAdd() {
       </div>
       <VDialog
         v-model="showDialog"
-        max-width="25%"
+        max-width="50%"
       >
-        <VCard>
-          <button @click="onAdd">Select</button>
+        <VCard
+          class="pa-4"
+          variant="outlined"
+          color="grey-500"
+          rounded="lg"
+          style="background-color: #fff"
+        >
+          <VCardTitle class="dialog-header">
+            <span class="font-weight-bold text-h6 text-black">Contact Number</span>
+          </VCardTitle>
+          <VCardSubtitle>We will send it to the phone number that you provide.</VCardSubtitle>
+          <VCardText class="text-black">Phone Number</VCardText>
+          <VAutocomplete
+            v-model="selectedContact"
+            :items="contactOption"
+            label="Search name, contact or role"
+            single-line
+            hide-details
+            variant="outlined"
+            rounded="xl"
+            density="compact"
+            class="search-input ml-4"
+          ></VAutocomplete>
+          <VCardActions class="justify-end">
+            <VBtn
+              text
+              class="rounded-pill px-8"
+              density="comfortable"
+              variant="outlined"
+              @click="handleBackButtonClick"
+              >Back</VBtn
+            >
+            <VBtn
+              color="on-secondary"
+              class="rounded-pill px-8 bg-primary"
+              density="comfortable"
+              @click="onAdd"
+              >Save</VBtn
+            >
+          </VCardActions>
         </VCard>
       </VDialog>
     </div>
