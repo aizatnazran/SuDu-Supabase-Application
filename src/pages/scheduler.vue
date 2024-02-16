@@ -25,7 +25,7 @@ const selectedDays = ref([])
 const phoneNumbers = ref([])
 const companyId = localStorage.getItem('company_id')
 const schedulers = ref([])
-
+const userUUID = localStorage.getItem('uuid')
 function showCronExpression() {
   alert(cronExpression.value)
   alert(useCase.value)
@@ -37,9 +37,16 @@ const store = useStore()
 const cronExpression = computed(() => store.state.cronExpression)
 const useCase = computed(() => store.state.selectedUseCase)
 const questions = computed(() => store.state.selectedQuestions)
-const contact = computed(() => store.state.selectedContact)
+const contact = computed(() => {
+  const selectedContact = store.state.selectedContact
+  if (!selectedContact) return null // Handle null or undefined case
+
+  // Split the selected contact by space and return the last part (which is the number)
+  const parts = selectedContact.split(' ')
+  return parts[parts.length - 1]
+})
 const apiClient = axios.create({
-  baseURL: `http://sudu.ai:3002`,
+  baseURL: 'http://sudu.ai:3002',
   withCredentials: false,
   headers: {
     Accept: 'application/json',
@@ -122,7 +129,26 @@ async function fetchTemplates() {
 
 function saveScheduler() {}
 
-function createScheduler() {}
+async function createScheduler() {
+  try {
+    const response = await apiClient.post('/trigger-api', {
+      question: questions.value,
+      database_name: 'de_carton',
+      cron_input: cronExpression.value,
+      second_function: 1,
+      contact_num: contact.value,
+      company_id: companyId,
+    })
+
+    console.log('API response:', response.data)
+
+    store.commit('clearValues')
+
+    dialog.value = false
+  } catch (error) {
+    console.error('Error creating scheduler:', error)
+  }
+}
 
 onMounted(async () => {
   try {
@@ -217,7 +243,7 @@ onMounted(async () => {
         @click="showCronExpression"
         class="rounded-pill mb-3"
       >
-        Show Cron Expression
+        Show Vuex Store
       </VBtn>
     </VRow>
     <VContainer>

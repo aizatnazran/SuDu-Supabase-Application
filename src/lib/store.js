@@ -22,6 +22,13 @@ export default createStore({
     setSelectedContact(state, contact) {
       state.selectedContact = contact;
     },
+    clearValues(state) {
+     console.log('Mutation called: clearValues');
+    state.cronExpression = null;
+    state.selectedUseCase = null;
+    state.selectedQuestions = [];
+    state.selectedContact = null;
+  },
   },
   getters: {
     selectedUseCase: (state) => state.selectedUseCase,
