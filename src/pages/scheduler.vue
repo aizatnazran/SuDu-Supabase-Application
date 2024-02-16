@@ -4,8 +4,10 @@ import { Controls } from '@vue-flow/controls'
 import { Panel, VueFlow, useVueFlow } from '@vue-flow/core'
 import { MiniMap } from '@vue-flow/minimap'
 import axios from 'axios'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { useStore } from 'vuex'
 import { supabase } from '../lib/supaBaseClient.js'
+
 import ContactNode from './ContactNode.vue'
 import PickQuestionNode from './PickQuestionNode.vue'
 import SelectDateCustomNode from './SelectDateCustomNode.vue'
@@ -24,6 +26,18 @@ const phoneNumbers = ref([])
 const companyId = localStorage.getItem('company_id')
 const schedulers = ref([])
 
+function showCronExpression() {
+  alert(cronExpression.value)
+  alert(useCase.value)
+  alert(questions.value)
+  alert(contact.value)
+}
+
+const store = useStore()
+const cronExpression = computed(() => store.state.cronExpression)
+const useCase = computed(() => store.state.selectedUseCase)
+const questions = computed(() => store.state.selectedQuestions)
+const contact = computed(() => store.state.selectedContact)
 const apiClient = axios.create({
   baseURL: `http://sudu.ai:3002`,
   withCredentials: false,
@@ -108,6 +122,8 @@ async function fetchTemplates() {
 
 function saveScheduler() {}
 
+function createScheduler() {}
+
 onMounted(async () => {
   try {
     await fetchSchedulers()
@@ -159,7 +175,7 @@ onMounted(async () => {
               width="105"
               class="rounded-pill"
               density="comfortable"
-              @click="saveScheduler"
+              @click="createScheduler"
               >Save</VBtn
             >
           </div>
@@ -187,7 +203,7 @@ onMounted(async () => {
     </div>
   </VCard>
 
-  <div v-else>
+  <div v-if="!dialog">
     <VRow>
       <VCardTitle class="font-weight-bold">Scheduler</VCardTitle>
       <VBtn
@@ -197,9 +213,30 @@ onMounted(async () => {
         <VIcon left>mdi-plus</VIcon>
         Add New
       </VBtn>
+      <VBtn
+        @click="showCronExpression"
+        class="rounded-pill mb-3"
+      >
+        Show Cron Expression
+      </VBtn>
     </VRow>
     <VContainer>
       <VRow>
+        <div
+          v-if="schedulers.length === 0"
+          class="text-center py-5"
+        >
+          <VRow>
+            <div>No scheduler created yet,</div>
+            <div
+              class="text-primary text--underline cursor-pointer"
+              @click="dialog = true"
+            >
+              click here
+            </div>
+            <div>to create a new scheduler.</div>
+          </VRow>
+        </div>
         <VCol
           cols="12"
           sm="6"
@@ -215,7 +252,6 @@ onMounted(async () => {
             </div>
             <h6>Every Tuesday, Thursday</h6>
             <div class="flex-grow-1 mb-5"></div>
-            <!-- Spacer div -->
             <div class="text-caption">{{ scheduler.contact_number }}</div>
             <div
               class="text-primary text--underline cursor-pointer mt-1"

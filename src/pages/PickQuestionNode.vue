@@ -1,13 +1,14 @@
 <script setup>
 import { Handle, Position, useVueFlow } from '@vue-flow/core'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import { useStore } from 'vuex'
+const store = useStore()
 const { nodes, addNodes, addEdges } = useVueFlow()
 
 const items = ref(['What is the total sales?', 'What is the invoice?', 'How much is the order?'])
 function saveSelections() {
-  console.log(selectedItems.value)
-
   if (selectedItems.value.length > 0) {
+    store.commit('setSelectedQuestions', selectedItems.value)
     showDialog.value = false
     selectedQuestionsDialog.value = true
   } else {
@@ -36,9 +37,8 @@ const selectedQuestionsDialog = ref(false)
 const selectedItems = ref([])
 
 const displayText = computed(() => {
-  return selectedItems.value.length > 0
-    ? `${selectedItems.value.length} question(s) selected`
-    : 'Pick the question you would like to.'
+  const count = store.getters.selectedQuestionsCount
+  return count > 0 ? `${count} question(s) selected` : 'Pick the question you would like to.'
 })
 
 function updateSelection(item) {
@@ -109,7 +109,17 @@ watch(
         :position="Position.Right"
       />
       <div class="text-success text-h6"><VIcon icon="mdi-help-circle"></VIcon>Pick Question</div>
-      <div class="mb-4 text-black">{{ displayText }}</div>
+      <div class="mb-4 text-black">
+        <template v-if="store.getters.selectedQuestionsCount > 0">
+          <span class="text-decoration-underline"
+            >{{ store.getters.selectedQuestionsCount }}
+            <span v-if="selectedItems.length > 0"> question(s) selected</span>
+
+            <span v-else> question(s) selected</span>
+          </span>
+        </template>
+        <span v-else>Pick the question you would like to.</span>
+      </div>
       <div class="d-flex justify-center">
         <VHover v-if="selected">
           <template v-slot:default="{ isHovering, props }">

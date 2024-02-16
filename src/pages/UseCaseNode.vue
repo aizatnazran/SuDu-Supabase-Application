@@ -1,7 +1,8 @@
 <script setup>
 import zoho from '@images/logos/zoho.png'
 import { Handle, Position, useVueFlow } from '@vue-flow/core'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import { useStore } from 'vuex'
 const { nodes, addNodes, addEdges, dimensions, toObject, fromObject } = useVueFlow()
 let input = ref('')
 const selected = ref(nodes.value[0].selected)
@@ -9,6 +10,8 @@ const showDialog = ref(false)
 const searchInput = ref('')
 const flowKey = 'example-flow'
 const selectedUseCase = ref(null)
+const store = useStore()
+const storeSelectedUseCase = computed(() => store.getters.selectedUseCase)
 const toggleDialog = () => {
   showDialog.value = !showDialog.value
 }
@@ -27,6 +30,9 @@ const filteredItems = computed(() => {
 })
 
 function onAdd(useCase) {
+  // Commit the selected use case to the store
+  store.commit('setSelectedUseCase', useCase)
+
   selectedUseCase.value = useCase
 
   showDialog.value = false
@@ -79,8 +85,8 @@ function onAdd(useCase) {
       />
       <div class="text-primary text-h6"><VIcon icon="mdi-text-box-search-outline"></VIcon>Use Case</div>
       <div class="mb-4 text-black">
-        <template v-if="selectedUseCase">
-          <span class="text-decoration-underline">{{ selectedUseCase }}</span
+        <template v-if="storeSelectedUseCase">
+          <span class="text-decoration-underline">{{ storeSelectedUseCase }}</span
           ><span> selected</span>
         </template>
         <span v-else>Select a use case for...</span>

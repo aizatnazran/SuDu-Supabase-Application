@@ -1,11 +1,91 @@
 <script setup>
 import { Handle, Position, useVueFlow } from '@vue-flow/core'
-import { ref } from 'vue'
+import { reactive, ref, watch } from 'vue'
+import { useStore } from 'vuex'
 const { nodes, addNodes, addEdges, dimensions, toObject, fromObject } = useVueFlow()
 
 const selected = ref(nodes.value[2].selected)
 const showDialog = ref(false)
 let newNode
+
+const selectedTime = ref('')
+const repeatFrequency = ref('')
+const repeatDay = ref('')
+const repeatDate = ref('')
+const times = ref(Array.from({ length: 24 }, (_, i) => `${i}:00`))
+const daysOfWeek = ref(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'])
+const datesOfMonth = ref(Array.from({ length: 31 }, (_, i) => i + 1))
+const store = useStore()
+const scheduleData = reactive({
+  selectedTime: '',
+  repeatFrequency: '',
+  repeatDay: '',
+  repeatDate: '',
+  times: Array.from({ length: 24 }, (_, i) => `${i}:00`),
+  daysOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+  datesOfMonth: Array.from({ length: 31 }, (_, i) => i + 1),
+})
+
+function onRepeatChange() {
+  scheduleData.repeatDay = ''
+  scheduleData.repeatDate = ''
+}
+
+function createCronExpression() {
+  console.log('Creating cron expression with:', scheduleData)
+  console.log('scheduleData.repeatDay value before mapping:', scheduleData.repeatDay)
+  let cronDayOfWeek =
+    {
+      Monday: 1,
+      Tuesday: 2,
+      Wednesday: 3,
+      Thursday: 4,
+      Friday: 5,
+      Saturday: 6,
+      Sunday: 0,
+    }[scheduleData.repeatDay] || '?'
+
+  const [hour, minute] = scheduleData.selectedTime.split(':')
+
+  let cronExpression
+  switch (scheduleData.repeatFrequency) {
+    case 'Daily':
+      cronExpression = `${minute} ${hour} * * *`
+      break
+    case 'Weekly':
+      cronExpression = `${minute} ${hour} * * ${cronDayOfWeek}`
+      break
+    case 'Monthly':
+      cronExpression = `${minute} ${hour} ${scheduleData.repeatDate} * *`
+      break
+    default:
+      cronExpression = ''
+  }
+  console.log('cronDayOfWeek:', cronDayOfWeek)
+  console.log('Final cronExpression:', cronExpression)
+
+  return cronExpression
+}
+
+function saveSchedule() {
+  const cronExpression = createCronExpression()
+  store.commit('updateCronExpression', cronExpression)
+  console.log('Generated cron expression:', cronExpression)
+  showDialog.value = false
+}
+
+function handleButtonClick() {
+  saveSchedule()
+  onAdd()
+}
+
+watch(
+  () => scheduleData.repeatFrequency,
+  () => {
+    scheduleData.repeatDay = ''
+    scheduleData.repeatDate = ''
+  },
+)
 
 const toggleDialog = () => {
   showDialog.value = !showDialog.value
@@ -122,10 +202,65 @@ function onAdd() {
       </div>
       <VDialog
         v-model="showDialog"
-        max-width="25%"
+        max-width="80%"
       >
-        <VCard>
-          <button @click="onAdd">Select</button>
+        <VCard
+          class="pa-4"
+          variant="outlined"
+          color="grey-500"
+          rounded="lg"
+          style="background-color: #fff"
+        >
+          <VCardTitle class="dialog-header">
+            <span class="font-weight-bold text-h6 text-black">Schedule Time</span>
+          </VCardTitle>
+
+          <VSelect
+            v-model="scheduleData.selectedTime"
+            :items="times"
+            label="Time"
+            class="mb-4"
+          />
+
+          <!-- Repeat frequency dropdown -->
+          <VSelect
+            v-model="scheduleData.repeatFrequency"
+            :items="['Daily', 'Weekly', 'Monthly']"
+            label="Repeat"
+            @change="onRepeatChange"
+            class="mb-4"
+          />
+
+          <!-- Conditional dropdown based on repeat frequency -->
+          <VSelect
+            v-if="scheduleData.repeatFrequency === 'Weekly'"
+            v-model="scheduleData.repeatDay"
+            :items="daysOfWeek"
+            label="Day of the week"
+            class="mb-4"
+          />
+          <VSelect
+            v-if="scheduleData.repeatFrequency === 'Monthly'"
+            v-model="scheduleData.repeatDate"
+            :items="datesOfMonth"
+            label="Date of the month"
+            class="mb-4"
+          />
+
+          <!-- Actions -->
+          <VCardActions>
+            <VBtn
+              color="primary"
+              text
+              @click="showDialog = false"
+              >Cancel</VBtn
+            >
+            <VBtn
+              color="primary"
+              @click="handleButtonClick"
+              >Save</VBtn
+            >
+          </VCardActions>
         </VCard>
       </VDialog>
     </div>

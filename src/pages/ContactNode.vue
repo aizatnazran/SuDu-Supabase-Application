@@ -1,7 +1,8 @@
 <script setup>
 import { supabase } from '@/lib/supaBaseClient'
 import { Handle, Position, useVueFlow } from '@vue-flow/core'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { useStore } from 'vuex'
 const { nodes, addEdges } = useVueFlow()
 
 const selectedContact = ref(null)
@@ -9,10 +10,19 @@ const selected = ref(false)
 const showDialog = ref(nodes.value[5].selected)
 const contactOption = ref([])
 const companyId = localStorage.getItem('company_id')
+const store = useStore()
 
 const toggleDialog = () => {
   showDialog.value = !showDialog.value
 }
+
+const selectedContactName = computed(() => {
+  if (store.state.selectedContact) {
+    const name = store.state.selectedContact.split(' ')[0]
+    return `${name}`
+  }
+  return 'Select contact to send the message.'
+})
 
 function handleBackButtonClick() {
   showDialog.value = false
@@ -42,6 +52,13 @@ async function fetchContacts() {
 }
 
 function onAdd() {
+  if (selectedContact.value) {
+    store.commit('setSelectedContact', selectedContact.value)
+  } else {
+    console.error('No contact selected')
+    return
+  }
+
   showDialog.value = !showDialog.value
   selected.value = true
 
@@ -99,7 +116,12 @@ onMounted(async () => {
         :position="Position.Left"
       />
       <div class="text-info text-h6"><VIcon icon="mdi-chat-processing"></VIcon>Contact</div>
-      <div class="mb-4 text-black">Select contact to send the message.</div>
+      <div class="mb-4 text-black">
+        <template v-if="selectedContact">
+          <span class="text-decoration-underline">{{ selectedContactName }}</span> selected
+        </template>
+        <template v-else> Select contact to send the message. </template>
+      </div>
       <div class="d-flex justify-center">
         <VHover v-if="selected">
           <template v-slot:default="{ isHovering, props }">

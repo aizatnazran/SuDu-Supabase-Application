@@ -7,11 +7,12 @@ import '@core/scss/template/index.scss'
 import '@layouts/styles/index.scss'
 import '@styles/styles.scss'
 import { createApp } from 'vue'
+import store from './lib/store'
 
 import { createPinia } from 'pinia'
 
 const app = createApp(App)
-
+app.use(store);
 
 // Use plugins
 app.use(createPinia()); // Create and use Pinia instance
