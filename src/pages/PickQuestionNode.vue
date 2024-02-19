@@ -111,12 +111,7 @@ watch(
       <div class="text-success text-h6"><VIcon icon="mdi-help-circle"></VIcon>Pick Question</div>
       <div class="mb-4 text-black">
         <template v-if="store.getters.selectedQuestionsCount > 0">
-          <span class="text-decoration-underline"
-            >{{ store.getters.selectedQuestionsCount }}
-            <span v-if="selectedItems.length > 0"> question(s) selected</span>
-
-            <span v-else> question(s) selected</span>
-          </span>
+          <span class="text-decoration-underline">Question selected</span>
         </template>
         <span v-else>Pick the question you would like to.</span>
       </div>
