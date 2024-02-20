@@ -232,20 +232,35 @@ function onAdd() {
           />
 
           <!-- Conditional dropdown based on repeat frequency -->
-          <VSelect
+          <div
             v-if="scheduleData.repeatFrequency === 'Weekly'"
-            v-model="scheduleData.repeatDay"
-            :items="daysOfWeek"
-            label="Day of the week"
-            class="mb-4"
-          />
-          <VSelect
+            class="d-flex justify-space-between mb-4"
+          >
+            <VBtn
+              v-for="day in daysOfWeek"
+              :key="day"
+              :outlined="scheduleData.repeatDay !== day"
+              :color="scheduleData.repeatDay === day ? 'primary' : ''"
+              @click="scheduleData.repeatDay = day"
+            >
+              {{ day.substring(0, 3) }}
+            </VBtn>
+          </div>
+
+          <div
             v-if="scheduleData.repeatFrequency === 'Monthly'"
-            v-model="scheduleData.repeatDate"
-            :items="datesOfMonth"
-            label="Date of the month"
-            class="mb-4"
-          />
+            class="date-picker-grid"
+          >
+            <div
+              v-for="date in datesOfMonth"
+              :key="date"
+              class="date-picker-cell"
+              :class="{ selected: scheduleData.repeatDate === date }"
+              @click="scheduleData.repeatDate = date"
+            >
+              {{ date }}
+            </div>
+          </div>
 
           <!-- Actions -->
           <VCardActions>
@@ -266,3 +281,24 @@ function onAdd() {
     </div>
   </VCard>
 </template>
+
+<style>
+.date-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  margin-bottom: 16px;
+}
+
+.date-picker-cell {
+  padding: 10px;
+  text-align: center;
+  border: 1px solid #ddd;
+  cursor: pointer;
+}
+
+.date-picker-cell.selected {
+  background-color: #6200ea;
+  color: white;
+}
+</style>
