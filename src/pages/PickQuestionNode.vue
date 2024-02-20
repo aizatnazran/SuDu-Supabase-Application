@@ -22,10 +22,9 @@ async function fetchStemplateIds(templateId) {
 }
 
 async function fetchQuestions() {
-  // Check if stemplateIds is empty
   if (stemplateIds.value.length === 0) {
     console.log('No stemplate IDs found. Skipping fetch for questions.')
-    questions.value = [] // Reset or set to default state if needed
+    questions.value = []
     return
   }
 
@@ -34,18 +33,15 @@ async function fetchQuestions() {
     const { data, error: fetchError } = await supabase
       .from('questions')
       .select('question_query, question_stemplate')
-      .in('question_stemplate', stemplateIds.value) // Works for both single ID and array of IDs
+      .in('question_stemplate', stemplateIds.value)
 
     if (fetchError) {
       throw new Error(fetchError.message)
     }
 
-    // Successfully fetched questions
     questions.value = data
   } catch (err) {
-    // Handle error scenario
     console.error('Failed to fetch questions:', err.message)
-    // Assuming you have an error reactive variable to capture and display the error message
     error.value = err.message
   }
 }
@@ -72,13 +68,11 @@ const toggleDialog = () => {
 }
 const filteredItems = computed(() => {
   if (!searchInput.value) {
-    // Assuming `questions` is an array of objects and you want to filter based on a specific property
-    // Adjust the property name as needed
     return questions.value.map(q => q.question_query)
   }
   return questions.value
     .filter(q => q.question_query.toLowerCase().includes(searchInput.value.toLowerCase()))
-    .map(q => q.question_query) // Adjust the property name as needed if filtering based on a different attribute
+    .map(q => q.question_query)
 })
 const searchInput = ref('')
 const selectedQuestionsDialog = ref(false)
@@ -136,7 +130,7 @@ watch(
   async newTemplateId => {
     if (newTemplateId) {
       await fetchStemplateIds(newTemplateId)
-      await fetchQuestions() // This now depends on stemplateIds being populated
+      await fetchQuestions()
     }
   },
   { immediate: true },
