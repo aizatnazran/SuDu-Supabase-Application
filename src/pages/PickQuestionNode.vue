@@ -1,11 +1,51 @@
 <script setup>
+import { supabase } from '@/lib/supaBaseClient'
 import { Handle, Position, useVueFlow } from '@vue-flow/core'
 import { computed, ref } from 'vue'
 import { useStore } from 'vuex'
 const store = useStore()
 const { nodes, addNodes, addEdges } = useVueFlow()
+const stemplateIds = ref([])
+const questions = ref([])
+const error = ref(null)
 
-const items = ref(['What is the total sales?', 'What is the invoice?', 'How much is the order?'])
+async function fetchStemplateIds(templateId) {
+  try {
+    const { data, error } = await supabase.from('stemplate').select('id').eq('stemplate_template', templateId) // Assuming 'stemplate_template' links to 'template'
+
+    if (error) throw error
+
+    stemplateIds.value = data.map(stemplate => stemplate.id)
+  } catch (err) {
+    console.error('Failed to fetch stemplate IDs:', err.message)
+  }
+}
+
+async function fetchQuestions() {
+  if (stemplateIds.value.length === 0) {
+    console.log('No stemplate IDs found. Skipping fetch for questions.')
+    questions.value = []
+    return
+  }
+
+  try {
+    // Proceed with fetching questions
+    const { data, error: fetchError } = await supabase
+      .from('questions')
+      .select('question_query, question_stemplate')
+      .in('question_stemplate', stemplateIds.value)
+
+    if (fetchError) {
+      throw new Error(fetchError.message)
+    }
+
+    questions.value = data
+  } catch (err) {
+    console.error('Failed to fetch questions:', err.message)
+    error.value = err.message
+  }
+}
+
 function saveSelections() {
   if (selectedItems.value.length > 0) {
     store.commit('setSelectedQuestions', selectedItems.value)
@@ -28,9 +68,11 @@ const toggleDialog = () => {
 }
 const filteredItems = computed(() => {
   if (!searchInput.value) {
-    return items.value
+    return questions.value.map(q => q.question_query)
   }
-  return items.value.filter(item => item.toLowerCase().includes(searchInput.value.toLowerCase()))
+  return questions.value
+    .filter(q => q.question_query.toLowerCase().includes(searchInput.value.toLowerCase()))
+    .map(q => q.question_query)
 })
 const searchInput = ref('')
 const selectedQuestionsDialog = ref(false)
@@ -82,6 +124,17 @@ function onAdd() {
   showDialog.value = false
   nodes.value[0].selected = true
 }
+
+watch(
+  () => store.state.templateId,
+  async newTemplateId => {
+    if (newTemplateId) {
+      await fetchStemplateIds(newTemplateId)
+      await fetchQuestions()
+    }
+  },
+  { immediate: true },
+)
 
 watch(
   selectedItems,

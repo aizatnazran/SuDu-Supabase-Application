@@ -3,6 +3,7 @@ import zoho from '@images/logos/zoho.png'
 import { Handle, Position, useVueFlow } from '@vue-flow/core'
 import { computed, ref } from 'vue'
 import { useStore } from 'vuex'
+import { supabase } from '../lib/supaBaseClient.js'
 const { nodes, addNodes, addEdges, dimensions, toObject, fromObject } = useVueFlow()
 let input = ref('')
 const selected = ref(nodes.value[0].selected)
@@ -11,15 +12,47 @@ const searchInput = ref('')
 const flowKey = 'example-flow'
 const selectedUseCase = ref(null)
 const store = useStore()
+const companyId = localStorage.getItem('company_id')
 const storeSelectedUseCase = computed(() => store.getters.selectedUseCase)
 const toggleDialog = () => {
   showDialog.value = !showDialog.value
 }
 
-const useCases = ref(['Sales', 'Customer', 'Quotation', 'Purchase', 'Invoice', 'Delivery', 'Supplier'])
+const useCases = ref([])
+
+async function fetchTemplates() {
+  try {
+    const { data: templatesWithCompany, error: companyError } = await supabase
+      .from('template')
+      .select('id, template_name')
+      .eq('company_id', companyId)
+
+    if (companyError) {
+      console.error('Error fetching templates with company ID:', companyError)
+      return []
+    }
+
+    const { data: templatesWithoutCompany, error: nullCompanyError } = await supabase
+      .from('template')
+      .select('id, template_name')
+      .is('company_id', null)
+
+    if (nullCompanyError) {
+      console.error('Error fetching templates with null company ID:', nullCompanyError)
+      return []
+    }
+
+    const allTemplates = [...templatesWithCompany, ...templatesWithoutCompany]
+
+    return allTemplates.map(template => ({ id: template.id, name: template.template_name }))
+  } catch (error) {
+    console.error('Error fetching templates:', error)
+    return []
+  }
+}
 
 function getFilteredList() {
-  return useCases.value.filter(useCase => useCase.toLowerCase().includes(input.value.toLowerCase()))
+  return useCases.value.filter(template => template.name.toLowerCase().includes(input.value.toLowerCase()))
 }
 
 const filteredItems = computed(() => {
@@ -29,10 +62,10 @@ const filteredItems = computed(() => {
   return items.value.filter(item => item.toLowerCase().includes(searchInput.value.toLowerCase()))
 })
 
-function onAdd(useCase) {
+function onAdd(useCase, templateId) {
   // Commit the selected use case to the store
   store.commit('setSelectedUseCase', useCase)
-
+  store.commit('setTemplateId', templateId)
   selectedUseCase.value = useCase
 
   showDialog.value = false
@@ -69,6 +102,12 @@ function onAdd(useCase) {
   selected.value = true
   showDialog.value = false
 }
+
+onMounted(async () => {
+  // Retrieve the companyId from localStorage
+  const companyId = localStorage.getItem('company_id')
+  useCases.value = await fetchTemplates(companyId)
+})
 </script>
 
 <template>
@@ -152,7 +191,7 @@ function onAdd(useCase) {
                   sm="6"
                   md="4"
                   v-for="useCase in getFilteredList()"
-                  :key="useCase"
+                  :key="useCase.id"
                 >
                   <VCard
                     class="use-case-card mb-4 d-flex flex-column"
@@ -161,7 +200,7 @@ function onAdd(useCase) {
                   >
                     <div class="d-flex justify-start align-start">
                       <div class="flex-grow-1 text-container">
-                        <VCardTitle class="font-weight-bold text-body-1 text-black">{{ useCase }}</VCardTitle>
+                        <VCardTitle class="font-weight-bold text-body-1 text-black">{{ useCase.name }}</VCardTitle>
                       </div>
 
                       <VImg
@@ -178,7 +217,7 @@ function onAdd(useCase) {
                         color="primary"
                         class="rounded-pill px-8"
                         density="comfortable"
-                        @click="onAdd(useCase)"
+                        @click="onAdd(useCase.name, useCase.id)"
                         >Select</VBtn
                       >
                     </div>

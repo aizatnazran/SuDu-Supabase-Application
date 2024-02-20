@@ -27,16 +27,18 @@ const companyId = localStorage.getItem('company_id')
 const schedulers = ref([])
 const userUUID = localStorage.getItem('uuid')
 function showCronExpression() {
-  alert(cronExpression.value)
-  alert(useCase.value)
-  alert(questions.value)
-  alert(contact.value)
+  console.log(
+    `Cron Expression is: ${cronExpression.value}, Use Case is: ${useCase.value}, Questions are: ${questions.value.join(
+      ', ',
+    )}, Contact is: ${contact.value}, template id is: ${id.value}`,
+  )
 }
 
 const store = useStore()
 const cronExpression = computed(() => store.state.cronExpression)
 const useCase = computed(() => store.state.selectedUseCase)
 const questions = computed(() => store.state.selectedQuestions)
+const id = computed(() => store.state.templateId)
 const contact = computed(() => {
   const selectedContact = store.state.selectedContact
   if (!selectedContact) return null // Handle null or undefined case
