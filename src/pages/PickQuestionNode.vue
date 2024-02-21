@@ -6,16 +6,24 @@ import { useStore } from 'vuex'
 const store = useStore()
 const { nodes, addNodes, addEdges } = useVueFlow()
 const stemplateIds = ref([])
+const stemplateNames = ref([])
 const questions = ref([])
 const error = ref(null)
 
 async function fetchStemplateIds(templateId) {
   try {
-    const { data, error } = await supabase.from('stemplate').select('id').eq('stemplate_template', templateId) // Assuming 'stemplate_template' links to 'template'
+    const { data, error } = await supabase
+      .from('stemplate')
+      .select('id, stemplate_name')
+      .eq('stemplate_template', templateId) // Assuming 'stemplate_template' links to 'template'
 
     if (error) throw error
 
     stemplateIds.value = data.map(stemplate => stemplate.id)
+    stemplateNames.value = data.map(stemplate => ({
+      id: stemplate.id,
+      name: stemplate.stemplate_name,
+    }))
   } catch (err) {
     console.error('Failed to fetch stemplate IDs:', err.message)
   }
@@ -66,13 +74,20 @@ const showDialog = ref(false)
 const toggleDialog = () => {
   showDialog.value = !showDialog.value
 }
+
 const filteredItems = computed(() => {
   if (!searchInput.value) {
-    return questions.value.map(q => q.question_query)
+    return questions.value.map(q => ({
+      query: q.question_query,
+      stemplateId: q.question_stemplate,
+    }))
   }
   return questions.value
     .filter(q => q.question_query.toLowerCase().includes(searchInput.value.toLowerCase()))
-    .map(q => q.question_query)
+    .map(q => ({
+      query: q.question_query,
+      stemplateId: q.question_stemplate,
+    }))
 })
 const searchInput = ref('')
 const selectedQuestionsDialog = ref(false)
@@ -143,6 +158,10 @@ watch(
   },
   { deep: true },
 )
+function getStemplateName(id) {
+  const stemplate = stemplateNames.value.find(item => item.id === id)
+  return stemplate ? stemplate.name : 'stemplate name not found'
+}
 </script>
 
 <template>
@@ -254,7 +273,10 @@ watch(
                         @change="() => updateSelection(item)"
                       ></VCheckbox>
                     </VListItemAction>
-                    <VListItemContent>{{ item }}</VListItemContent>
+                    <VListItemContent
+                      >{{ item.query }}
+                      <span class="stemplate-pill">{{ getStemplateName(item.stemplateId) }}</span></VListItemContent
+                    >
                   </div>
                 </VListItem>
               </VListItemGroup>
@@ -291,7 +313,7 @@ watch(
               :key="index"
               class="text-black"
             >
-              {{ question }}
+              {{ question.query }} <span class="stemplate-pill">{{ getStemplateName(question.stemplateId) }}</span>
             </div>
           </VCardText>
           <VCardActions class="justify-end">
@@ -318,6 +340,12 @@ watch(
 </template>
 
 <style scoped>
+.stemplate-pill {
+  border-radius: 9999px;
+  background-color: #6200ea;
+  color: white;
+  padding: 8px;
+}
 .v-list-item-group {
   background-color: #eeeeee;
   padding: 1rem;
