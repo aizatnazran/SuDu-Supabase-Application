@@ -11,6 +11,41 @@ const showDialog = ref(nodes.value[5].selected)
 const contactOption = ref([])
 const companyId = localStorage.getItem('company_id')
 const store = useStore()
+const isOpen = ref(false)
+const selectedOption = ref('')
+const filteredOptions = ref([])
+const allData = ref([])
+const roleOption = ref([])
+const searchTerm = ref('')
+const selectedName = ref(null)
+
+const toggleDropdown = () => {
+  isOpen.value = !isOpen.value
+}
+
+const handleDocumentClick = event => {
+  if (!event.target.closest('.select-input-container')) {
+    isOpen.value = false
+  }
+}
+
+const selectOption = option => {
+  selectedContact.value = option.role + ' ' + option.title
+  selectedName.value = option.title
+  store.commit('setSelectedContact', {
+    selectedContact: selectedContact.value,
+    selectedName: selectedName.value,
+  })
+  // Remove the 'selected' class from all options first
+  document.querySelectorAll('.box-option').forEach(el => {
+    el.classList.remove('selected')
+  })
+
+  // Add the 'selected' class to the clicked option
+  event.target.classList.add('selected')
+
+  isOpen.value = false
+}
 
 const toggleDialog = () => {
   showDialog.value = !showDialog.value
@@ -18,7 +53,9 @@ const toggleDialog = () => {
 
 const selectedContactName = computed(() => {
   if (store.state.selectedContact) {
-    const name = store.state.selectedContact.split(' ')[0]
+    const nameWithContact = store.state.selectedName
+    const parts = nameWithContact.split(' ')
+    const name = parts.slice(0, -1).join(' ')
     return `${name}`
   }
   return 'Select contact to send the message.'
@@ -28,32 +65,71 @@ function handleBackButtonClick() {
   showDialog.value = false
 }
 
+watchEffect(() => {
+  filteredOptions.value = allData.value.filter(option =>
+    option.title.toLowerCase().includes(searchTerm.value.toLowerCase()),
+  )
+  if (isOpen.value) {
+    document.addEventListener('click', handleDocumentClick)
+  } else {
+    document.removeEventListener('click', handleDocumentClick)
+  }
+})
+
 async function fetchContacts() {
   try {
     const { data: contactWithName, error: nameError } = await supabase
       .from('contact')
-      .select('contact_name, contact_number')
-      .eq('company_id', companyId)
+      .select('contact_name, contact_number, contact_role')
+      .eq('company_id', 1)
 
     if (nameError) {
       console.log('Error fetching contact with contact name:', nameError)
       return []
     }
-
     const allContactName = [...contactWithName]
     console.log(allContactName)
-    return allContactName.map(contact => {
-      return `${contact.contact_name}   ${contact.contact_number}`
-    })
+    return allContactName.map(contact => ({
+      name: contact.contact_name,
+      number: contact.contact_number,
+      contactRole: contact.contact_role,
+    }))
   } catch (error) {
     console.error('Error fetching contact:', error)
     return []
   }
 }
 
+async function fetchRole() {
+  try {
+    const { data: roleNameWithRoleColour, error: errorRole } = await supabase
+      .from('role')
+      .select('id, role_name, role_colour')
+      .eq('company_id', 1)
+
+    if (errorRole) {
+      console.log('Error fetching role colour with role name:', errorRole)
+      return []
+    }
+
+    const allRole = [...roleNameWithRoleColour]
+    return allRole.map(role => ({
+      id: role.id,
+      roleName: role.role_name,
+      roleColour: role.role_colour,
+    }))
+  } catch (error) {
+    console.error('Error fetching role:', error)
+    return []
+  }
+}
+
 function onAdd() {
   if (selectedContact.value) {
-    store.commit('setSelectedContact', selectedContact.value)
+    store.commit('setSelectedContact', {
+      selectedContact: selectedContact.value,
+      selectedName: selectedName.value,
+    })
   } else {
     console.error('No contact selected')
     return
@@ -96,7 +172,26 @@ function onAdd() {
 onMounted(async () => {
   try {
     contactOption.value = await fetchContacts()
+    roleOption.value = await fetchRole()
     console.log(contactOption.value)
+
+    if (contactOption.value && roleOption.value) {
+      const contactItems = contactOption.value.map(contact => {
+        // Find the role object corresponding to the contact's roleId
+        const role = roleOption.value.find(role => role.id === contact.contactRole)
+
+        // If a role is found, extract its name and colour
+        const roleName = role ? role.roleName : 'Unknown'
+        const roleColour = role ? role.roleColour : '#000000'
+
+        return {
+          title: `${contact.name}  ${contact.number}`,
+          role: roleName,
+          colour: roleColour,
+        }
+      })
+      allData.value = [...contactItems]
+    }
   } catch (error) {
     console.error('Error during onMounted:', error)
   }
@@ -166,17 +261,50 @@ onMounted(async () => {
           </VCardTitle>
           <VCardSubtitle>We will send it to the phone number that you provide.</VCardSubtitle>
           <VCardText class="text-black">Phone Number</VCardText>
-          <VAutocomplete
-            v-model="selectedContact"
-            :items="contactOption"
-            label="Search name, contact or role"
-            single-line
-            hide-details
-            variant="outlined"
+          <div class="select-input-container">
+            <input
+              v-model="selectedContact"
+              class="select-input"
+              placeholder="Search or select option"
+              @click="toggleDropdown"
+            />
+            <div
+              v-if="isOpen"
+              class="dropdown-menu"
+            >
+              <div
+                v-for="(option, index) in filteredOptions"
+                :key="index"
+                @click="selectOption(option, $event)"
+                :class="{ selected: selectedOption == option }"
+                class="box-option"
+              >
+                <span
+                  class="role-pill"
+                  :style="{ backgroundColor: option.colour, color: 'white', marginRight: '1rem' }"
+                  >{{ option.role }}</span
+                >
+                <span :style="{ color: 'black' }">{{ option.title }}</span>
+              </div>
+            </div>
+          </div>
+          <VCardText class="text-black">Subject</VCardText>
+          <VTextField
+            placeholder="Type here..."
+            density="comfortable"
             rounded="xl"
-            density="compact"
-            class="search-input ml-4"
-          ></VAutocomplete>
+          ></VTextField>
+
+          <VCard
+            variant="outlined"
+            :style="{ marginTop: '1rem', marginBottom: '1rem' }"
+          >
+            <VCardTitle>Good Day, Admin</VCardTitle>
+
+            <VCardText>Here is our report for Selected Use Case</VCardText>
+            <VCardText>[Report]</VCardText>
+            <VCardText>Thank you.</VCardText>
+          </VCard>
           <VCardActions class="justify-end">
             <VBtn
               text
@@ -199,3 +327,61 @@ onMounted(async () => {
     </div>
   </VCard>
 </template>
+
+<style scoped>
+.selected {
+  background-color: #007bff;
+  color: #ffffff;
+}
+
+.box-option {
+  padding: 1rem;
+}
+
+.role-pill {
+  border-radius: 9999px;
+  padding: 4px;
+}
+
+.select-input-container {
+  position: relative;
+  border-radius: 9999px;
+  border: 2px solid #ccc;
+  max-width: 400px;
+}
+
+.select-input {
+  width: 400px;
+  padding: 8px 2rem;
+  font-size: 16px;
+  border: none;
+}
+
+.select-input:focus {
+  outline: none;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1000;
+  display: block;
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 0.25rem;
+  margin-top: 4px;
+}
+
+.dropdown-menu div {
+  padding: 8px;
+  cursor: pointer;
+}
+
+.dropdown-menu div:hover {
+  background-color: #f0f0f0;
+}
+</style>
