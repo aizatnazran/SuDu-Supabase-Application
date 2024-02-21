@@ -21,7 +21,8 @@ export default createStore({
       state.selectedQuestions = questions.join(', ');;
     },
     setSelectedContact(state, contact) {
-      state.selectedContact = contact;
+      state.selectedContact = contact.selectedContact;
+      state.selectedName = contact.selectedName;
     },
     setTemplateId(state, id) { 
       state.templateId = id;
