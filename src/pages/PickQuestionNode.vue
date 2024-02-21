@@ -275,7 +275,7 @@ function getStemplateName(id) {
                     </VListItemAction>
                     <VListItemContent
                       >{{ item.query }}
-                      <span class="rounded-pill">{{ getStemplateName(item.stemplateId) }}</span></VListItemContent
+                      <span class="stemplate-pill">{{ getStemplateName(item.stemplateId) }}</span></VListItemContent
                     >
                   </div>
                 </VListItem>
@@ -313,7 +313,7 @@ function getStemplateName(id) {
               :key="index"
               class="text-black"
             >
-              {{ question }}
+              {{ question.query }} <span class="stemplate-pill">{{ getStemplateName(question.stemplateId) }}</span>
             </div>
           </VCardText>
           <VCardActions class="justify-end">
@@ -340,8 +340,8 @@ function getStemplateName(id) {
 </template>
 
 <style scoped>
-.rounded-pill {
-  border-radius: 0.25rem;
+.stemplate-pill {
+  border-radius: 9999px;
   background-color: #6200ea;
   color: white;
   padding: 8px;
