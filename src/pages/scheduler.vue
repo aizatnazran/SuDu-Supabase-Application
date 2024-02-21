@@ -4,10 +4,10 @@ import { Controls } from '@vue-flow/controls'
 import { Panel, VueFlow, useVueFlow } from '@vue-flow/core'
 import { MiniMap } from '@vue-flow/minimap'
 import axios from 'axios'
+import Swal from 'sweetalert2'
 import { computed, onMounted, ref } from 'vue'
 import { useStore } from 'vuex'
 import { supabase } from '../lib/supaBaseClient.js'
-
 import ContactNode from './ContactNode.vue'
 import PickQuestionNode from './PickQuestionNode.vue'
 import SelectDateCustomNode from './SelectDateCustomNode.vue'
@@ -182,6 +182,34 @@ async function fetchTemplates() {
   }
 }
 
+async function confirmDeleteScheduler(schedulerId) {
+  const result = await Swal.fire({
+    title: 'Are you sure you want to delete this scheduler?',
+    text: "You won't be able to revert this!",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Yes, delete it!',
+  })
+
+  if (result.isConfirmed) {
+    try {
+      const response = await axios.delete(`http://sudu.ai:3002/delete/${schedulerId}`)
+      if (response.status === 200) {
+        Swal.fire('Deleted!', 'The scheduler has been deleted.', 'success')
+        // Optionally, refresh your scheduler list here
+        await fetchSchedulers()
+      } else {
+        Swal.fire('Error!', 'Failed to delete the scheduler. Please try again.', 'error')
+      }
+    } catch (error) {
+      console.error('Error deleting scheduler:', error)
+      Swal.fire('Error!', 'Failed to delete the scheduler. Please try again.', 'error')
+    }
+  }
+}
+
 function saveScheduler() {}
 
 async function createScheduler() {
@@ -195,13 +223,26 @@ async function createScheduler() {
       company_id: companyId,
     })
 
-    console.log('API response:', response.data)
+    if (response.data) {
+      Swal.fire({
+        icon: 'success',
+        title: 'Scheduler Created Successfully',
+        showConfirmButton: true,
+        timer: 1500,
+      })
 
-    store.commit('clearValues')
-
-    dialog.value = false
+      store.commit('clearValues')
+      dialog.value = false
+      await fetchSchedulers()
+    }
   } catch (error) {
     console.error('Error creating scheduler:', error)
+    Swal.fire({
+      icon: 'error',
+      title: 'Failed to Create Scheduler',
+      text: 'Please try again later.',
+      showConfirmButton: true,
+    })
   }
 }
 
@@ -329,7 +370,15 @@ onMounted(async () => {
           <VCard class="d-flex flex-column pa-4">
             <div class="d-flex justify-space-between">
               <div class="text-h6">{{ scheduler.question_name }}</div>
+
               <VSwitch v-model="scheduler.isActive" />
+              <VBtn
+                icon
+                small
+                @click.stop="confirmDeleteScheduler(scheduler.id)"
+              >
+                <VIcon>mdi-close</VIcon>
+              </VBtn>
             </div>
             <h6>{{ parseCronExpression(scheduler.cron_input) }}</h6>
             <div class="flex-grow-1 mb-5"></div>
