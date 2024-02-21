@@ -39,7 +39,10 @@ function showCronExpression() {
 const store = useStore()
 const cronExpression = computed(() => store.state.cronExpression)
 const useCase = computed(() => store.state.selectedUseCase)
+const subUseCase = computed(() => store.state.selectedSubUseCase)
 const questions = computed(() => store.state.selectedQuestions)
+const questionName = computed(() => store.state.selectedQuestionName)
+console.log(questionName)
 const id = computed(() => store.state.templateId)
 const contact = computed(() => {
   const selectedContact = store.state.selectedContact
@@ -221,6 +224,9 @@ async function createScheduler() {
       second_function: 1,
       contact_num: contact.value,
       company_id: companyId,
+      use_case: useCase.value,
+      sub_use_case: subUseCase.value,
+      question_name: questionName.value,
     })
 
     if (response.data) {

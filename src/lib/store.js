@@ -18,7 +18,9 @@ export default createStore({
       state.selectedUseCase = useCase;
     },
     setSelectedQuestions(state, questions) {
-      state.selectedQuestions = questions.join(', ');;
+      state.selectedQuestions = questions.selectedItems;
+      state.selectedSubUseCase = questions.selectedSubUseCase;
+      state.selectedQuestionName = questions.selectedQuestionName;
     },
     setSelectedContact(state, contact) {
       state.selectedContact = contact.selectedContact;
