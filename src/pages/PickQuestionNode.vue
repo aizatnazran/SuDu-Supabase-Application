@@ -40,7 +40,7 @@ async function fetchQuestions() {
     // Proceed with fetching questions
     const { data, error: fetchError } = await supabase
       .from('questions')
-      .select('question_query, question_stemplate')
+      .select('id, question_query, question_stemplate, question_name')
       .in('question_stemplate', stemplateIds.value)
 
     if (fetchError) {
@@ -56,7 +56,11 @@ async function fetchQuestions() {
 
 function saveSelections() {
   if (selectedItems.value.length > 0) {
-    store.commit('setSelectedQuestions', selectedItems.value)
+    store.commit('setSelectedQuestions', {
+      selectedItems: selectedItems.value.map(question => question.query)[0],
+      selectedSubUseCase: stemplateNames.value.map(sub => sub.name),
+      selectedQuestionName: getQuestionName(selectedItems.value.map(q => q.id)[0]),
+    })
     showDialog.value = false
     selectedQuestionsDialog.value = true
   } else {
@@ -78,6 +82,7 @@ const toggleDialog = () => {
 const filteredItems = computed(() => {
   if (!searchInput.value) {
     return questions.value.map(q => ({
+      id: q.id,
       query: q.question_query,
       stemplateId: q.question_stemplate,
     }))
@@ -85,6 +90,7 @@ const filteredItems = computed(() => {
   return questions.value
     .filter(q => q.question_query.toLowerCase().includes(searchInput.value.toLowerCase()))
     .map(q => ({
+      id: q.id,
       query: q.question_query,
       stemplateId: q.question_stemplate,
     }))
@@ -161,6 +167,10 @@ watch(
 function getStemplateName(id) {
   const stemplate = stemplateNames.value.find(item => item.id === id)
   return stemplate ? stemplate.name : 'stemplate name not found'
+}
+function getQuestionName(id) {
+  const questionName = questions.value.find(question => question.id === id)
+  return questionName ? questionName.question_name : 'There is no question name'
 }
 </script>
 

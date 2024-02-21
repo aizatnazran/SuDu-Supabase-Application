@@ -81,7 +81,7 @@ async function fetchContacts() {
     const { data: contactWithName, error: nameError } = await supabase
       .from('contact')
       .select('contact_name, contact_number, contact_role')
-      .eq('company_id', 1)
+      .eq('company_id', companyId)
 
     if (nameError) {
       console.log('Error fetching contact with contact name:', nameError)
@@ -105,7 +105,7 @@ async function fetchRole() {
     const { data: roleNameWithRoleColour, error: errorRole } = await supabase
       .from('role')
       .select('id, role_name, role_colour')
-      .eq('company_id', 1)
+      .eq('company_id', companyId)
 
     if (errorRole) {
       console.log('Error fetching role colour with role name:', errorRole)
