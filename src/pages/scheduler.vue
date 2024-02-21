@@ -25,6 +25,8 @@ const selectedDays = ref([])
 const phoneNumbers = ref([])
 const companyId = localStorage.getItem('company_id')
 const schedulers = ref([])
+const selectedScheduler = ref({})
+
 const userUUID = localStorage.getItem('uuid')
 function showCronExpression() {
   console.log(
@@ -56,7 +58,11 @@ const apiClient = axios.create({
   },
 })
 
-const openQuestionsDialog = () => {
+const openQuestionsDialog = scheduler => {
+  selectedScheduler.value = {
+    ...scheduler, // Spread the scheduler properties
+    // Now selectedScheduler will have properties like question and contact_number
+  }
   dialogs.value.questions = true
 }
 
@@ -68,9 +74,56 @@ onConnect(params => {
   addEdges([params])
 })
 
+function parseCronExpression(cronExpression) {
+  const daysOfWeekMap = {
+    1: 'Monday',
+    2: 'Tuesday',
+    3: 'Wednesday',
+    4: 'Thursday',
+    5: 'Friday',
+    6: 'Saturday',
+    0: 'Sunday',
+  }
+
+  // Split the cron expression
+  const parts = cronExpression.split(' ')
+  if (parts.length !== 5) return 'Invalid cron expression'
+
+  const [minute, hour, dayOfMonth, month, dayOfWeek] = parts
+
+  // Daily at specific time (00 1 * * *)
+  if (dayOfMonth === '*' && month === '*' && dayOfWeek === '*') {
+    const hourFormatted = hour.padStart(2, '0')
+    const minuteFormatted = minute.padStart(2, '0')
+    const amPm = hour >= 12 ? 'PM' : 'AM'
+    const standardHour = hour % 12 || 12 // Converts 24h to 12h format with noon/midnight handling
+    return `Daily at ${standardHour}:${minuteFormatted} ${amPm}`
+  }
+
+  // Weekly on specific days
+  if (dayOfMonth === '*' && month === '*' && dayOfWeek !== '*') {
+    const days = dayOfWeek
+      .split(',')
+      .map(day => daysOfWeekMap[day])
+      .join(', ')
+    return `Every ${days} at ${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`
+  }
+
+  // Monthly on a specific day
+  if (dayOfMonth !== '*' && month === '*') {
+    return `Monthly on day ${dayOfMonth} at ${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`
+  }
+
+  // Handle other cases as needed
+  return 'Custom schedule'
+}
+
 async function fetchSchedulers() {
   try {
     const response = await apiClient.get('/all')
+    if (response.data && response.data.length > 0) {
+      console.log('Schedulers:', response.data) // Check if the data is as expected
+    }
     schedulers.value = response.data
   } catch (error) {
     console.error('Error fetching schedulers:', error)
@@ -275,15 +328,15 @@ onMounted(async () => {
         >
           <VCard class="d-flex flex-column pa-4">
             <div class="d-flex justify-space-between">
-              <div class="text-h6">{{ scheduler.question }}</div>
+              <div class="text-h6">{{ scheduler.question_name }}</div>
               <VSwitch v-model="scheduler.isActive" />
             </div>
-            <h6>Every Tuesday, Thursday</h6>
+            <h6>{{ parseCronExpression(scheduler.cron_input) }}</h6>
             <div class="flex-grow-1 mb-5"></div>
             <div class="text-caption">{{ scheduler.contact_number }}</div>
             <div
               class="text-primary text--underline cursor-pointer mt-1"
-              @click="openQuestionsDialog"
+              @click="openQuestionsDialog(scheduler)"
             >
               Questions
             </div>
@@ -306,35 +359,29 @@ onMounted(async () => {
               md="6"
             >
               <div class="text-h6 text-start mb-2 font-weight-bold">Use Case</div>
-              <VSelect
-                v-model="selectedTemplate"
-                :items="templateOptions"
+              <VTextField
+                v-model="selectedScheduler.use_case"
                 label="Use Case"
-                item-text="name"
-                item-value="id"
-                return-object
-              ></VSelect>
+                readonly
+              ></VTextField>
             </VCol>
             <VCol
               cols="12"
               md="6"
             >
               <div class="text-h6 text-start font-weight-bold">Phone Number</div>
-              <VSelect
-                v-model="selectedPhoneNumber"
-                :items="phoneNumbers"
+              <VTextField
+                v-model="selectedScheduler.contact_number"
                 label="Phone Number"
-                item-text="number"
-                item-value="id"
-                return-object
-              ></VSelect>
+                readonly
+              ></VTextField>
             </VCol>
           </VRow>
           <VRow>
             <VCol>
               <div class="text-h6 text-start mt-4 font-weight-bold">Selected Questions</div>
-              <div>1. What is my weekly average sales?</div>
-              <div>2. Which day has the highest sales?</div>
+              <!-- Display the question directly without a v-for loop -->
+              <div>{{ selectedScheduler.question }}</div>
             </VCol>
           </VRow>
           <VRow>
