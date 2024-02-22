@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supaBaseClient'
 import { Handle, Position, useVueFlow } from '@vue-flow/core'
 import { computed, onMounted, ref } from 'vue'
 import { useStore } from 'vuex'
+
 const { nodes, addEdges } = useVueFlow()
 
 const selectedContact = ref(null)

@@ -4,10 +4,10 @@ import { Controls } from '@vue-flow/controls'
 import { Panel, VueFlow, useVueFlow } from '@vue-flow/core'
 import { MiniMap } from '@vue-flow/minimap'
 import axios from 'axios'
+import Swal from 'sweetalert2'
 import { computed, onMounted, ref } from 'vue'
 import { useStore } from 'vuex'
 import { supabase } from '../lib/supaBaseClient.js'
-
 import ContactNode from './ContactNode.vue'
 import PickQuestionNode from './PickQuestionNode.vue'
 import SelectDateCustomNode from './SelectDateCustomNode.vue'
@@ -46,9 +46,7 @@ console.log(questionName)
 const id = computed(() => store.state.templateId)
 const contact = computed(() => {
   const selectedContact = store.state.selectedContact
-  if (!selectedContact) return null // Handle null or undefined case
-
-  // Split the selected contact by space and return the last part (which is the number)
+  if (!selectedContact) return null
   const parts = selectedContact.split(' ')
   return parts[parts.length - 1]
 })
@@ -63,8 +61,7 @@ const apiClient = axios.create({
 
 const openQuestionsDialog = scheduler => {
   selectedScheduler.value = {
-    ...scheduler, // Spread the scheduler properties
-    // Now selectedScheduler will have properties like question and contact_number
+    ...scheduler,
   }
   dialogs.value.questions = true
 }
@@ -72,7 +69,7 @@ const openQuestionsDialog = scheduler => {
 const { onConnect, addEdges } = useVueFlow()
 
 const nodes = ref([{ id: '1', type: 'custom', label: 'Node 1', position: { x: 30, y: 190 } }])
-
+const edges = ref([])
 onConnect(params => {
   addEdges([params])
 })
@@ -99,7 +96,7 @@ function parseCronExpression(cronExpression) {
     const hourFormatted = hour.padStart(2, '0')
     const minuteFormatted = minute.padStart(2, '0')
     const amPm = hour >= 12 ? 'PM' : 'AM'
-    const standardHour = hour % 12 || 12 // Converts 24h to 12h format with noon/midnight handling
+    const standardHour = hour % 12 || 12
     return `Daily at ${standardHour}:${minuteFormatted} ${amPm}`
   }
 
@@ -117,8 +114,19 @@ function parseCronExpression(cronExpression) {
     return `Monthly on day ${dayOfMonth} at ${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`
   }
 
-  // Handle other cases as needed
   return 'Custom schedule'
+}
+
+function resetAndCloseDialog() {
+  selectedTemplate.value = null
+  selectedPhoneNumber.value = null
+  selectedDays.value = []
+  nodes.value = [{ id: '1', type: 'custom', label: 'Node 1', position: { x: 30, y: 190 } }] // Or [] for completely empty
+  edges.value = []
+
+  store.commit('clearValues')
+
+  dialog.value = false
 }
 
 async function fetchSchedulers() {
@@ -185,6 +193,34 @@ async function fetchTemplates() {
   }
 }
 
+async function confirmDeleteScheduler(schedulerId) {
+  const result = await Swal.fire({
+    title: 'Are you sure you want to delete this scheduler?',
+    text: "You won't be able to revert this!",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Yes, delete it!',
+  })
+
+  if (result.isConfirmed) {
+    try {
+      const response = await axios.delete(`http://sudu.ai:3002/delete/${schedulerId}`)
+      if (response.status === 200) {
+        Swal.fire('Deleted!', 'The scheduler has been deleted.', 'success')
+
+        await fetchSchedulers()
+      } else {
+        Swal.fire('Error!', 'Failed to delete the scheduler. Please try again.', 'error')
+      }
+    } catch (error) {
+      console.error('Error deleting scheduler:', error)
+      Swal.fire('Error!', 'Failed to delete the scheduler. Please try again.', 'error')
+    }
+  }
+}
+
 function saveScheduler() {}
 
 async function createScheduler() {
@@ -201,13 +237,26 @@ async function createScheduler() {
       question_name: questionName.value,
     })
 
-    console.log('API response:', response.data)
+    if (response.data) {
+      Swal.fire({
+        icon: 'success',
+        title: 'Scheduler Created Successfully',
+        showConfirmButton: true,
+        timer: 1500,
+      })
 
-    store.commit('clearValues')
-
-    dialog.value = false
+      store.commit('clearValues')
+      dialog.value = false
+      await fetchSchedulers()
+    }
   } catch (error) {
     console.error('Error creating scheduler:', error)
+    Swal.fire({
+      icon: 'error',
+      title: 'Failed to Create Scheduler',
+      text: 'Please try again later.',
+      showConfirmButton: true,
+    })
   }
 }
 
@@ -254,7 +303,7 @@ onMounted(async () => {
               width="105"
               variant="outlined"
               density="comfortable"
-              @click="dialog = false"
+              @click="resetAndCloseDialog"
               class="rounded-pill"
               >Cancel</VBtn
             >
@@ -335,7 +384,15 @@ onMounted(async () => {
           <VCard class="d-flex flex-column pa-4">
             <div class="d-flex justify-space-between">
               <div class="text-h6">{{ scheduler.question_name }}</div>
+
               <VSwitch v-model="scheduler.isActive" />
+              <VBtn
+                icon
+                small
+                @click.stop="confirmDeleteScheduler(scheduler.id)"
+              >
+                <VIcon>mdi-close</VIcon>
+              </VBtn>
             </div>
             <h6>{{ parseCronExpression(scheduler.cron_input) }}</h6>
             <div class="flex-grow-1 mb-5"></div>
@@ -386,7 +443,7 @@ onMounted(async () => {
           <VRow>
             <VCol>
               <div class="text-h6 text-start mt-4 font-weight-bold">Selected Questions</div>
-              <!-- Display the question directly without a v-for loop -->
+
               <div>{{ selectedScheduler.question }}</div>
             </VCol>
           </VRow>
