@@ -247,6 +247,15 @@ async function createScheduler() {
 
       store.commit('clearValues')
       dialog.value = false
+      selectedTemplate.value = null
+      selectedPhoneNumber.value = null
+      selectedDays.value = []
+      nodes.value = [{ id: '1', type: 'custom', label: 'Node 1', position: { x: 30, y: 190 } }]
+      edges.value = []
+
+      store.commit('clearValues')
+
+      dialog.value = false
       await fetchSchedulers()
     }
   } catch (error) {
