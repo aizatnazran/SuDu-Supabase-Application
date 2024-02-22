@@ -139,11 +139,10 @@ function onAdd() {
 
     addNodes([newNode])
     addEdges([newEdge])
-  } else {
-    console.log('You cannot make more not on pick question node')
   }
   selected.value = true
   showDialog.value = false
+  selectedQuestionsDialog.value = false
   nodes.value[0].selected = true
 }
 
