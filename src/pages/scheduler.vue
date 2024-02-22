@@ -381,27 +381,28 @@ onMounted(async () => {
           :key="scheduler.id"
           class="py-2"
         >
-          <VCard class="d-flex flex-column pa-4">
-            <div class="d-flex justify-space-between">
-              <div class="text-h6">{{ scheduler.question_name }}</div>
-
-              <VSwitch v-model="scheduler.isActive" />
-              <VBtn
-                icon
-                small
-                @click.stop="confirmDeleteScheduler(scheduler.id)"
-              >
-                <VIcon>mdi-close</VIcon>
-              </VBtn>
+          <VCard class="d-flex flex-column pa-4 h-100">
+            <div class="d-flex justify-space-between align-start">
+              <div class="text-h6 w-75 mr-4">{{ scheduler.question_name }}</div>
+              <div class="d-flex justify-end align-center">
+                <VSwitch v-model="scheduler.isActive" />
+              </div>
             </div>
             <h6>{{ parseCronExpression(scheduler.cron_input) }}</h6>
             <div class="flex-grow-1 mb-5"></div>
             <div class="text-caption">{{ scheduler.contact_number }}</div>
             <div
-              class="text-primary text--underline cursor-pointer mt-1"
+              class="mt-1 d-flex justify-space-between align-end"
               @click="openQuestionsDialog(scheduler)"
             >
-              Questions
+              <h4 class="text-primary text--underline cursor-pointer">Question</h4>
+              <VBtn
+                icon
+                small
+                @click.stop="confirmDeleteScheduler(scheduler.id)"
+              >
+                <VIcon>mdi-delete</VIcon>
+              </VBtn>
             </div>
           </VCard>
         </VCol>
