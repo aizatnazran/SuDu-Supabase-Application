@@ -96,8 +96,6 @@ function onAdd(useCase, templateId) {
     addNodes([newNode])
     addEdges([newEdge])
     localStorage.setItem(flowKey, JSON.stringify(toObject()))
-  } else {
-    console.log('You cannot make more than one use case node')
   }
   selected.value = true
   showDialog.value = false
