@@ -55,11 +55,11 @@ async function fetchQuestions() {
 }
 
 function saveSelections() {
-  if (selectedItems.value.length > 0) {
+  if (selectedItems.value) {
     store.commit('setSelectedQuestions', {
-      selectedItems: selectedItems.value.map(question => question.query)[0],
+      selectedItems: selectedItems.value.query,
       selectedSubUseCase: stemplateNames.value.map(sub => sub.name),
-      selectedQuestionName: getQuestionName(selectedItems.value.map(q => q.id)[0]),
+      selectedQuestionName: getQuestionName(selectedItems.value.id),
     })
     showDialog.value = false
     selectedQuestionsDialog.value = true
@@ -97,7 +97,8 @@ const filteredItems = computed(() => {
 })
 const searchInput = ref('')
 const selectedQuestionsDialog = ref(false)
-const selectedItems = ref([])
+const selectedItems = ref(null)
+const displaySelectedItem = ref([])
 
 const displayText = computed(() => {
   const count = store.getters.selectedQuestionsCount
@@ -105,11 +106,11 @@ const displayText = computed(() => {
 })
 
 function updateSelection(item) {
-  const index = selectedItems.value.indexOf(item)
-  if (index > -1) {
-    selectedItems.value.splice(index, 1)
+  if (selectedItems.value.__v_raw !== item) {
+    selectedItems.value = null
   } else {
-    selectedItems.value.push(item)
+    selectedItems.value = item
+    displaySelectedItem.value.push(item)
   }
 }
 function onAdd() {
@@ -268,20 +269,17 @@ function getQuestionName(id) {
               dense
               class="v-list-item-group"
             >
-              <VListItemGroup
-                v-model="selectedItems"
-                multiple
-              >
+              <VRadioGroup v-model="selectedItems">
                 <VListItem
                   v-for="(item, index) in filteredItems"
                   :key="index"
                 >
                   <div class="list-item">
                     <VListItemAction class="list-item-action">
-                      <VCheckbox
+                      <VRadio
                         :value="item"
                         @change="() => updateSelection(item)"
-                      ></VCheckbox>
+                      ></VRadio>
                     </VListItemAction>
                     <VListItemContent
                       >{{ item.query }}
@@ -289,7 +287,7 @@ function getQuestionName(id) {
                     >
                   </div>
                 </VListItem>
-              </VListItemGroup>
+              </VRadioGroup>
             </VList>
           </VCardText>
           <VCardActions class="justify-end">
@@ -319,11 +317,12 @@ function getQuestionName(id) {
           <VCardSubtitle class="text-black">Please confirm the questions that selected.</VCardSubtitle>
           <VCardText class="card-text d-flex flex-column justify-start ga-4 my-2">
             <div
-              v-for="(question, index) in selectedItems"
-              :key="index"
               class="text-black"
+              v-for="(item, index) in displaySelectedItem.slice(-1)"
+              :key="index"
             >
-              {{ question.query }} <span class="stemplate-pill">{{ getStemplateName(question.stemplateId) }}</span>
+              {{ item.query }}
+              <span class="stemplate-pill">{{ getStemplateName(item.stemplateId) }}</span>
             </div>
           </VCardText>
           <VCardActions class="justify-end">
