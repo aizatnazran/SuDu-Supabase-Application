@@ -1,16 +1,145 @@
 <script setup>
-import { ref } from 'vue'
-
-import { onMounted } from 'vue'
+import { Background } from '@vue-flow/background'
+import { Controls } from '@vue-flow/controls'
+import { Panel, VueFlow, useVueFlow } from '@vue-flow/core'
+import { MiniMap } from '@vue-flow/minimap'
+import axios from 'axios'
+import Swal from 'sweetalert2'
+import { computed, onMounted, ref } from 'vue'
+import { useStore } from 'vuex'
 import { supabase } from '../lib/supaBaseClient.js'
+import ContactNode from './ContactNode.vue'
+import PickQuestionNode from './PickQuestionNode.vue'
+import SelectDateCustomNode from './SelectDateCustomNode.vue'
+import SelectDateDailyNode from './SelectDateDailyNode.vue'
+import SelectDateWeeklyNode from './SelectDateWeeklyNode.vue'
+import UseCaseNode from './UseCaseNode.vue'
 const dialog = ref(false)
+const dialogs = ref({
+  questions: false,
+})
 const templateOptions = ref([])
 const selectedTemplate = ref(null)
 const selectedPhoneNumber = ref(null)
 const selectedDays = ref([])
 const phoneNumbers = ref([])
-const userUUID = localStorage.getItem('uuid')
 const companyId = localStorage.getItem('company_id')
+const schedulers = ref([])
+const selectedScheduler = ref({})
+
+const userUUID = localStorage.getItem('uuid')
+function showCronExpression() {
+  console.log(
+    `Cron Expression is: ${cronExpression.value}, Use Case is: ${useCase.value}, Questions are: ${questions.value.join(
+      ', ',
+    )}, Contact is: ${contact.value}, template id is: ${id.value}`,
+  )
+}
+
+const store = useStore()
+const cronExpression = computed(() => store.state.cronExpression)
+const useCase = computed(() => store.state.selectedUseCase)
+const subUseCase = computed(() => store.state.selectedSubUseCase)
+const questions = computed(() => store.state.selectedQuestions)
+const questionName = computed(() => store.state.selectedQuestionName)
+console.log(questionName)
+const id = computed(() => store.state.templateId)
+const contact = computed(() => {
+  const selectedContact = store.state.selectedContact
+  if (!selectedContact) return null
+  const parts = selectedContact.split(' ')
+  return parts[parts.length - 1]
+})
+const apiClient = axios.create({
+  baseURL: 'http://sudu.ai:3002',
+  withCredentials: false,
+  headers: {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+  },
+})
+
+const openQuestionsDialog = scheduler => {
+  selectedScheduler.value = {
+    ...scheduler,
+  }
+  dialogs.value.questions = true
+}
+
+const { onConnect, addEdges } = useVueFlow()
+
+const nodes = ref([{ id: '1', type: 'custom', label: 'Node 1', position: { x: 30, y: 190 } }])
+const edges = ref([])
+onConnect(params => {
+  addEdges([params])
+})
+
+function parseCronExpression(cronExpression) {
+  const daysOfWeekMap = {
+    1: 'Monday',
+    2: 'Tuesday',
+    3: 'Wednesday',
+    4: 'Thursday',
+    5: 'Friday',
+    6: 'Saturday',
+    0: 'Sunday',
+  }
+
+  // Split the cron expression
+  const parts = cronExpression.split(' ')
+  if (parts.length !== 5) return 'Invalid cron expression'
+
+  const [minute, hour, dayOfMonth, month, dayOfWeek] = parts
+
+  // Daily at specific time (00 1 * * *)
+  if (dayOfMonth === '*' && month === '*' && dayOfWeek === '*') {
+    const hourFormatted = hour.padStart(2, '0')
+    const minuteFormatted = minute.padStart(2, '0')
+    const amPm = hour >= 12 ? 'PM' : 'AM'
+    const standardHour = hour % 12 || 12
+    return `Daily at ${standardHour}:${minuteFormatted} ${amPm}`
+  }
+
+  // Weekly on specific days
+  if (dayOfMonth === '*' && month === '*' && dayOfWeek !== '*') {
+    const days = dayOfWeek
+      .split(',')
+      .map(day => daysOfWeekMap[day])
+      .join(', ')
+    return `Every ${days} at ${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`
+  }
+
+  // Monthly on a specific day
+  if (dayOfMonth !== '*' && month === '*') {
+    return `Monthly on day ${dayOfMonth} at ${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`
+  }
+
+  return 'Custom schedule'
+}
+
+function resetAndCloseDialog() {
+  selectedTemplate.value = null
+  selectedPhoneNumber.value = null
+  selectedDays.value = []
+  nodes.value = [{ id: '1', type: 'custom', label: 'Node 1', position: { x: 30, y: 190 } }] // Or [] for completely empty
+  edges.value = []
+
+  store.commit('clearValues')
+
+  dialog.value = false
+}
+
+async function fetchSchedulers() {
+  try {
+    const response = await apiClient.get('/all')
+    if (response.data && response.data.length > 0) {
+      console.log('Schedulers:', response.data) // Check if the data is as expected
+    }
+    schedulers.value = response.data
+  } catch (error) {
+    console.error('Error fetching schedulers:', error)
+  }
+}
 
 async function fetchPhoneNumbers() {
   try {
@@ -64,10 +193,85 @@ async function fetchTemplates() {
   }
 }
 
+async function confirmDeleteScheduler(schedulerId) {
+  const result = await Swal.fire({
+    title: 'Are you sure you want to delete this scheduler?',
+    text: "You won't be able to revert this!",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Yes, delete it!',
+  })
+
+  if (result.isConfirmed) {
+    try {
+      const response = await axios.delete(`http://sudu.ai:3002/delete/${schedulerId}`)
+      if (response.status === 200) {
+        Swal.fire('Deleted!', 'The scheduler has been deleted.', 'success')
+
+        await fetchSchedulers()
+      } else {
+        Swal.fire('Error!', 'Failed to delete the scheduler. Please try again.', 'error')
+      }
+    } catch (error) {
+      console.error('Error deleting scheduler:', error)
+      Swal.fire('Error!', 'Failed to delete the scheduler. Please try again.', 'error')
+    }
+  }
+}
+
 function saveScheduler() {}
+
+async function createScheduler() {
+  try {
+    const response = await apiClient.post('/trigger-api', {
+      question: questions.value,
+      database_name: 'de_carton',
+      cron_input: cronExpression.value,
+      second_function: 1,
+      contact_num: contact.value,
+      company_id: companyId,
+      use_case: useCase.value,
+      sub_use_case: subUseCase.value,
+      question_name: questionName.value,
+    })
+
+    if (response.data) {
+      Swal.fire({
+        icon: 'success',
+        title: 'Scheduler Created Successfully',
+        showConfirmButton: true,
+        timer: 1500,
+      })
+
+      store.commit('clearValues')
+      dialog.value = false
+      selectedTemplate.value = null
+      selectedPhoneNumber.value = null
+      selectedDays.value = []
+      nodes.value = [{ id: '1', type: 'custom', label: 'Node 1', position: { x: 30, y: 190 } }]
+      edges.value = []
+
+      store.commit('clearValues')
+
+      dialog.value = false
+      await fetchSchedulers()
+    }
+  } catch (error) {
+    console.error('Error creating scheduler:', error)
+    Swal.fire({
+      icon: 'error',
+      title: 'Failed to Create Scheduler',
+      text: 'Please try again later.',
+      showConfirmButton: true,
+    })
+  }
+}
 
 onMounted(async () => {
   try {
+    await fetchSchedulers()
     templateOptions.value = await fetchTemplates()
     phoneNumbers.value = await fetchPhoneNumbers()
   } catch (error) {
@@ -77,20 +281,144 @@ onMounted(async () => {
 </script>
 
 <template>
-  <VRow>
-    <VCardTitle class="font-weight-bold">Scheduler</VCardTitle>
-    <div class="d-flex flex-wrap gap-4">
+  <VCard
+    v-if="dialog"
+    max-width="100%"
+    class="mt-4"
+    @click:outside="dialog = false"
+  >
+    <div style="height: 548px">
+      <VueFlow
+        v-model:nodes="nodes"
+        v-model:edges="edges"
+        class="vue-flow-basic-example"
+        :default-zoom="1.5"
+        :min-zoom="0.2"
+        :max-zoom="4"
+        style="width: 100%; height: 100%"
+      >
+        <Background
+          pattern-color="#aaa"
+          :gap="8"
+        />
+
+        <MiniMap />
+
+        <Controls />
+
+        <Panel position="top-right">
+          <div class="d-flex justify-end align-center gap-4">
+            <VBtn
+              width="105"
+              variant="outlined"
+              density="comfortable"
+              @click="resetAndCloseDialog"
+              class="rounded-pill"
+              >Cancel</VBtn
+            >
+            <VBtn
+              width="105"
+              class="rounded-pill"
+              density="comfortable"
+              @click="createScheduler"
+              >Save</VBtn
+            >
+          </div>
+        </Panel>
+
+        <template #node-custom="nodeProps">
+          <UseCaseNode v-bind="nodeProps" />
+        </template>
+        <template #node-custom2="nodeProps2">
+          <PickQuestionNode v-bind="nodeProps2" />
+        </template>
+        <template #node-custom3="nodeProps3">
+          <SelectDateWeeklyNode v-bind="nodeProps3" />
+        </template>
+        <template #node-custom4="nodeProps4">
+          <SelectDateCustomNode v-bind="nodeProps4" />
+        </template>
+        <template #node-custom5="nodeProps5">
+          <SelectDateDailyNode v-bind="nodeProps5" />
+        </template>
+        <template #node-custom6="nodeProps6">
+          <ContactNode v-bind="nodeProps6" />
+        </template>
+      </VueFlow>
+    </div>
+  </VCard>
+
+  <div v-if="!dialog">
+    <VRow>
+      <VCardTitle class="font-weight-bold">Scheduler</VCardTitle>
       <VBtn
         @click="dialog = true"
-        class="rounded-pill"
+        class="rounded-pill mb-3"
       >
         <VIcon left>mdi-plus</VIcon>
         Add New
       </VBtn>
-    </div>
-  </VRow>
+      <VBtn
+        @click="showCronExpression"
+        class="rounded-pill mb-3"
+      >
+        Show Vuex Store
+      </VBtn>
+    </VRow>
+    <VContainer>
+      <VRow>
+        <div
+          v-if="schedulers.length === 0"
+          class="text-center py-5"
+        >
+          <VRow>
+            <div>No scheduler created yet,</div>
+            <div
+              class="text-primary text--underline cursor-pointer"
+              @click="dialog = true"
+            >
+              click here
+            </div>
+            <div>to create a new scheduler.</div>
+          </VRow>
+        </div>
+        <VCol
+          cols="12"
+          sm="6"
+          md="4"
+          v-for="scheduler in schedulers"
+          :key="scheduler.id"
+          class="py-2"
+        >
+          <VCard class="d-flex flex-column pa-4">
+            <div class="d-flex justify-space-between">
+              <div class="text-h6">{{ scheduler.question_name }}</div>
+
+              <VSwitch v-model="scheduler.isActive" />
+              <VBtn
+                icon
+                small
+                @click.stop="confirmDeleteScheduler(scheduler.id)"
+              >
+                <VIcon>mdi-close</VIcon>
+              </VBtn>
+            </div>
+            <h6>{{ parseCronExpression(scheduler.cron_input) }}</h6>
+            <div class="flex-grow-1 mb-5"></div>
+            <div class="text-caption">{{ scheduler.contact_number }}</div>
+            <div
+              class="text-primary text--underline cursor-pointer mt-1"
+              @click="openQuestionsDialog(scheduler)"
+            >
+              Questions
+            </div>
+          </VCard>
+        </VCol>
+      </VRow>
+    </VContainer>
+  </div>
   <VDialog
-    v-model="dialog"
+    v-model="dialogs.questions"
     max-width="600px"
     @click:outside="dialog = false"
   >
@@ -103,35 +431,29 @@ onMounted(async () => {
               md="6"
             >
               <div class="text-h6 text-start mb-2 font-weight-bold">Use Case</div>
-              <VSelect
-                v-model="selectedTemplate"
-                :items="templateOptions"
+              <VTextField
+                v-model="selectedScheduler.use_case"
                 label="Use Case"
-                item-text="name"
-                item-value="id"
-                return-object
-              ></VSelect>
+                readonly
+              ></VTextField>
             </VCol>
             <VCol
               cols="12"
               md="6"
             >
               <div class="text-h6 text-start font-weight-bold">Phone Number</div>
-              <VSelect
-                v-model="selectedPhoneNumber"
-                :items="phoneNumbers"
+              <VTextField
+                v-model="selectedScheduler.contact_number"
                 label="Phone Number"
-                item-text="number"
-                item-value="id"
-                return-object
-              ></VSelect>
+                readonly
+              ></VTextField>
             </VCol>
           </VRow>
           <VRow>
             <VCol>
               <div class="text-h6 text-start mt-4 font-weight-bold">Selected Questions</div>
-              <div>1. What is my weekly average sales?</div>
-              <div>2. Which day has the highest sales?</div>
+
+              <div>{{ selectedScheduler.question }}</div>
             </VCol>
           </VRow>
           <VRow>
@@ -182,4 +504,20 @@ onMounted(async () => {
   </VDialog>
 </template>
 
-<style></style>
+<style>
+@import '@vue-flow/core/dist/style.css';
+
+/* import the default theme (optional) */
+@import '@vue-flow/core/dist/theme-default.css';
+
+@import '@vue-flow/controls/dist/style.css';
+@import '@vue-flow/minimap/dist/style.css';
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.text--underline {
+  text-decoration: underline;
+}
+</style>

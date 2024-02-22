@@ -873,7 +873,7 @@
     "@vue/compiler-dom" "3.3.2"
     "@vue/shared" "3.3.2"
 
-"@vue/devtools-api@^6.2.1", "@vue/devtools-api@^6.5.0":
+"@vue/devtools-api@^6.0.0-beta.11", "@vue/devtools-api@^6.2.1", "@vue/devtools-api@^6.5.0":
   version "6.5.0"
   resolved "https://registry.npmjs.org/@vue/devtools-api/-/devtools-api-6.5.0.tgz"
   integrity sha512-o9KfBeaBmCKl10usN4crU53fYtC1r7jJwdGKjPT24t348rHxgfpZ0xL3Xm/gLUYnc0oTp8LAmrxOeLyu6tbk2Q==
@@ -4290,6 +4290,13 @@ vuetify@^3.0.0-beta.4, vuetify@^3.4.3:
   version "3.4.3"
   resolved "https://registry.npmjs.org/vuetify/-/vuetify-3.4.3.tgz"
   integrity sha512-b8yi87Zv4bn2JbaVkkV9uzSRw0fdY/v3ieWne0OTI29w/CNSyLyfHGBCrmx7eD74i562M1j+AwSSRJCX3wF0+Q==
+
+vuex@^4.1.0:
+  version "4.1.0"
+  resolved "https://registry.npmjs.org/vuex/-/vuex-4.1.0.tgz"
+  integrity sha512-hmV6UerDrPcgbSy9ORAtNXDr9M4wlNP4pEFKye4ujJF8oqgFFuxDCdOLS3eNoRTtq5O3hoBDh9Doj1bQMYHRbQ==
+  dependencies:
+    "@vue/devtools-api" "^6.0.0-beta.11"
 
 webfontloader@^1.6.28:
   version "1.6.28"
