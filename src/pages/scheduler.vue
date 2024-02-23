@@ -133,9 +133,14 @@ async function fetchSchedulers() {
   try {
     const response = await apiClient.get('/all')
     if (response.data && response.data.length > 0) {
-      console.log('Schedulers:', response.data) // Check if the data is as expected
+      const filteredSchedulers = response.data.filter(scheduler => scheduler.company_id === companyId)
+
+      console.log('Filtered Schedulers:', filteredSchedulers)
+
+      schedulers.value = filteredSchedulers
+    } else {
+      schedulers.value = []
     }
-    schedulers.value = response.data
   } catch (error) {
     console.error('Error fetching schedulers:', error)
   }
