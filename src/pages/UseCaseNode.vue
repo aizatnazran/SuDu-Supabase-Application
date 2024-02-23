@@ -1,5 +1,5 @@
 <script setup>
-import zoho from '@images/logos/zoho.png'
+import zoho2 from '@images/logos/zoho2.png'
 import { Handle, Position, useVueFlow } from '@vue-flow/core'
 import { computed, ref } from 'vue'
 import { useStore } from 'vuex'
@@ -188,36 +188,38 @@ onMounted(async () => {
                   cols="12"
                   sm="6"
                   md="4"
+                  lg="4"
                   v-for="useCase in getFilteredList()"
                   :key="useCase.id"
                 >
                   <VCard
-                    class="use-case-card mb-4 d-flex flex-column"
+                    class="use-case-card d-flex flex-column pa-2 h-100"
                     variant="outlined"
                     color="primary"
                   >
-                    <div class="d-flex justify-start align-start">
-                      <div class="flex-grow-1 text-container">
-                        <VCardTitle class="font-weight-bold text-body-1 text-black">{{ useCase.name }}</VCardTitle>
-                      </div>
+                    <div class="d-flex justify-space-between align-start w-100 mb-6">
+                      <VCardTitle class="font-weight-bold text-body-1 text-black w-auto">{{ useCase.name }}</VCardTitle>
 
                       <VImg
-                        :src="zoho"
-                        class="card-image mx-2"
+                        :src="zoho2"
+                        class="card-image w-auto"
+                        max-width="115"
+                        height="70"
                       ></VImg>
                     </div>
 
-                    <div class="mt-auto d-flex justify-space-between align-end">
+                    <div class="d-flex justify-space-between align-end w-100">
                       <VCardSubtitle class="text-caption">{{ '12th Oct 2023' }}</VCardSubtitle>
 
-                      <VBtn
-                        text
-                        color="primary"
-                        class="rounded-pill px-8"
-                        density="comfortable"
-                        @click="onAdd(useCase.name, useCase.id)"
-                        >Select</VBtn
-                      >
+                      <div class="d-flex justify-end align-center">
+                        <VBtn
+                          color="primary"
+                          class="rounded-pill"
+                          density="comfortable"
+                          @click="onAdd(useCase.name, useCase.id)"
+                          >Select</VBtn
+                        >
+                      </div>
                     </div>
                   </VCard>
                 </VCol>
