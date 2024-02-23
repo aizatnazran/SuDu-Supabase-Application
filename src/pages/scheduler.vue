@@ -30,9 +30,8 @@ const selectedScheduler = ref({})
 const userUUID = localStorage.getItem('uuid')
 function showCronExpression() {
   console.log(
-    `Cron Expression is: ${cronExpression.value}, Use Case is: ${useCase.value}, Questions are: ${questions.value.join(
-      ', ',
-    )}, Contact is: ${contact.value}, template id is: ${id.value}`,
+    `Use Case is: ${useCase.value} || Questions are: ${questions.value} || Cron Expression is: ${cronExpression.value}
+    || template id is: ${id.value} || Contact is: ${contact.value} `,
   )
 }
 
@@ -121,7 +120,7 @@ function resetAndCloseDialog() {
   selectedTemplate.value = null
   selectedPhoneNumber.value = null
   selectedDays.value = []
-  nodes.value = [{ id: '1', type: 'custom', label: 'Node 1', position: { x: 30, y: 190 } }] // Or [] for completely empty
+  nodes.value = [{ id: '1', type: 'custom', label: 'Node 1', position: { x: 30, y: 190 } }]
   edges.value = []
 
   store.commit('clearValues')
@@ -322,6 +321,12 @@ onMounted(async () => {
               >Cancel</VBtn
             >
             <VBtn
+              @click="showCronExpression"
+              class="rounded-pill mb-3"
+            >
+              Show Vuex Store
+            </VBtn>
+            <VBtn
               width="105"
               class="rounded-pill"
               density="comfortable"
@@ -494,6 +499,7 @@ onMounted(async () => {
       </VCardText>
       <VCardActions>
         <VSpacer></VSpacer>
+
         <VBtn
           @click="saveScheduler"
           class="primary rounded-pill"
