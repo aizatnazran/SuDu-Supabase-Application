@@ -146,7 +146,8 @@ async function fetchSchedulers() {
           }
         }),
       )
-      schedulers.value = contactNames
+      // Filter schedulers based on company ID
+      schedulers.value = contactNames.filter(scheduler => scheduler.company_id === companyId)
     }
   } catch (error) {
     console.error('Error fetching schedulers:', error)
