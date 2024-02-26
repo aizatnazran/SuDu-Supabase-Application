@@ -10,8 +10,6 @@ import { useStore } from 'vuex'
 import { supabase } from '../lib/supaBaseClient.js'
 import ContactNode from './ContactNode.vue'
 import PickQuestionNode from './PickQuestionNode.vue'
-import SelectDateCustomNode from './SelectDateCustomNode.vue'
-import SelectDateDailyNode from './SelectDateDailyNode.vue'
 import SelectDateWeeklyNode from './SelectDateWeeklyNode.vue'
 import UseCaseNode from './UseCaseNode.vue'
 const dialog = ref(false)
@@ -326,14 +324,17 @@ onMounted(async () => {
         <template #node-custom3="nodeProps3">
           <SelectDateWeeklyNode v-bind="nodeProps3" />
         </template>
-        <template #node-custom4="nodeProps4">
+        <!-- <template #node-custom4="nodeProps4">
           <SelectDateCustomNode v-bind="nodeProps4" />
         </template>
         <template #node-custom5="nodeProps5">
           <SelectDateDailyNode v-bind="nodeProps5" />
-        </template>
-        <template #node-custom6="nodeProps6">
+        </template> -->
+        <!-- <template #node-custom6="nodeProps6">
           <ContactNode v-bind="nodeProps6" />
+        </template> -->
+        <template #node-custom4="nodeProps4">
+          <ContactNode v-bind="nodeProps4" />
         </template>
       </VueFlow>
     </div>
