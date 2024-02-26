@@ -67,6 +67,19 @@ function createCronExpression() {
   return cronExpression
 }
 
+const isFormValid = computed(() => {
+  const isTimeAndFrequencySelected = scheduleData.selectedTime !== '' && scheduleData.repeatFrequency !== ''
+
+  let isSpecificRequirementMet = true
+  if (scheduleData.repeatFrequency === 'Weekly') {
+    isSpecificRequirementMet = scheduleData.repeatDay !== ''
+  } else if (scheduleData.repeatFrequency === 'Monthly') {
+    isSpecificRequirementMet = scheduleData.repeatDate !== ''
+  }
+
+  return isTimeAndFrequencySelected && isSpecificRequirementMet
+})
+
 function saveSchedule() {
   const cronExpression = createCronExpression()
   store.commit('updateCronExpression', cronExpression)
@@ -75,8 +88,12 @@ function saveSchedule() {
 }
 
 function handleButtonClick() {
-  saveSchedule()
-  onAdd()
+  if (isFormValid.value) {
+    saveSchedule()
+    onAdd()
+  } else {
+    console.log('Form is not valid')
+  }
 }
 
 watch(
@@ -202,7 +219,7 @@ function onAdd() {
       </div>
       <VDialog
         v-model="showDialog"
-        max-width="80%"
+        max-width="600px"
       >
         <VCard
           class="pa-4"
@@ -273,6 +290,7 @@ function onAdd() {
             <VBtn
               color="primary"
               @click="handleButtonClick"
+              :disabled="!isFormValid"
               >Save</VBtn
             >
           </VCardActions>

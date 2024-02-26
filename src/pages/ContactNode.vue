@@ -246,7 +246,7 @@ onMounted(async () => {
       </div>
       <VDialog
         v-model="showDialog"
-        max-width="50%"
+        max-width="1000px"
       >
         <VCard
           class="pa-4"

@@ -178,11 +178,15 @@ const submitNewContact = async () => {
 }
 
 const editContact = contact => {
-  editingContact.value = { ...contact, contact_role: contact.contact_role.id }
+  editingContact.value = {
+    ...contact,
+    contact_role: contact.contact_role.id,
+    contact_number: String(contact.contact_number),
+  }
   editDialog.value = true
+  console.log(typeof editingContact.value.contact_number)
 }
 
-//Function to edit a contact
 const submitEditedContact = async () => {
   try {
     const updatedContactData = {
@@ -192,7 +196,8 @@ const submitEditedContact = async () => {
       id: editingContact.value.id,
     }
 
-    const phoneNumber = updatedContactData.contact_number.trim()
+    const phoneNumber = String(editingContact.value.contact_number).trim()
+    console.log(typeof editingContact.value.contact_number)
     if (!phoneNumber.startsWith('60')) {
       Swal.fire({
         title: 'Error!',
@@ -280,6 +285,7 @@ onMounted(() => {
   if (company_id) {
     fetchContact()
   }
+  console.log(typeof editingContact.value.contact_number) // Check the type here
 })
 </script>
 
