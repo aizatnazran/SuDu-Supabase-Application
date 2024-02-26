@@ -24,6 +24,7 @@ const phoneNumbers = ref([])
 const companyId = localStorage.getItem('company_id')
 const schedulers = ref([])
 const selectedScheduler = ref({})
+const contactNumber = ref(null)
 
 const userUUID = localStorage.getItem('uuid')
 function showCronExpression() {
@@ -131,11 +132,49 @@ async function fetchSchedulers() {
   try {
     const response = await apiClient.get('/all')
     if (response.data && response.data.length > 0) {
-      console.log('Schedulers:', response.data) // Check if the data is as expected
+      console.log('Schedulers:', response.data)
+      const contactNames = await Promise.all(
+        response.data.map(async scheduler => {
+          const contactData = await supabase
+            .from('contact')
+            .select('contact_name')
+            .eq('contact_number', parseInt(scheduler.contact_number))
+
+          console.log(contactData.data.map(data => data.contact_name)[0])
+          return {
+            ...scheduler,
+            contact_name: contactData.data.map(data => data.contact_name)[0] || '',
+          }
+        }),
+      )
+
+      schedulers.value = contactNames
     }
-    schedulers.value = response.data
   } catch (error) {
     console.error('Error fetching schedulers:', error)
+  }
+}
+
+async function fetchPhoneNumberWithScheduler() {
+  try {
+    const { data: contactWithName, error: contactError } = await supabase
+      .from('contact')
+      .select('contact_number, contact_name')
+
+    if (contactError) {
+      console.error('Error fetching contacts with contact number:', contactError)
+      return []
+    }
+
+    const allContactName = [...contactWithName]
+
+    return allContactName.map(contact => ({
+      contact_number: contact.contact_number,
+      contact_name: contact.contact_name,
+    }))
+  } catch (error) {
+    console.error('Error fetching contact scheduler:', error)
+    return []
   }
 }
 
@@ -143,7 +182,7 @@ async function fetchPhoneNumbers() {
   try {
     const { data: contactsWithCompany, error: companyError } = await supabase
       .from('contact')
-      .select('contact_number')
+      .select('contact_number, contact_name')
       .eq('company_id', companyId)
 
     if (companyError) {
@@ -153,7 +192,10 @@ async function fetchPhoneNumbers() {
 
     const allContacts = [...contactsWithCompany]
 
-    return allContacts.map(contact => contact.contact_number)
+    return allContacts.map(contact => ({
+      number: contact.contact_number,
+      name: contact.contact_name,
+    }))
   } catch (error) {
     console.error('Error fetching contacts:', error)
     return []
@@ -263,10 +305,26 @@ onMounted(async () => {
     await fetchSchedulers()
     templateOptions.value = await fetchTemplates()
     phoneNumbers.value = await fetchPhoneNumbers()
+    contactNumber.value = await fetchPhoneNumberWithScheduler()
   } catch (error) {
     console.error('Error during onMounted:', error)
   }
 })
+
+const editScheduler = scheduler => {
+  openQuestionsDialog(scheduler)
+  console.log('Edit action triggered')
+}
+
+const confirmDelete = scheduler => {
+  confirmDeleteScheduler(scheduler.id)
+  console.log('Edit action triggered')
+}
+
+const items = ref([
+  { title: 'Edit', icon: 'mdi-edit', action: scheduler => editScheduler(scheduler) },
+  { title: 'Delete', icon: 'mdi-delete', action: scheduler => confirmDelete(scheduler) },
+])
 </script>
 
 <template>
@@ -385,25 +443,42 @@ onMounted(async () => {
           <VCard class="d-flex flex-column pa-4 h-100">
             <div class="d-flex justify-space-between align-start">
               <div class="text-h6 w-75 mr-4">{{ scheduler.question_name }}</div>
-              <div class="d-flex justify-end align-center">
-                <VSwitch v-model="scheduler.isActive" />
-              </div>
+              <v-menu :location="location">
+                <template v-slot:activator="{ props, on }">
+                  <v-btn
+                    icon
+                    flat
+                    color="transparent"
+                    class="dots-button"
+                    v-bind="props"
+                    v-on="on"
+                  >
+                    <v-icon>mdi-dots-horizontal</v-icon>
+                  </v-btn>
+                </template>
+
+                <v-list>
+                  <v-list-item
+                    v-for="(item, index) in items"
+                    :key="index"
+                    @click="item.action(scheduler)"
+                  >
+                    <div class="d-flex gap-2">
+                      <VIcon>{{ item.icon }}</VIcon>
+                      <v-list-item-title>{{ item.title }}</v-list-item-title>
+                    </div>
+                  </v-list-item>
+                </v-list>
+              </v-menu>
             </div>
             <h6>{{ parseCronExpression(scheduler.cron_input) }}</h6>
-            <div class="flex-grow-1 mb-5"></div>
-            <div class="text-caption">{{ scheduler.contact_number }}</div>
-            <div
-              class="mt-1 d-flex justify-space-between align-end"
-              @click="openQuestionsDialog(scheduler)"
-            >
-              <h4 class="text-primary text--underline cursor-pointer">Question</h4>
-              <VBtn
-                icon
-                small
-                @click.stop="confirmDeleteScheduler(scheduler.id)"
-              >
-                <VIcon>mdi-delete</VIcon>
-              </VBtn>
+            <div class="text-caption">
+              Contact: <span class="text-decoration-underline">{{ scheduler.contact_name }}</span>
+            </div>
+            <div class="d-flex justify-end align-center">
+              <div class="d-flex justify-end align-end w-25 pl-11">
+                <VSwitch v-model="scheduler.isActive" />
+              </div>
             </div>
           </VCard>
         </VCol>
