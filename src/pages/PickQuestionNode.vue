@@ -15,7 +15,7 @@ async function fetchStemplateIds(templateId) {
     const { data, error } = await supabase
       .from('stemplate')
       .select('id, stemplate_name')
-      .eq('stemplate_template', templateId) // Assuming 'stemplate_template' links to 'template'
+      .eq('stemplate_template', templateId)
 
     if (error) throw error
 
@@ -37,7 +37,6 @@ async function fetchQuestions() {
   }
 
   try {
-    // Proceed with fetching questions
     const { data, error: fetchError } = await supabase
       .from('questions')
       .select('id, question_query, question_stemplate, question_name')

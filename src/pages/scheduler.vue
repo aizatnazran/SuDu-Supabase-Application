@@ -29,9 +29,8 @@ const contactNumber = ref(null)
 const userUUID = localStorage.getItem('uuid')
 function showCronExpression() {
   console.log(
-    `Cron Expression is: ${cronExpression.value}, Use Case is: ${useCase.value}, Questions are: ${questions.value.join(
-      ', ',
-    )}, Contact is: ${contact.value}, template id is: ${id.value}`,
+    `Use Case is: ${useCase.value} || Questions are: ${questions.value} || Cron Expression is: ${cronExpression.value}
+    || template id is: ${id.value} || Contact is: ${contact.value} `,
   )
 }
 
@@ -120,7 +119,7 @@ function resetAndCloseDialog() {
   selectedTemplate.value = null
   selectedPhoneNumber.value = null
   selectedDays.value = []
-  nodes.value = [{ id: '1', type: 'custom', label: 'Node 1', position: { x: 30, y: 190 } }] // Or [] for completely empty
+  nodes.value = [{ id: '1', type: 'custom', label: 'Node 1', position: { x: 30, y: 190 } }]
   edges.value = []
 
   store.commit('clearValues')
@@ -132,24 +131,9 @@ async function fetchSchedulers() {
   try {
     const response = await apiClient.get('/all')
     if (response.data && response.data.length > 0) {
-      console.log('Schedulers:', response.data)
-      const contactNames = await Promise.all(
-        response.data.map(async scheduler => {
-          const contactData = await supabase
-            .from('contact')
-            .select('contact_name')
-            .eq('contact_number', parseInt(scheduler.contact_number))
-
-          console.log(contactData.data.map(data => data.contact_name)[0])
-          return {
-            ...scheduler,
-            contact_name: contactData.data.map(data => data.contact_name)[0] || '',
-          }
-        }),
-      )
-
-      schedulers.value = contactNames
+      console.log('Schedulers:', response.data) // Check if the data is as expected
     }
+    schedulers.value = response.data
   } catch (error) {
     console.error('Error fetching schedulers:', error)
   }
@@ -287,6 +271,15 @@ async function createScheduler() {
 
       store.commit('clearValues')
       dialog.value = false
+      selectedTemplate.value = null
+      selectedPhoneNumber.value = null
+      selectedDays.value = []
+      nodes.value = [{ id: '1', type: 'custom', label: 'Node 1', position: { x: 30, y: 190 } }]
+      edges.value = []
+
+      store.commit('clearValues')
+
+      dialog.value = false
       await fetchSchedulers()
     }
   } catch (error) {
@@ -363,6 +356,12 @@ const items = ref([
               class="rounded-pill"
               >Cancel</VBtn
             >
+            <VBtn
+              @click="showCronExpression"
+              class="rounded-pill mb-3"
+            >
+              Show Vuex Store
+            </VBtn>
             <VBtn
               width="105"
               class="rounded-pill"
@@ -557,6 +556,7 @@ const items = ref([
       </VCardText>
       <VCardActions>
         <VSpacer></VSpacer>
+
         <VBtn
           @click="saveScheduler"
           class="primary rounded-pill"
