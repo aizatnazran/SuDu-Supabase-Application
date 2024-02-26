@@ -38,12 +38,10 @@ const selectOption = option => {
     selectedContact: selectedContact.value,
     selectedName: selectedName.value,
   })
-  // Remove the 'selected' class from all options first
   document.querySelectorAll('.box-option').forEach(el => {
     el.classList.remove('selected')
   })
 
-  // Add the 'selected' class to the clicked option
   event.target.classList.add('selected')
 
   isOpen.value = false
@@ -249,7 +247,9 @@ onMounted(async () => {
       </div>
       <VDialog
         v-model="showDialog"
-        max-width="80%"
+
+        max-width="1000px"
+
       >
         <VCard
           class="pa-4"
