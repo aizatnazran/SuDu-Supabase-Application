@@ -132,8 +132,22 @@ async function fetchSchedulers() {
     const response = await apiClient.get('/all')
     if (response.data && response.data.length > 0) {
       console.log('Schedulers:', response.data) // Check if the data is as expected
+      console.log('Schedulers:', response.data)
+      const contactNames = await Promise.all(
+        response.data.map(async scheduler => {
+          const contactData = await supabase
+            .from('contact')
+            .select('contact_name')
+            .eq('contact_number', parseInt(scheduler.contact_number))
+          console.log(contactData.data.map(data => data.contact_name)[0])
+          return {
+            ...scheduler,
+            contact_name: contactData.data.map(data => data.contact_name)[0] || '',
+          }
+        }),
+      )
+      schedulers.value = contactNames
     }
-    schedulers.value = response.data
   } catch (error) {
     console.error('Error fetching schedulers:', error)
   }
@@ -472,7 +486,7 @@ const items = ref([
             </div>
             <h6>{{ parseCronExpression(scheduler.cron_input) }}</h6>
             <div class="text-caption">
-              Contact: <span class="text-decoration-underline">{{ scheduler.contact_name }}</span>
+              Contact: <span class="text-decoration-underline text-primary">{{ scheduler.contact_name }}</span>
             </div>
             <div class="d-flex justify-end align-center">
               <div class="d-flex justify-end align-end w-25 pl-11">
