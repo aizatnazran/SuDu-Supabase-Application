@@ -113,34 +113,50 @@ function onAdd() {
     for (let i = 0; i < 3; i++) {
       const id = nodes.value.length + 1
 
+      //   if (id == 4) {
+      //     newNode = {
+      //       id: `random_node-${id}`,
+      //       type: `custom${id}`,
+      //       label: `Node ${id}`,
+      //       position: {
+      //         x: nodes.value[2].position.x,
+      //         y: nodes.value[2].position.y + 200,
+      //       },
+      //     }
+      //     selected.value = true
+      //     showDialog.value = false
+      //     nodes.value[0].selected = true
+      //     nodes.value[1].selected = true
+      //     nodes.value[2].selected = true
+      //   } else if (id == 5) {
+      //     newNode = {
+      //       id: `random_node-${id}`,
+      //       type: `custom${id}`,
+      //       label: `Node ${id}`,
+      //       position: {
+      //         x: nodes.value[2].position.x,
+      //         y: nodes.value[2].position.y - 200,
+      //       },
+      //     }
+      //     selected.value = true
+      //     nodes.value[3].selected = true
+      //   } else {
+      //     newNode = {
+      //       id: `random_node-${id}`,
+      //       type: `custom${id}`,
+      //       label: `Node ${id}`,
+      //       position: {
+      //         x: nodes.value[2].position.x + 400,
+      //         y: nodes.value[2].position.y,
+      //       },
+      //     }
+      //     selected.value = true
+      //     nodes.value[4].selected = true
+      //   }
+
+      //   addNodes([newNode])
+      // }
       if (id == 4) {
-        newNode = {
-          id: `random_node-${id}`,
-          type: `custom${id}`,
-          label: `Node ${id}`,
-          position: {
-            x: nodes.value[2].position.x,
-            y: nodes.value[2].position.y + 200,
-          },
-        }
-        selected.value = true
-        showDialog.value = false
-        nodes.value[0].selected = true
-        nodes.value[1].selected = true
-        nodes.value[2].selected = true
-      } else if (id == 5) {
-        newNode = {
-          id: `random_node-${id}`,
-          type: `custom${id}`,
-          label: `Node ${id}`,
-          position: {
-            x: nodes.value[2].position.x,
-            y: nodes.value[2].position.y - 200,
-          },
-        }
-        selected.value = true
-        nodes.value[3].selected = true
-      } else {
         newNode = {
           id: `random_node-${id}`,
           type: `custom${id}`,
@@ -151,8 +167,11 @@ function onAdd() {
           },
         }
         selected.value = true
-        nodes.value[4].selected = true
-      }
+        showDialog.value = false
+        nodes.value[0].selected = true
+        nodes.value[1].selected = true
+        nodes.value[2].selected = true
+      } else continue
 
       addNodes([newNode])
     }

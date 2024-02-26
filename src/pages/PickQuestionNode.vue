@@ -235,34 +235,49 @@ function getQuestionName(id) {
           rounded="lg"
           style="background-color: #fff"
         >
-          <VCardTitle class="dialog-header">
-            <span class="font-weight-bold text-h6 text-black">Questions</span>
-            <VTextField
-              v-model="searchInput"
-              prepend-icon="mdi-magnify"
-              label="Search..."
-              variant="underlined"
-              dense
-              flat
-              solo-inverted
-              hide-details
-              class="search-input"
-            ></VTextField>
-          </VCardTitle>
-          <VCardSubtitle class="mb-5 text-black">What questions would you like to ask SuDu AI?</VCardSubtitle>
-          <VBtnToggle
-            class="pl-3"
-            mandatory="force"
-            rounded="xl"
-            color="primary"
-            density="comfortable"
-            variant="outlined"
-          >
-            <VBtn class="tab-item">Reporting</VBtn>
-            <VBtn class="tab-item">Analysis</VBtn>
-            <VBtn class="tab-item">Automation</VBtn>
-          </VBtnToggle>
-          <VCardText>
+          <VRow>
+            <VCol cols="12">
+              <div class="d-flex flex-column">
+                <VCardTitle class="dialog-header d-flex justify-space-between align-end">
+                  <span class="font-weight-bold text-h6 text-black">Questions</span>
+                  <VTextField
+                    v-model="searchInput"
+                    prepend-icon="mdi-magnify"
+                    label="Search..."
+                    variant="underlined"
+                    dense
+                    flat
+                    solo-inverted
+                    hide-details
+                    class="search-input"
+                  ></VTextField>
+                </VCardTitle>
+                <div class="mb-5 ml-2 pa-2 text-black w-100">What questions would you like to ask SuDu AI?</div>
+              </div>
+            </VCol>
+          </VRow>
+          <VRow class="ml-1 pa-2">
+            <VBtnToggle
+              mandatory="force"
+              rounded="xl"
+              color="primary"
+              density="comfortable"
+              variant="outlined"
+            >
+              <VBtn class="tab-item">Reporting</VBtn>
+              <VBtn
+                disabled
+                class="tab-item"
+                >Analysis</VBtn
+              >
+              <VBtn
+                disabled
+                class="tab-item"
+                >Automation</VBtn
+              >
+            </VBtnToggle>
+          </VRow>
+          <VCardText class="py-4">
             <VList
               dense
               class="v-list-item-group"
@@ -272,7 +287,7 @@ function getQuestionName(id) {
                   v-for="(item, index) in filteredItems"
                   :key="index"
                 >
-                  <div class="list-item">
+                  <div class="list-item w-100 d-flex justify-start align-center mb-4">
                     <VListItemAction class="list-item-action">
                       <VRadio
                         :value="item"
@@ -280,9 +295,11 @@ function getQuestionName(id) {
                       ></VRadio>
                     </VListItemAction>
                     <VListItemContent
-                      >{{ item.query }}
-                      <span class="stemplate-pill">{{ getStemplateName(item.stemplateId) }}</span></VListItemContent
+                      class="w-100 d-flex flex-column flex-md-row justify-start align-start align-md-center gap-2"
                     >
+                      {{ item.query }}
+                      <span class="stemplate-pill w-auto text-body-2">{{ getStemplateName(item.stemplateId) }}</span>
+                    </VListItemContent>
                   </div>
                 </VListItem>
               </VRadioGroup>
@@ -291,7 +308,7 @@ function getQuestionName(id) {
           <VCardActions class="justify-end">
             <VBtn
               color="on-secondary"
-              class="rounded-pill px-8 bg-primary"
+              class="rounded-pill px-8 bg-primary mt-4"
               density="comfortable"
               @click="saveSelections"
               >Next</VBtn
@@ -313,14 +330,14 @@ function getQuestionName(id) {
         >
           <VCardTitle class="font-weight-bold text-black text-h6">Selected Questions</VCardTitle>
           <VCardSubtitle class="text-black">Please confirm the questions that selected.</VCardSubtitle>
-          <VCardText class="card-text d-flex flex-column justify-start ga-4 my-2">
+          <VCardText class="card-text d-flex flex-column flex-md-row justify-start align-center ga-4 my-2 w-100">
             <div
-              class="text-black"
+              class="text-black d-flex flex-column flex-md-row justify-start align-baseline align-md-center w-100"
               v-for="(item, index) in displaySelectedItem.slice(-1)"
               :key="index"
             >
               {{ item.query }}
-              <span class="stemplate-pill">{{ getStemplateName(item.stemplateId) }}</span>
+              <span class="stemplate-pill text-body-2 ml-2">{{ getStemplateName(item.stemplateId) }}</span>
             </div>
           </VCardText>
           <VCardActions class="justify-end">
@@ -352,6 +369,7 @@ function getQuestionName(id) {
   background-color: #6200ea;
   color: white;
   padding: 8px;
+  width: fit-content;
 }
 .v-list-item-group {
   background-color: #eeeeee;

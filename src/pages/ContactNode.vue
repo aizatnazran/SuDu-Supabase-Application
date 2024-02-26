@@ -8,7 +8,8 @@ const { nodes, addEdges } = useVueFlow()
 
 const selectedContact = ref(null)
 const selected = ref(false)
-const showDialog = ref(nodes.value[5].selected)
+// const showDialog = ref(nodes.value[5].selected)
+const showDialog = ref(nodes.value[3].selected)
 const contactOption = ref([])
 const companyId = localStorage.getItem('company_id')
 const store = useStore()
@@ -137,35 +138,35 @@ function onAdd() {
   showDialog.value = !showDialog.value
   selected.value = true
 
-  const newEdges = [
-    {
-      id: `e${nodes.value[1].id}-${nodes.value[3].id}`,
-      source: `${nodes.value[1].id}`,
-      target: `${nodes.value[3].id}`,
-    },
-    {
-      id: `e${nodes.value[1].id}-${nodes.value[4].id}`,
-      source: `${nodes.value[1].id}`,
-      target: `${nodes.value[4].id}`,
-    },
-    {
-      id: `e${nodes.value[3].id}-${nodes.value[5].id}`,
-      source: `${nodes.value[3].id}`,
-      target: `${nodes.value[5].id}`,
-    },
-    {
-      id: `e${nodes.value[4].id}-${nodes.value[5].id}`,
-      source: `${nodes.value[4].id}`,
-      target: `${nodes.value[5].id}`,
-    },
-  ]
+  // const newEdges = [
+  //   // {
+  //   //   id: `e${nodes.value[1].id}-${nodes.value[3].id}`,
+  //   //   source: `${nodes.value[1].id}`,
+  //   //   target: `${nodes.value[3].id}`,
+  //   // },
+  //   // {
+  //   //   id: `e${nodes.value[1].id}-${nodes.value[4].id}`,
+  //   //   source: `${nodes.value[1].id}`,
+  //   //   target: `${nodes.value[4].id}`,
+  //   // },
+  //   // {
+  //   //   id: `e${nodes.value[3].id}-${nodes.value[5].id}`,
+  //   //   source: `${nodes.value[3].id}`,
+  //   //   target: `${nodes.value[5].id}`,
+  //   // },
+  //   // {
+  //   //   id: `e${nodes.value[4].id}-${nodes.value[5].id}`,
+  //   //   source: `${nodes.value[4].id}`,
+  //   //   target: `${nodes.value[5].id}`,
+  //   // },
+  // ]
 
-  addEdges(newEdges)
+  // addEdges(newEdges)
   nodes.value[0].selected = true
   nodes.value[1].selected = true
   nodes.value[2].selected = true
   nodes.value[3].selected = true
-  nodes.value[4].selected = true
+  // nodes.value[4].selected = true
 }
 
 onMounted(async () => {
@@ -246,7 +247,9 @@ onMounted(async () => {
       </div>
       <VDialog
         v-model="showDialog"
+
         max-width="1000px"
+
       >
         <VCard
           class="pa-4"
@@ -256,14 +259,14 @@ onMounted(async () => {
           style="background-color: #fff"
         >
           <VCardTitle class="dialog-header">
-            <span class="font-weight-bold text-h6 text-black">Contact Number</span>
+            <span class="font-weight-bold text-h6 text-black">Messaging</span>
           </VCardTitle>
-          <VCardSubtitle>We will send it to the phone number that you provide.</VCardSubtitle>
-          <VCardText class="text-black">Phone Number</VCardText>
-          <div class="select-input-container">
+          <div class="ml-4">We will send it to the phone number that you provide.</div>
+          <VCardText class="text-black font-weight-bold">To:</VCardText>
+          <div class="select-input-container ml-4 w-75">
             <input
               v-model="selectedContact"
-              class="select-input"
+              class="select-input w-auto"
               placeholder="Search or select option"
               @click="toggleDropdown"
             />
@@ -287,39 +290,52 @@ onMounted(async () => {
               </div>
             </div>
           </div>
-          <VCardText class="text-black">Subject</VCardText>
+          <VCardText class="text-black font-weight-bold">Subject</VCardText>
           <VTextField
             placeholder="Type here..."
             density="comfortable"
             rounded="xl"
+            class="ml-4 w-75"
           ></VTextField>
 
           <VCard
             variant="outlined"
             :style="{ marginTop: '1rem', marginBottom: '1rem' }"
+            class="ml-4"
           >
-            <VCardTitle>Good Day, Admin</VCardTitle>
+            <div><VCardTitle>Good Day, Admin</VCardTitle></div>
 
             <VCardText>Here is our report for Selected Use Case</VCardText>
             <VCardText>[Report]</VCardText>
             <VCardText>Thank you.</VCardText>
           </VCard>
-          <VCardActions class="justify-end">
-            <VBtn
-              text
-              class="rounded-pill px-8"
-              density="comfortable"
-              variant="outlined"
-              @click="handleBackButtonClick"
-              >Back</VBtn
-            >
-            <VBtn
-              color="on-secondary"
-              class="rounded-pill px-8 bg-primary"
-              density="comfortable"
-              @click="onAdd"
-              >Save</VBtn
-            >
+          <VCardActions>
+            <VRow justify="end">
+              <VCol
+                cols="12"
+                sm="1"
+                md="12"
+                lg="12"
+                align-self="end"
+                class="w-100 d-flex justify-end align-center"
+              >
+                <VBtn
+                  text
+                  class="rounded-pill px-8"
+                  density="comfortable"
+                  variant="outlined"
+                  @click="handleBackButtonClick"
+                  >Back</VBtn
+                >
+                <VBtn
+                  color="on-secondary"
+                  class="rounded-pill px-8 bg-primary"
+                  density="comfortable"
+                  @click="onAdd"
+                  >Save</VBtn
+                >
+              </VCol>
+            </VRow>
           </VCardActions>
         </VCard>
       </VDialog>
