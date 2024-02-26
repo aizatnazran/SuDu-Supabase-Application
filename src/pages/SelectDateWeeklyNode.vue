@@ -67,6 +67,19 @@ function createCronExpression() {
   return cronExpression
 }
 
+const isFormValid = computed(() => {
+  const isTimeAndFrequencySelected = scheduleData.selectedTime !== '' && scheduleData.repeatFrequency !== ''
+
+  let isSpecificRequirementMet = true
+  if (scheduleData.repeatFrequency === 'Weekly') {
+    isSpecificRequirementMet = scheduleData.repeatDay !== ''
+  } else if (scheduleData.repeatFrequency === 'Monthly') {
+    isSpecificRequirementMet = scheduleData.repeatDate !== ''
+  }
+
+  return isTimeAndFrequencySelected && isSpecificRequirementMet
+})
+
 function saveSchedule() {
   const cronExpression = createCronExpression()
   store.commit('updateCronExpression', cronExpression)
@@ -75,8 +88,12 @@ function saveSchedule() {
 }
 
 function handleButtonClick() {
-  saveSchedule()
-  onAdd()
+  if (isFormValid.value) {
+    saveSchedule()
+    onAdd()
+  } else {
+    console.log('Form is not valid')
+  }
 }
 
 watch(
@@ -96,34 +113,50 @@ function onAdd() {
     for (let i = 0; i < 3; i++) {
       const id = nodes.value.length + 1
 
+      //   if (id == 4) {
+      //     newNode = {
+      //       id: `random_node-${id}`,
+      //       type: `custom${id}`,
+      //       label: `Node ${id}`,
+      //       position: {
+      //         x: nodes.value[2].position.x,
+      //         y: nodes.value[2].position.y + 200,
+      //       },
+      //     }
+      //     selected.value = true
+      //     showDialog.value = false
+      //     nodes.value[0].selected = true
+      //     nodes.value[1].selected = true
+      //     nodes.value[2].selected = true
+      //   } else if (id == 5) {
+      //     newNode = {
+      //       id: `random_node-${id}`,
+      //       type: `custom${id}`,
+      //       label: `Node ${id}`,
+      //       position: {
+      //         x: nodes.value[2].position.x,
+      //         y: nodes.value[2].position.y - 200,
+      //       },
+      //     }
+      //     selected.value = true
+      //     nodes.value[3].selected = true
+      //   } else {
+      //     newNode = {
+      //       id: `random_node-${id}`,
+      //       type: `custom${id}`,
+      //       label: `Node ${id}`,
+      //       position: {
+      //         x: nodes.value[2].position.x + 400,
+      //         y: nodes.value[2].position.y,
+      //       },
+      //     }
+      //     selected.value = true
+      //     nodes.value[4].selected = true
+      //   }
+
+      //   addNodes([newNode])
+      // }
       if (id == 4) {
-        newNode = {
-          id: `random_node-${id}`,
-          type: `custom${id}`,
-          label: `Node ${id}`,
-          position: {
-            x: nodes.value[2].position.x,
-            y: nodes.value[2].position.y + 200,
-          },
-        }
-        selected.value = true
-        showDialog.value = false
-        nodes.value[0].selected = true
-        nodes.value[1].selected = true
-        nodes.value[2].selected = true
-      } else if (id == 5) {
-        newNode = {
-          id: `random_node-${id}`,
-          type: `custom${id}`,
-          label: `Node ${id}`,
-          position: {
-            x: nodes.value[2].position.x,
-            y: nodes.value[2].position.y - 200,
-          },
-        }
-        selected.value = true
-        nodes.value[3].selected = true
-      } else {
         newNode = {
           id: `random_node-${id}`,
           type: `custom${id}`,
@@ -134,8 +167,11 @@ function onAdd() {
           },
         }
         selected.value = true
-        nodes.value[4].selected = true
-      }
+        showDialog.value = false
+        nodes.value[0].selected = true
+        nodes.value[1].selected = true
+        nodes.value[2].selected = true
+      } else continue
 
       addNodes([newNode])
     }
@@ -202,7 +238,7 @@ function onAdd() {
       </div>
       <VDialog
         v-model="showDialog"
-        max-width="80%"
+        max-width="600px"
       >
         <VCard
           class="pa-4"
@@ -273,6 +309,7 @@ function onAdd() {
             <VBtn
               color="primary"
               @click="handleButtonClick"
+              :disabled="!isFormValid"
               >Save</VBtn
             >
           </VCardActions>
