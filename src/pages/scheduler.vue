@@ -26,21 +26,12 @@ const schedulers = ref([])
 const selectedScheduler = ref({})
 const contactNumber = ref(null)
 
-const userUUID = localStorage.getItem('uuid')
-function showCronExpression() {
-  console.log(
-    `Use Case is: ${useCase.value} || Questions are: ${questions.value} || Cron Expression is: ${cronExpression.value}
-    || template id is: ${id.value} || Contact is: ${contact.value} `,
-  )
-}
-
 const store = useStore()
 const cronExpression = computed(() => store.state.cronExpression)
 const useCase = computed(() => store.state.selectedUseCase)
 const subUseCase = computed(() => store.state.selectedSubUseCase)
 const questions = computed(() => store.state.selectedQuestions)
 const questionName = computed(() => store.state.selectedQuestionName)
-console.log(questionName)
 const id = computed(() => store.state.templateId)
 const contact = computed(() => {
   const selectedContact = store.state.selectedContact
@@ -131,7 +122,6 @@ async function fetchSchedulers() {
   try {
     const response = await apiClient.get('/all')
     if (response.data && response.data.length > 0) {
-      console.log('Schedulers:', response.data) // Check if the data is as expected
       console.log('Schedulers:', response.data)
       const contactNames = await Promise.all(
         response.data.map(async scheduler => {
@@ -146,7 +136,6 @@ async function fetchSchedulers() {
           }
         }),
       )
-      // Filter schedulers based on company ID
       schedulers.value = contactNames.filter(scheduler => scheduler.company_id === companyId)
     }
   } catch (error) {
@@ -371,12 +360,7 @@ const items = ref([
               class="rounded-pill"
               >Cancel</VBtn
             >
-            <VBtn
-              @click="showCronExpression"
-              class="rounded-pill mb-3"
-            >
-              Show Vuex Store
-            </VBtn>
+
             <VBtn
               width="105"
               class="rounded-pill"
@@ -421,12 +405,6 @@ const items = ref([
       >
         <VIcon left>mdi-plus</VIcon>
         Add New
-      </VBtn>
-      <VBtn
-        @click="showCronExpression"
-        class="rounded-pill mb-3"
-      >
-        Show Vuex Store
       </VBtn>
     </VRow>
     <VContainer>
