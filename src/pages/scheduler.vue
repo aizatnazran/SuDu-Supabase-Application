@@ -434,7 +434,7 @@ const items = ref([
         >
           <VCard class="d-flex flex-column pa-4 h-100">
             <div class="d-flex justify-space-between align-start">
-              <div class="text-h6 w-75 mr-4">{{ scheduler.question_name }}</div>
+              <div class="text-h6 w-75 mr-4 text-truncate">{{ scheduler.question_name }}</div>
               <v-menu :location="location">
                 <template v-slot:activator="{ props, on }">
                   <v-btn
@@ -463,7 +463,8 @@ const items = ref([
                 </v-list>
               </v-menu>
             </div>
-            <h6>{{ parseCronExpression(scheduler.cron_input) }}</h6>
+            <v-divider></v-divider>
+            <h5 class="mt-4">{{ parseCronExpression(scheduler.cron_input) }}</h5>
             <div class="text-caption">
               Contact: <span class="text-decoration-underline text-primary">{{ scheduler.contact_name }}</span>
             </div>
