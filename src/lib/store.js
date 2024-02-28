@@ -31,7 +31,7 @@ export default createStore({
     },
     clearValues(state) {
      console.log('Mutation called: clearValues');
-    state.cronExpression = null;
+    state.cronExpression = '';
     state.selectedUseCase = null;
     state.selectedQuestions = [];
     state.selectedContact = null;
