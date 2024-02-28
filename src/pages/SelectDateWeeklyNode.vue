@@ -338,19 +338,36 @@ function onAdd() {
 .date-picker-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 5px;
   margin-bottom: 16px;
 }
 
 .date-picker-cell {
   padding: 10px;
   text-align: center;
-  border: 1px solid #ddd;
+  border: 1px solid transparent;
   cursor: pointer;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  background-color: #f4f4f4;
 }
 
-.date-picker-cell.selected {
-  background-color: #6200ea;
+.date-picker-cell.selected,
+.date-picker-cell:hover {
+  background-color: #9155fd;
   color: white;
+  border: 1px solid #ddd;
+}
+
+.date-picker-cell:nth-child(7n + 1) {
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+.date-picker-cell:nth-child(7n) {
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+.date-picker-cell:hover {
+  background-color: #00000051;
 }
 </style>
