@@ -123,14 +123,12 @@ async function fetchSchedulers() {
   try {
     const response = await apiClient.get('/all')
     if (response.data && response.data.length > 0) {
-      console.log('Schedulers:', response.data)
       const contactNames = await Promise.all(
         response.data.map(async scheduler => {
           const contactData = await supabase
             .from('contact')
             .select('contact_name')
             .eq('contact_number', parseInt(scheduler.contact_number))
-          console.log(contactData.data.map(data => data.contact_name)[0])
           return {
             ...scheduler,
             contact_name: contactData.data.map(data => data.contact_name)[0] || '',
@@ -250,8 +248,6 @@ async function confirmDeleteScheduler(schedulerId) {
   }
 }
 
-function saveScheduler() {}
-
 async function createScheduler() {
   try {
     const response = await apiClient.post('/trigger-api', {
@@ -320,7 +316,7 @@ const confirmDelete = scheduler => {
 }
 
 const items = ref([
-  { title: 'Edit', icon: 'mdi-edit', action: scheduler => editScheduler(scheduler) },
+  { title: 'View', icon: 'mdi-eye', action: scheduler => editScheduler(scheduler) },
   { title: 'Delete', icon: 'mdi-delete', action: scheduler => confirmDelete(scheduler) },
 ])
 </script>
@@ -555,16 +551,12 @@ const items = ref([
       </VCardText>
       <VCardActions>
         <VSpacer></VSpacer>
-
         <VBtn
-          @click="saveScheduler"
+          variant="outlined"
+          density="comfortable"
+          @click="dialogs.questions = false"
           class="primary rounded-pill"
-          >Edit</VBtn
-        >
-        <VBtn
-          @click="saveScheduler"
-          class="primary rounded-pill"
-          >Save</VBtn
+          >OK</VBtn
         >
       </VCardActions>
     </VCard>
