@@ -239,7 +239,7 @@ function getQuestionName(id) {
             <VCol cols="12">
               <div class="d-flex flex-column">
                 <VCardTitle class="dialog-header d-flex justify-space-between align-end">
-                  <span class="font-weight-bold text-h6 text-black">Questions</span>
+                  <span class="font-weight-bold text-h6 text-black">Question</span>
                   <VTextField
                     v-model="searchInput"
                     prepend-icon="mdi-magnify"
@@ -252,7 +252,7 @@ function getQuestionName(id) {
                     class="search-input"
                   ></VTextField>
                 </VCardTitle>
-                <div class="mb-5 ml-2 pa-2 text-black w-100">What questions would you like to ask SuDu AI?</div>
+                <div class="mb-5 ml-2 pa-2 text-black w-100">What question would you like to ask SuDu AI?</div>
               </div>
             </VCol>
           </VRow>
@@ -328,8 +328,8 @@ function getQuestionName(id) {
           rounded="lg"
           style="background-color: #fff"
         >
-          <VCardTitle class="font-weight-bold text-black text-h6">Selected Questions</VCardTitle>
-          <VCardSubtitle class="text-black">Please confirm the questions that selected.</VCardSubtitle>
+          <VCardTitle class="font-weight-bold text-black text-h6">Selected Question</VCardTitle>
+          <VCardSubtitle class="text-black">Please confirm the question selected.</VCardSubtitle>
           <VCardText class="card-text d-flex flex-column flex-md-row justify-start align-center ga-4 my-2 w-100">
             <div
               class="text-black d-flex flex-column flex-md-row justify-start align-baseline align-md-center w-100"

@@ -80,13 +80,14 @@ function parseCronExpression(cronExpression) {
 
   const [minute, hour, dayOfMonth, month, dayOfWeek] = parts
 
+  // Convert 24 hour to 12 hour format
+  const hourFormatted = hour % 12 || 12
+  const minuteFormatted = minute.padStart(2, '0')
+  const amPm = hour >= 12 ? 'PM' : 'AM'
+
   // Daily at specific time (00 1 * * *)
   if (dayOfMonth === '*' && month === '*' && dayOfWeek === '*') {
-    const hourFormatted = hour.padStart(2, '0')
-    const minuteFormatted = minute.padStart(2, '0')
-    const amPm = hour >= 12 ? 'PM' : 'AM'
-    const standardHour = hour % 12 || 12
-    return `Daily at ${standardHour}:${minuteFormatted} ${amPm}`
+    return `Daily at ${hourFormatted}:${minuteFormatted} ${amPm}`
   }
 
   // Weekly on specific days
@@ -95,12 +96,12 @@ function parseCronExpression(cronExpression) {
       .split(',')
       .map(day => daysOfWeekMap[day])
       .join(', ')
-    return `Every ${days} at ${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`
+    return `Every ${days} at ${hourFormatted}:${minuteFormatted} ${amPm}`
   }
 
   // Monthly on a specific day
   if (dayOfMonth !== '*' && month === '*') {
-    return `Monthly on day ${dayOfMonth} at ${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`
+    return `Monthly on day ${dayOfMonth} at ${hourFormatted}:${minuteFormatted} ${amPm}`
   }
 
   return 'Custom schedule'
@@ -495,24 +496,28 @@ const items = ref([
               <VTextField
                 v-model="selectedScheduler.use_case"
                 label="Use Case"
-                readonly
+                outlined
+                dense
+                single-line
               ></VTextField>
             </VCol>
             <VCol
               cols="12"
               md="6"
             >
-              <div class="text-h6 text-start font-weight-bold">Phone Number</div>
+              <div class="text-h6 text-start mb-2 font-weight-bold">Phone Number</div>
               <VTextField
                 v-model="selectedScheduler.contact_number"
                 label="Phone Number"
-                readonly
+                outlined
+                dense
+                single-line
               ></VTextField>
             </VCol>
           </VRow>
           <VRow>
             <VCol>
-              <div class="text-h6 text-start mt-4 font-weight-bold">Selected Questions</div>
+              <div class="text-h6 text-start mt-4 font-weight-bold">Selected Question</div>
 
               <div>{{ selectedScheduler.question }}</div>
             </VCol>
