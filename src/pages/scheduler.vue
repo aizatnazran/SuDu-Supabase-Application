@@ -495,6 +495,7 @@ const items = ref([
                 outlined
                 dense
                 single-line
+                readonly
               ></VTextField>
             </VCol>
             <VCol
@@ -508,6 +509,7 @@ const items = ref([
                 outlined
                 dense
                 single-line
+                readonly
               ></VTextField>
             </VCol>
           </VRow>
