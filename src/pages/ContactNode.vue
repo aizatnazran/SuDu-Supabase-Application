@@ -247,9 +247,7 @@ onMounted(async () => {
       </div>
       <VDialog
         v-model="showDialog"
-
         max-width="1000px"
-
       >
         <VCard
           class="pa-4"
@@ -324,8 +322,8 @@ onMounted(async () => {
                   class="rounded-pill px-8"
                   density="comfortable"
                   variant="outlined"
-                  @click="handleBackButtonClick"
-                  >Back</VBtn
+                  @click="showDialog = false"
+                  >Cancel</VBtn
                 >
                 <VBtn
                   color="on-secondary"

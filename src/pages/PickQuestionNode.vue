@@ -306,13 +306,32 @@ function getQuestionName(id) {
             </VList>
           </VCardText>
           <VCardActions class="justify-end">
-            <VBtn
-              color="on-secondary"
-              class="rounded-pill px-8 bg-primary mt-4"
-              density="comfortable"
-              @click="saveSelections"
-              >Next</VBtn
-            >
+            <VRow justify="end">
+              <VCol
+                cols="12"
+                sm="1"
+                md="12"
+                lg="12"
+                align-self="end"
+                class="w-100 d-flex justify-end align-center"
+              >
+                <VBtn
+                  text
+                  class="rounded-pill px-8"
+                  density="comfortable"
+                  variant="outlined"
+                  @click="showDialog = false"
+                  >Cancel</VBtn
+                >
+                <VBtn
+                  color="on-secondary"
+                  class="rounded-pill px-8 bg-primary"
+                  density="comfortable"
+                  @click="saveSelections"
+                  >Next</VBtn
+                >
+              </VCol>
+            </VRow>
           </VCardActions>
         </VCard>
       </VDialog>
