@@ -528,16 +528,30 @@ const items = ref([
                   <VBtn
                     value="daily"
                     class="primary"
+                    disabled
                     >Daily</VBtn
                   >
-                  <VBtn value="weekly">Weekly</VBtn>
-                  <VBtn value="monthly">Monthly</VBtn>
-                  <VBtn value="custom">Custom</VBtn>
+                  <VBtn
+                    value="weekly"
+                    disabled
+                    >Weekly</VBtn
+                  >
+                  <VBtn
+                    value="monthly"
+                    disabled
+                    >Monthly</VBtn
+                  >
+                  <VBtn
+                    value="custom"
+                    disabled
+                    >Custom</VBtn
+                  >
                 </VBtnToggle>
               </VRow>
               <VBtnToggle
                 v-model="selectedDays"
                 multiple
+                disabled
               >
                 <VBtn value="Mon">Mon</VBtn>
                 <VBtn value="Tue">Tue</VBtn>
