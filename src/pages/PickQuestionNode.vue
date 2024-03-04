@@ -239,7 +239,7 @@ function getQuestionName(id) {
             <VCol cols="12">
               <div class="d-flex flex-column">
                 <VCardTitle class="dialog-header d-flex justify-space-between align-end">
-                  <span class="font-weight-bold text-h6 text-black">Questions</span>
+                  <span class="font-weight-bold text-h6 text-black">Question</span>
                   <VTextField
                     v-model="searchInput"
                     prepend-icon="mdi-magnify"
@@ -252,7 +252,7 @@ function getQuestionName(id) {
                     class="search-input"
                   ></VTextField>
                 </VCardTitle>
-                <div class="mb-5 ml-2 pa-2 text-black w-100">What questions would you like to ask SuDu AI?</div>
+                <div class="mb-5 ml-2 pa-2 text-black w-100">What question would you like to ask SuDu AI?</div>
               </div>
             </VCol>
           </VRow>
@@ -306,13 +306,32 @@ function getQuestionName(id) {
             </VList>
           </VCardText>
           <VCardActions class="justify-end">
-            <VBtn
-              color="on-secondary"
-              class="rounded-pill px-8 bg-primary mt-4"
-              density="comfortable"
-              @click="saveSelections"
-              >Next</VBtn
-            >
+            <VRow justify="end">
+              <VCol
+                cols="12"
+                sm="1"
+                md="12"
+                lg="12"
+                align-self="end"
+                class="w-100 d-flex justify-end align-center"
+              >
+                <VBtn
+                  text
+                  class="rounded-pill px-8"
+                  density="comfortable"
+                  variant="outlined"
+                  @click="showDialog = false"
+                  >Cancel</VBtn
+                >
+                <VBtn
+                  color="on-secondary"
+                  class="rounded-pill px-8 bg-primary"
+                  density="comfortable"
+                  @click="saveSelections"
+                  >Next</VBtn
+                >
+              </VCol>
+            </VRow>
           </VCardActions>
         </VCard>
       </VDialog>
@@ -328,8 +347,8 @@ function getQuestionName(id) {
           rounded="lg"
           style="background-color: #fff"
         >
-          <VCardTitle class="font-weight-bold text-black text-h6">Selected Questions</VCardTitle>
-          <VCardSubtitle class="text-black">Please confirm the questions that selected.</VCardSubtitle>
+          <VCardTitle class="font-weight-bold text-black text-h6">Selected Question</VCardTitle>
+          <VCardSubtitle class="text-black">Please confirm the question selected.</VCardSubtitle>
           <VCardText class="card-text d-flex flex-column flex-md-row justify-start align-center ga-4 my-2 w-100">
             <div
               class="text-black d-flex flex-column flex-md-row justify-start align-baseline align-md-center w-100"

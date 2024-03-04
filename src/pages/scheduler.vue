@@ -80,13 +80,14 @@ function parseCronExpression(cronExpression) {
 
   const [minute, hour, dayOfMonth, month, dayOfWeek] = parts
 
+  // Convert 24 hour to 12 hour format
+  const hourFormatted = hour % 12 || 12
+  const minuteFormatted = minute.padStart(2, '0')
+  const amPm = hour >= 12 ? 'PM' : 'AM'
+
   // Daily at specific time (00 1 * * *)
   if (dayOfMonth === '*' && month === '*' && dayOfWeek === '*') {
-    const hourFormatted = hour.padStart(2, '0')
-    const minuteFormatted = minute.padStart(2, '0')
-    const amPm = hour >= 12 ? 'PM' : 'AM'
-    const standardHour = hour % 12 || 12
-    return `Daily at ${standardHour}:${minuteFormatted} ${amPm}`
+    return `Daily at ${hourFormatted}:${minuteFormatted} ${amPm}`
   }
 
   // Weekly on specific days
@@ -95,12 +96,12 @@ function parseCronExpression(cronExpression) {
       .split(',')
       .map(day => daysOfWeekMap[day])
       .join(', ')
-    return `Every ${days} at ${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`
+    return `Every ${days} at ${hourFormatted}:${minuteFormatted} ${amPm}`
   }
 
   // Monthly on a specific day
   if (dayOfMonth !== '*' && month === '*') {
-    return `Monthly on day ${dayOfMonth} at ${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`
+    return `Monthly on day ${dayOfMonth} at ${hourFormatted}:${minuteFormatted} ${amPm}`
   }
 
   return 'Custom schedule'
@@ -122,14 +123,12 @@ async function fetchSchedulers() {
   try {
     const response = await apiClient.get('/all')
     if (response.data && response.data.length > 0) {
-      console.log('Schedulers:', response.data)
       const contactNames = await Promise.all(
         response.data.map(async scheduler => {
           const contactData = await supabase
             .from('contact')
             .select('contact_name')
             .eq('contact_number', parseInt(scheduler.contact_number))
-          console.log(contactData.data.map(data => data.contact_name)[0])
           return {
             ...scheduler,
             contact_name: contactData.data.map(data => data.contact_name)[0] || '',
@@ -249,8 +248,6 @@ async function confirmDeleteScheduler(schedulerId) {
   }
 }
 
-function saveScheduler() {}
-
 async function createScheduler() {
   try {
     const response = await apiClient.post('/trigger-api', {
@@ -319,7 +316,7 @@ const confirmDelete = scheduler => {
 }
 
 const items = ref([
-  { title: 'Edit', icon: 'mdi-edit', action: scheduler => editScheduler(scheduler) },
+  { title: 'View', icon: 'mdi-eye', action: scheduler => editScheduler(scheduler) },
   { title: 'Delete', icon: 'mdi-delete', action: scheduler => confirmDelete(scheduler) },
 ])
 </script>
@@ -434,7 +431,7 @@ const items = ref([
         >
           <VCard class="d-flex flex-column pa-4 h-100">
             <div class="d-flex justify-space-between align-start">
-              <div class="text-h6 w-75 mr-4">{{ scheduler.question_name }}</div>
+              <div class="text-h6 w-75 mr-4 text-truncate">{{ scheduler.question_name }}</div>
               <v-menu :location="location">
                 <template v-slot:activator="{ props, on }">
                   <v-btn
@@ -463,7 +460,8 @@ const items = ref([
                 </v-list>
               </v-menu>
             </div>
-            <h6>{{ parseCronExpression(scheduler.cron_input) }}</h6>
+            <v-divider></v-divider>
+            <h5 class="mt-4">{{ parseCronExpression(scheduler.cron_input) }}</h5>
             <div class="text-caption">
               Contact: <span class="text-decoration-underline text-primary">{{ scheduler.contact_name }}</span>
             </div>
@@ -494,6 +492,9 @@ const items = ref([
               <VTextField
                 v-model="selectedScheduler.use_case"
                 label="Use Case"
+                outlined
+                dense
+                single-line
                 readonly
               ></VTextField>
             </VCol>
@@ -501,17 +502,20 @@ const items = ref([
               cols="12"
               md="6"
             >
-              <div class="text-h6 text-start font-weight-bold">Phone Number</div>
+              <div class="text-h6 text-start mb-2 font-weight-bold">Phone Number</div>
               <VTextField
                 v-model="selectedScheduler.contact_number"
                 label="Phone Number"
+                outlined
+                dense
+                single-line
                 readonly
               ></VTextField>
             </VCol>
           </VRow>
           <VRow>
             <VCol>
-              <div class="text-h6 text-start mt-4 font-weight-bold">Selected Questions</div>
+              <div class="text-h6 text-start mt-4 font-weight-bold">Selected Question</div>
 
               <div>{{ selectedScheduler.question }}</div>
             </VCol>
@@ -524,16 +528,30 @@ const items = ref([
                   <VBtn
                     value="daily"
                     class="primary"
+                    disabled
                     >Daily</VBtn
                   >
-                  <VBtn value="weekly">Weekly</VBtn>
-                  <VBtn value="monthly">Monthly</VBtn>
-                  <VBtn value="custom">Custom</VBtn>
+                  <VBtn
+                    value="weekly"
+                    disabled
+                    >Weekly</VBtn
+                  >
+                  <VBtn
+                    value="monthly"
+                    disabled
+                    >Monthly</VBtn
+                  >
+                  <VBtn
+                    value="custom"
+                    disabled
+                    >Custom</VBtn
+                  >
                 </VBtnToggle>
               </VRow>
               <VBtnToggle
                 v-model="selectedDays"
                 multiple
+                disabled
               >
                 <VBtn value="Mon">Mon</VBtn>
                 <VBtn value="Tue">Tue</VBtn>
@@ -549,16 +567,12 @@ const items = ref([
       </VCardText>
       <VCardActions>
         <VSpacer></VSpacer>
-
         <VBtn
-          @click="saveScheduler"
+          variant="outlined"
+          density="comfortable"
+          @click="dialogs.questions = false"
           class="primary rounded-pill"
-          >Edit</VBtn
-        >
-        <VBtn
-          @click="saveScheduler"
-          class="primary rounded-pill"
-          >Save</VBtn
+          >OK</VBtn
         >
       </VCardActions>
     </VCard>

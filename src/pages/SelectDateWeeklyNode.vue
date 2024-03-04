@@ -1,6 +1,6 @@
 <script setup>
 import { Handle, Position, useVueFlow } from '@vue-flow/core'
-import { reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useStore } from 'vuex'
 const { nodes, addNodes, addEdges, dimensions, toObject, fromObject } = useVueFlow()
 
@@ -16,6 +16,7 @@ const times = ref(Array.from({ length: 24 }, (_, i) => `${i}:00`))
 const daysOfWeek = ref(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'])
 const datesOfMonth = ref(Array.from({ length: 31 }, (_, i) => i + 1))
 const store = useStore()
+const isDateSelected = computed(() => store.state.cronExpression !== '')
 const scheduleData = reactive({
   selectedTime: '',
   repeatFrequency: '',
@@ -207,7 +208,21 @@ function onAdd() {
         :position="Position.Right"
       />
       <div class="text-warning text-h6"><VIcon icon="mdi-calendar-clock"></VIcon>Select Date</div>
-      <div class="mb-4 text-black">Select a date and time weekly.</div>
+      <div class="pa-2 d-flex-column justify-start">
+        <!-- Other elements... -->
+        <div
+          v-if="isDateSelected"
+          class="mb-4 text-black"
+        >
+          <span style="text-decoration: underline">Time</span> selected
+        </div>
+        <div
+          v-else
+          class="mb-4 text-black"
+        >
+          Select a date and time weekly.
+        </div>
+      </div>
       <div class="d-flex justify-center">
         <VHover v-if="selected">
           <template v-slot:default="{ isHovering, props }">
@@ -323,19 +338,36 @@ function onAdd() {
 .date-picker-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 5px;
   margin-bottom: 16px;
 }
 
 .date-picker-cell {
   padding: 10px;
   text-align: center;
-  border: 1px solid #ddd;
+  border: 1px solid transparent;
   cursor: pointer;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  background-color: #f4f4f4;
 }
 
-.date-picker-cell.selected {
-  background-color: #6200ea;
+.date-picker-cell.selected,
+.date-picker-cell:hover {
+  background-color: #9155fd;
   color: white;
+  border: 1px solid #ddd;
+}
+
+.date-picker-cell:nth-child(7n + 1) {
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+.date-picker-cell:nth-child(7n) {
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+.date-picker-cell:hover {
+  background-color: #00000051;
 }
 </style>
