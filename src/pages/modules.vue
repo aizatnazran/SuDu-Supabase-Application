@@ -13,16 +13,49 @@ const uploadFiles = async file => {
   formData.append('module', file)
 
   try {
-    const response = await axios.post('http://localhost:3000/upload-module', formData, {
+    await axios.post('http://localhost:3000/upload-module', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     })
+
+    localStorage.setItem('test', JSON.stringify(['Test Path']))
+
     modulePaths.value.push(`http://localhost:3000/modules/${file.name.replace('.zip', '')}/`)
-    Swal.fire('Success', 'Module uploaded successfully!', 'success')
+    localStorage.setItem('modulePaths', JSON.stringify(modulePaths.value))
+    Swal.fire({
+      title: 'Success!',
+      text: 'Module successfully added!',
+      icon: 'success',
+      customClass: { container: 'high-z-index-swal' },
+      confirmButtonColor: '#3085d6',
+    })
   } catch (error) {
-    Swal.fire('Error', 'Failed to upload the module.', 'error')
+    Swal.fire({
+      title: 'Error',
+      text: 'Error uploading module',
+      icon: 'success',
+      customClass: { container: 'high-z-index-swal' },
+      confirmButtonColor: '#d33',
+    })
   }
+}
+
+const removeModule = moduleToRemove => {
+  // Filter out the module to remove
+  modulePaths.value = modulePaths.value.filter(module => module !== moduleToRemove)
+
+  // Update localStorage
+  localStorage.setItem('modulePaths', JSON.stringify(modulePaths.value))
+
+  // Show confirmation message
+  Swal.fire({
+    title: 'Removed!',
+    text: 'Module successfully removed!',
+    icon: 'success',
+    customClass: { container: 'high-z-index-swal' },
+    confirmButtonColor: '#3085d6',
+  })
 }
 
 const handleFileChange = event => {
@@ -33,8 +66,23 @@ const handleFileChange = event => {
 }
 
 const selectModule = module => {
-  selectedModule.value = module
+  if (selectedModule.value === module) {
+    selectedModule.value = null
+  } else {
+    selectedModule.value = module
+  }
 }
+
+function loadModulePaths() {
+  const paths = localStorage.getItem('modulePaths')
+  if (paths) {
+    modulePaths.value = JSON.parse(paths)
+  }
+}
+
+onMounted(() => {
+  loadModulePaths()
+})
 </script>
 
 <template>
@@ -54,8 +102,18 @@ const selectModule = module => {
         v-for="(module, index) in modulePaths"
         :key="index"
       >
-        <VCard @click="selectModule(module)">
+        <VCard
+          @click="selectModule(module)"
+          class="module-card"
+        >
           <VCardText>{{ module }}</VCardText>
+          <VBtn
+            icon
+            class="delete-btn"
+            @click.stop="removeModule(module)"
+          >
+            <VIcon>mdi-delete</VIcon>
+          </VBtn>
         </VCard>
       </VCol>
     </VRow>
@@ -108,5 +166,19 @@ const selectModule = module => {
   padding: 20px;
   text-align: center;
   color: #aaa;
+}
+
+.module-card {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.delete-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  margin: 8px;
 }
 </style>
