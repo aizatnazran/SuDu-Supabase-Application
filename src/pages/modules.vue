@@ -41,21 +41,51 @@ const uploadFiles = async file => {
   }
 }
 
-const removeModule = moduleToRemove => {
-  // Filter out the module to remove
-  modulePaths.value = modulePaths.value.filter(module => module !== moduleToRemove)
-
-  // Update localStorage
-  localStorage.setItem('modulePaths', JSON.stringify(modulePaths.value))
-
-  // Show confirmation message
-  Swal.fire({
-    title: 'Removed!',
-    text: 'Module successfully removed!',
-    icon: 'success',
-    customClass: { container: 'high-z-index-swal' },
+const removeModule = async moduleToRemove => {
+  // Show a confirmation dialog before deleting
+  const result = await Swal.fire({
+    title: 'Are you sure?',
+    text: 'Do you really want to delete this module?',
+    icon: 'warning',
+    showCancelButton: true,
     confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Yes, delete it!',
   })
+
+  if (result.isConfirmed) {
+    // Extract module name from the URL
+    // Assuming the URL ends with a slash and format is as defined above
+    const moduleName = moduleToRemove
+      .split('/')
+      .filter(part => part.length > 0)
+      .pop() // This will handle trailing slashes
+
+    try {
+      // Make a DELETE request to the server to remove the module directory
+      await axios.delete(`http://localhost:3000/delete-module/${moduleName}`)
+      // Update UI and localStorage after successful deletion
+      modulePaths.value = modulePaths.value.filter(module => module !== moduleToRemove)
+      localStorage.setItem('modulePaths', JSON.stringify(modulePaths.value))
+
+      Swal.fire({
+        title: 'Removed!',
+        text: 'Module successfully removed!',
+        icon: 'success',
+        customClass: { container: 'high-z-index-swal' },
+        confirmButtonColor: '#3085d6',
+      })
+    } catch (error) {
+      console.error('Failed to delete module:', error)
+      Swal.fire({
+        title: 'Error',
+        text: 'Failed to remove module',
+        icon: 'error',
+        customClass: { container: 'high-z-index-swal' },
+        confirmButtonColor: '#d33',
+      })
+    }
+  }
 }
 
 const handleFileChange = event => {
