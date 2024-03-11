@@ -1,7 +1,7 @@
 <script setup>
-import { Handle, Position, useVueFlow } from '@vue-flow/core'
-import { reactive, ref, watch } from 'vue'
-import { useStore } from 'vuex'
+import { Handle, Position, useVueFlow } from '@vue-flow/core';
+import { reactive, ref, watch } from 'vue';
+import { useStore } from 'vuex';
 const { nodes, addNodes, addEdges, dimensions, toObject, fromObject } = useVueFlow()
 
 const selected = ref(nodes.value[2].selected)
@@ -14,6 +14,20 @@ const repeatDay = ref('')
 const repeatDate = ref('')
 const times = ref(Array.from({ length: 24 }, (_, i) => `${i}:00`))
 const daysOfWeek = ref(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'])
+const monthsOfYear = ref([
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'Jun',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+])
 const datesOfMonth = ref(Array.from({ length: 31 }, (_, i) => i + 1))
 const store = useStore()
 const scheduleData = reactive({
@@ -21,14 +35,73 @@ const scheduleData = reactive({
   repeatFrequency: '',
   repeatDay: '',
   repeatDate: '',
+  repeatMonth: '',
   times: Array.from({ length: 24 }, (_, i) => `${i}:00`),
   daysOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
   datesOfMonth: Array.from({ length: 31 }, (_, i) => i + 1),
+  monthsOfYear: [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'Jun',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+]
 })
+
+
+function getMessage(repeatFrequency) {
+  switch (repeatFrequency) {
+    case 'Daily':
+      return 'Will send everyday'
+      break
+    case 'Weekly':
+      console.log(scheduleData.repeatDay)
+      const selectedDays = scheduleData.repeatDay
+      console.log(selectedDays)
+      if (selectedDays.length === 0) {
+        return 'Please select at least one day'
+      } else {
+        return `Will send every ${selectedDays}`
+      }
+      break
+    case 'Monthly':
+    console.log(scheduleData.repeatDate)
+      const selectedDates = scheduleData.repeatDate
+      console.log(selectedDates)
+      if (selectedDates.length === 0) {
+        return 'Please select at least one date'
+      } 
+      else {
+        return `Will send every month on ${selectedDates}`
+      }
+      break
+    case 'Yearly':
+    console.log(scheduleData.repeatMonth)
+      const selectedMonths = scheduleData.repeatMonth
+      console.log(selectedMonths)
+      if (selectedMonths.length === 0) {
+        return 'Please select at least one month'
+      } else{
+        return `Will send every first day of ${selectedMonths}`
+      }
+      break
+    default:
+      return ''
+      break
+  }
+}
 
 function onRepeatChange() {
   scheduleData.repeatDay = ''
   scheduleData.repeatDate = ''
+  scheduleData.repeatMonth = ''
 }
 
 function createCronExpression() {
@@ -42,8 +115,23 @@ function createCronExpression() {
       Thursday: 4,
       Friday: 5,
       Saturday: 6,
-      Sunday: 0,
+      Sunday: 7,
     }[scheduleData.repeatDay] || '?'
+
+  let cronMonthOfYear = {
+    January: 1,
+    February: 2,
+    March: 3,
+    April: 4,
+    May: 5,
+    June: 6,
+    July: 7,
+    August: 8,
+    September: 9,
+    October: 10,
+    November: 11,
+    December: 12,
+  }[scheduleData.repeatMonth] || '?'
 
   const [hour, minute] = scheduleData.selectedTime.split(':')
 
@@ -57,6 +145,9 @@ function createCronExpression() {
       break
     case 'Monthly':
       cronExpression = `${minute} ${hour} ${scheduleData.repeatDate} * *`
+      break
+    case 'Yearly':
+      cronExpression = `${minute} ${hour} 1 ${cronMonthOfYear} *`
       break
     default:
       cronExpression = ''
@@ -75,6 +166,8 @@ const isFormValid = computed(() => {
     isSpecificRequirementMet = scheduleData.repeatDay !== ''
   } else if (scheduleData.repeatFrequency === 'Monthly') {
     isSpecificRequirementMet = scheduleData.repeatDate !== ''
+  } else if(scheduleData.repeatFrequency === 'Yearly') {
+    isSpecificRequirementMet = scheduleData.repeatMonth !== ''
   }
 
   return isTimeAndFrequencySelected && isSpecificRequirementMet
@@ -101,6 +194,7 @@ watch(
   () => {
     scheduleData.repeatDay = ''
     scheduleData.repeatDate = ''
+    scheduleData.repeatMonth = ''
   },
 )
 
@@ -238,7 +332,7 @@ function onAdd() {
       </div>
       <VDialog
         v-model="showDialog"
-        max-width="600px"
+        max-width="800px"
       >
         <VCard
           class="pa-4"
@@ -251,63 +345,204 @@ function onAdd() {
             <span class="font-weight-bold text-h6 text-black">Schedule Time</span>
           </VCardTitle>
 
-          <VSelect
-            v-model="scheduleData.selectedTime"
-            :items="times"
-            label="Time"
-            class="mb-4"
-          />
-
-          <!-- Repeat frequency dropdown -->
-          <VSelect
-            v-model="scheduleData.repeatFrequency"
-            :items="['Daily', 'Weekly', 'Monthly']"
-            label="Repeat"
-            @change="onRepeatChange"
-            class="mb-4"
-          />
-
-          <!-- Conditional dropdown based on repeat frequency -->
-          <div
-            v-if="scheduleData.repeatFrequency === 'Weekly'"
-            class="d-flex justify-space-between mb-4"
-          >
-            <VBtn
-              v-for="day in daysOfWeek"
-              :key="day"
-              :outlined="scheduleData.repeatDay !== day"
-              :color="scheduleData.repeatDay === day ? 'primary' : ''"
-              @click="scheduleData.repeatDay = day"
-            >
-              {{ day.substring(0, 3) }}
-            </VBtn>
-          </div>
-
-          <div
-            v-if="scheduleData.repeatFrequency === 'Monthly'"
-            class="date-picker-grid"
-          >
-            <div
-              v-for="date in datesOfMonth"
-              :key="date"
-              class="date-picker-cell"
-              :class="{ selected: scheduleData.repeatDate === date }"
-              @click="scheduleData.repeatDate = date"
-            >
-              {{ date }}
+          <div class="d-flex gap-4 px-4">
+            <div class="d-flex justify-start align-center time">
+              <div class="clock">
+                <VIcon color="white">mdi-clock-time-five</VIcon>
+              </div>
+              <VSelect
+                v-model="scheduleData.selectedTime"
+                :items="times"
+                variant="underline"
+                color="primary"
+              />
+            </div>
+            <div class="d-flex justify-center align-center gap-2 w-50">
+              <strong class="text-black text-body">Repeat</strong>
+              <!-- <VSelect
+                v-if="scheduleData.repeatFrequency === 'Daily'"
+                density="compact"
+                placeholder="-"
+                :items="['-']"
+                class="repeat"
+              />
+              <VSelect
+                v-else
+                density="compact"
+                v-model="selectedRepeat"
+                :items="[1, 2, 3, 4, 5, 6, 7, 8, 9]"
+                class="repeat"
+              /> -->
+              <VSelect
+                density="compact"
+                v-model="scheduleData.repeatFrequency"
+                :items="['Daily', 'Weekly', 'Monthly', 'Yearly']"
+                @change="onRepeatChange"
+                class="frequencyInterval"
+              />
             </div>
           </div>
 
+          <VItemGroup
+            mandatory
+            v-if="scheduleData.repeatFrequency === 'Weekly'"
+          >
+            <VContainer>
+              <VRow class="d-flex justify-evenly align-center w-100 gap-10">
+                <VCol
+                  v-for="day in daysOfWeek"
+                  :key="day"
+                  cols="12"
+                  md="1"
+                  sm="4"
+                  class="w-100"
+                >
+
+                
+                  <VItem
+                    v-slot="{ isSelected, toggle }"
+                    class="w-100"
+                  >
+                    <VCard
+                      :color="isSelected ? 'primary' : ''"
+                      class="d-flex justify-center align-center"
+                      width="90"
+                      height="40"
+                      dark
+                      @click="toggle(); scheduleData.repeatDay = day"
+                    >
+                      <VScrollYTransition>
+                        <div class="text-body text-center">
+                          {{ day.substring(0, 3) }}
+                        </div>
+                      </VScrollYTransition>
+                    </VCard>
+                  </VItem>
+                </VCol>
+              </VRow>
+            </VContainer>
+          </VItemGroup>
+
+
+          
+          <VItemGroup
+            mandatory
+            v-else-if="scheduleData.repeatFrequency === 'Monthly'"
+          >
+            <div class="d-flex flex-column justify-start align-center mt-4 pa-4">
+              <div class="d-flex justify-start align-center w-100 gap-8 pl-2 pb-2">
+                <div>On Day</div>
+                <VCard class="auto">
+                  <VCardTitle class="text-center">{{ scheduleData.repeatDate  }}</VCardTitle>
+                </VCard>
+              </div>
+
+              <VContainer>
+                <VRow class="bg-secondary d-flex justify-around rounded">
+                  <VCol
+                    v-for="(date, index) in datesOfMonth"
+                    :key="index"
+                    cols="12"
+                    md="1"
+                  >
+                    <VItem v-slot="{ isSelected, toggle }">
+                      <VCard
+                        :color="isSelected ? 'primary' : 'secondary'"
+                        class="d-flex align-center w-100"
+                        width="80"
+                        height="30"
+                        variant="flat"
+                        dark
+                        @click="toggle(); scheduleData.repeatDate = date"
+                      >
+                        <VScrollYTransition>
+                          <div class="text-body flex-grow-1 text-center">
+                            {{ date }}
+                          </div>
+                        </VScrollYTransition>
+                      </VCard>
+                    </VItem>
+                  </VCol>
+                </VRow>
+              </VContainer>
+            </div>
+          </VItemGroup>
+
+          <VItemGroup
+            mandatory
+            v-else-if="scheduleData.repeatFrequency === 'Yearly'"
+          >
+            <VContainer>
+              <VRow class="d-flex align-center w-100 gap-10">
+                <VCol
+                v-for="n in 6"
+                  :key="n"
+                  cols="12"
+                  md="1"
+                  class="w-100"
+                >
+                  <VItem v-slot="{ isSelected, toggle }" class="w-100">
+                    <VCard
+                      :color="isSelected ? 'primary' : ''"
+                      class="d-flex justify-center align-center"
+                      width="90"
+                      height="40"
+                      dark
+                      @click="toggle(); scheduleData.repeatMonth = monthsOfYear[n-1]"
+                    >
+                      <VScrollYTransition>
+                        <div class="text-body  text-center">
+                          {{ monthsOfYear[n-1].substring(0,3)}}
+                        </div>
+                      </VScrollYTransition>
+                    </VCard>
+                  </VItem>
+                </VCol>
+              </VRow>
+
+              <VRow class="d-flex justify-evenly align-center w-100 gap-10">
+                <VCol
+                v-for="n in 6"
+                  :key="n + 6"
+                  cols="12"
+                  md="1"
+                  class="w-100"
+                >
+                  <VItem v-slot="{ isSelected, toggle }" class="w-100">
+                    <VCard
+                      :color="isSelected ? 'primary' : ''"
+                      class="d-flex justify-center align-center"
+                      width="90"
+                      height="40"
+                      dark
+                      @click="toggle(); scheduleData.repeatMonth = monthsOfYear[n+5]"
+                    >
+                      <VScrollYTransition>
+                        <div class="text-body  text-center">
+                          {{ monthsOfYear[n+5].substring(0,3)}}
+                        </div>
+                      </VScrollYTransition>
+                    </VCard>
+                  </VItem>
+                </VCol>
+              </VRow>
+            </VContainer>
+          </VItemGroup>
+
+          <p class=" pa-4">{{ getMessage(scheduleData.repeatFrequency) }}</p>
+
           <!-- Actions -->
-          <VCardActions>
-            <VBtn
+          <VCardActions class="w-100 d-flex justify-end align-end">
+            <!-- <VBtn
               color="primary"
-              text
-              @click="showDialog = false"
-              >Cancel</VBtn
-            >
+              @click="handleButtonClick"
+              :disabled="!isFormValid"
+              >Save</VBtn
+            > -->
             <VBtn
-              color="primary"
+              color="on-secondary"
+              class="rounded-pill px-8 bg-primary mt-4"
+              density="comfortable"
               @click="handleButtonClick"
               :disabled="!isFormValid"
               >Save</VBtn
@@ -337,5 +572,31 @@ function onAdd() {
 .date-picker-cell.selected {
   background-color: #6200ea;
   color: white;
+}
+.clock {
+  background-color: #9155fd;
+  padding: 0.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 9999px;
+}
+.time {
+  background-color: #e3d7f9fe;
+  border-radius: 9999px;
+  width: fit-content;
+  max-height: 41px;
+}
+.repeat {
+  max-width: 5rem;
+}
+.frequencyInterval {
+  max-width: 10rem;
+}
+.rounded {
+  border-radius: 0.375rem;
+}
+.custom-width {
+  width: 100px;
 }
 </style>

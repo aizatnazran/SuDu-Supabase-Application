@@ -23,6 +23,10 @@ const selectedMonth = ref(null)
 const selectedYear = ref(null)
 const subTemplateOptions = ref([])
 const selectedSubTemplate = ref(null)
+const isLoading = ref(false)
+const isPlaceFile = ref(false)
+const uploadProgress = ref(0)
+const selectedFileName = ref('something.pdf')
 
 const resetFields = () => {
   selectedTemplate.value = null
@@ -143,9 +147,50 @@ watch(selectedTemplate, async newVal => {
   }
 })
 
-const handleFileChange = event => {
+const handleFileChange = async event => {
   selectedFiles.value = Array.from(event.target.files)
   console.log('Selected files:', selectedFiles.value)
+
+  selectedFileName.value = selectedFiles.value[0].name
+  console.log('raw file:', selectedFileName.value)
+
+  isPlaceFile.value = true
+
+  isLoading.value = true
+
+  // Reset progress to 0
+  uploadProgress.value = 0
+
+  // Simulate a delay to show loading state for 2 seconds
+  const totalProgressSteps = 40
+  const progressInterval = 2000 / totalProgressSteps // Total time / total steps
+
+  let currentProgress = 0
+  const progressIncrement = 100 / totalProgressSteps
+
+  const progressIntervalId = setInterval(() => {
+    currentProgress += progressIncrement
+    uploadProgress.value = Math.round(currentProgress)
+
+    if (currentProgress >= 100) {
+      clearInterval(progressIntervalId)
+      isLoading.value = false
+    }
+  }, progressInterval)
+
+  // Mock a delay for demonstration purpose (replace this with your actual upload logic)
+  await new Promise(resolve => setTimeout(resolve, 1000))
+}
+
+watch(selectedFiles, newVal => {
+  if (newVal.length > 0) {
+    isPlaceFile.value = true
+  }
+})
+
+function removeFile() {
+  selectedFiles.value = []
+  isPlaceFile.value = false
 }
 
 //Function to fetch files from table
@@ -517,6 +562,50 @@ const items = ref([
               class="file-upload-input"
             />
 
+            <div v-if="isPlaceFile">
+              <VCard
+                v-if="isLoading"
+                class="document-card ma-1 pa-2"
+              >
+                <VProgressLinear
+                  v-if="isLoading"
+                  v-model="uploadProgress"
+                  color="primary"
+                  class="text-caption"
+                  height="10"
+                  style="margin-bottom: 10px"
+                >
+                  <template v-slot:default="{ value }">
+                    <strong>{{ Math.floor(value) }}%</strong>
+                  </template>
+                </VProgressLinear>
+                <div>Uploading</div>
+              </VCard>
+              <VCard
+                v-else
+                class="document-card ma-1 pa-2"
+              >
+                <div class="d-flex justify-end align-start">
+                  <VBtn
+                    icon
+                    flat
+                    color="transparent"
+                    class="dots-button"
+                    @click="removeFile"
+                  >
+                    <VIcon>mdi-close</VIcon>
+                  </VBtn>
+                </div>
+                <img
+                  :src="getImageSrc(selectedFileName)"
+                  alt="Document Icon"
+                />
+                <p class="file-name">
+                  {{ selectedFileName }}
+                </p>
+              </VCard>
+            </div>
+
             <div class="text-h6 text-start mt-4 font-weight-bold">Choose Date</div>
             <VRow>
               <VCol cols="6">
@@ -593,8 +682,9 @@ const items = ref([
 }
 
 .file-upload-input {
-  border: 2px dashed #aaa;
-  border-radius: 4px;
+  border: 2px dashed #9155fd;
+  border-spacing: 2px;
+  border-radius: 7px;
   padding: 20px;
   text-align: center;
   color: #aaa;
