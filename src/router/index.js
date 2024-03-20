@@ -92,6 +92,11 @@ const router = createRouter({
           component: () => import('../pages/scheduler.vue'),
           meta: { requiresAuth: true },
         },
+        {
+          path: 'modules',
+          component: () => import('../pages/modules.vue'),
+          meta: { requiresAuth: true },
+        },
       ],
     },
     {

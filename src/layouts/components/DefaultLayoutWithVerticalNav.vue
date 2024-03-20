@@ -112,6 +112,13 @@ const upgradeBanner = computed(() => {
           to: '/scheduler',
         }"
       />
+      <VerticalNavLink
+        :item="{
+          title: 'Modules',
+          icon: 'mdi-view-module',
+          to: '/modules',
+        }"
+      />
       <!-- <VerticalNavLink
         :item="{
           title: 'Template',
